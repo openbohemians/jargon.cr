@@ -2,7 +2,7 @@
 
 ## Completed
 
-- **One error for a value that doesn't convert** (unreleased) — `--count two` reported both "Invalid integer value 'two' for count" and "Invalid type for count: expected integer, got string" (and an `enum` error, if any). Validation now skips a field whose argument or environment variable didn't convert; values from defaults, config, and stdin JSON are validated as before. jargon.rs does the same.
+- **One error for a value that doesn't convert** (v0.22.2) — `--count two` reported both "Invalid integer value 'two' for count" and "Invalid type for count: expected integer, got string" (and an `enum` error, if any). Validation now skips a field whose argument or environment variable didn't convert; values from defaults, config, and stdin JSON are validated as before. jargon.rs does the same.
 - **Type errors name schema types** (v0.22.1) — "Invalid type for x: expected integer, got object" instead of "expected Integer, got Hash(String, JSON::Any)", so an end user sees the words the schema uses rather than Crystal's classes. jargon.rs says the same.
 - **Fixes found by the Rust port** (v0.22.0) — porting to Rust (jargon.rs) turned up these, now fixed in both implementations where they applied:
   - Help shows a default that isn't a string as JSON (`[default: ["a",1]]`, `[default: null]`), not in Crystal's inspect form.
