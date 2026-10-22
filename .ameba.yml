@@ -12,3 +12,7 @@ Lint/NotNil:
 # Single-char block params are fine for iterators
 Naming/BlockParameterName:
   Enabled: false
+
+# Inline %({...}) JSON schemas are the spec (and README) idiom
+Style/MultilineStringLiteral:
+  Enabled: false

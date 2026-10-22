@@ -70,7 +70,9 @@ module Jargon
   end
 
   # Flatten a schema by resolving all $ref pointers and removing $defs.
-  # Useful for AI tool definitions that don't support $ref.
+  # Useful for AI tool definitions that don't support $ref. Raises
+  # `ArgumentError` on a recursive `$ref` (a schema that contains itself),
+  # which has no finite inline form.
   def self.flatten(schema : String) : String
     json = JSON.parse(schema)
     defs = json["$defs"]?.try(&.as_h) || json["definitions"]?.try(&.as_h) || {} of String => JSON::Any
@@ -78,7 +80,9 @@ module Jargon
     flattened.to_json
   end
 
-  private def self.flatten_node(node : JSON::Any, defs : Hash(String, JSON::Any)) : JSON::Any
+  # `expanding` holds the definitions being inlined on this path, to detect
+  # a ref back into one of them.
+  private def self.flatten_node(node : JSON::Any, defs : Hash(String, JSON::Any), expanding : Set(String) = Set(String).new) : JSON::Any
     case node.raw
     when Hash
       hash = node.as_h
@@ -88,7 +92,10 @@ module Jargon
         if ref.starts_with?("#/$defs/") || ref.starts_with?("#/definitions/")
           def_name = ref.split("/").last
           if resolved = defs[def_name]?
-            return flatten_node(deep_copy(resolved), defs)
+            if expanding.includes?(def_name)
+              raise ArgumentError.new("Cannot flatten recursive $ref '#{ref}': the definition contains itself")
+            end
+            return flatten_node(deep_copy(resolved), defs, expanding | Set{def_name})
           end
         end
         # Keep unresolvable refs as-is
@@ -99,11 +106,11 @@ module Jargon
       result = {} of String => JSON::Any
       hash.each do |key, value|
         next if key == "$defs" || key == "definitions"
-        result[key] = flatten_node(value, defs)
+        result[key] = flatten_node(value, defs, expanding)
       end
       JSON::Any.new(result)
     when Array
-      JSON::Any.new(node.as_a.map { |item| flatten_node(item, defs) })
+      JSON::Any.new(node.as_a.map { |item| flatten_node(item, defs, expanding) })
     else
       node
     end

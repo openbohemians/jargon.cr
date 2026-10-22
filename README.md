@@ -9,7 +9,7 @@ A Crystal library that generates CLI interfaces from JSON Schema definitions. De
 - **Validation**: Required fields, enum values, strict type checking, `additionalProperties`
 - **Standalone validator**: Use `Jargon::Validator` to validate data without the CLI parser
 - **Defaults**: Schema defaults, config file defaults, environment variables
-- **Config files**: Load from `.config/` (XDG spec) with deep merge support
+- **Config files**: Load from `~/.config/` (XDG spec), optionally project `.config/`, with deep merge support
 - **Help text**: Generated from schema descriptions
 - **Auto help flags**: `--help` and `-h` detected automatically
 - **Shell completions**: Generate completion shims for bash, zsh, and fish, with optional app-driven dynamic completers for live data
@@ -88,14 +88,11 @@ cli = Jargon.cli("myapp", yaml: schema)
 
 ## Argument Styles
 
-Three styles are supported interchangeably:
+Two styles are supported interchangeably:
 
 ```sh
 # Equals style (minimal)
 myapp name=John age=30 verbose=true
-
-# Colon style
-myapp name:John age:30 verbose:true
 
 # Traditional style
 myapp --name John --age 30 --verbose
@@ -103,23 +100,27 @@ myapp --name John --age 30 --verbose
 
 Mix and match as you like:
 ```sh
-myapp name=John --age 30 verbose:true
+myapp name=John --age 30 verbose=true
 ```
 
-The bare `key:value` / `key=value` styles (no leading dashes) are an *implicit
-assignment* convenience. If your operands legitimately contain colons or equals
-— timestamps, ratios, `host:port`, account paths — you can turn the implicit
-assignment off so those tokens are always taken literally:
+Only `=` separates a key from its value. A colon has no special meaning, so
+operands like `host:8080`, `12:30`, `Expenses:Food`, or JSON such as
+`{"id":1}` are always ordinary tokens.
+
+The bare `key=value` style (no leading dashes) is an *implicit assignment*
+convenience. If your operands legitimately contain `=` — say, `name=value`
+pairs passed through to another tool — you can turn the implicit assignment
+off so those tokens are always taken literally:
 
 ```crystal
 cli = Jargon.cli("myapp", json: schema)
 cli.bare_assignment(false)   # only --flag / --flag=value set properties now
 ```
 
-With it off, a bare `key:value` token is never read as an assignment: it falls
+With it off, a bare `key=value` token is never read as an assignment: it falls
 to positional capture if a slot is open, otherwise it's an unexpected argument.
 The `--flag=value` long-option form is unaffected and always honored. (Note that
-an open positional slot already captures colon-bearing operands literally, so
+an open positional slot already captures `=`-bearing operands literally, so
 this switch only governs the implicit-assignment fallback.)
 
 ## Nested Objects
@@ -294,8 +295,8 @@ cat -n a.txt b.txt c.txt
 ```
 
 A variadic positional is **greedy**: it captures every remaining token
-literally, including ones that contain `:` or `=` (e.g. `Expenses:Food`,
-`host:8080`) or look like negative numbers (`-50`). It stops only at a genuine
+literally, including ones that look like assignments (`k=v`) or negative
+numbers (`-50`). It stops only at a genuine
 flag, so put flags before the variadic:
 
 ```sh
@@ -447,7 +448,7 @@ myapp --completions zsh > ~/.zfunc/_myapp
 myapp --completions fish > ~/.config/fish/completions/myapp.fish
 ```
 
-Out of the box you get completion for subcommand names (including nested), long and short flags, and `enum` values — all derived from the schema, no extra code.
+Out of the box you get completion for subcommand names (including nested), long and short flags, and `enum` values (both `--mode <Tab>` and `--mode=<Tab>`) — all derived from the schema, no extra code. Values containing `:` (`Expenses:Food`) complete as whole words in every shell, including bash, where the shim undoes readline's splitting at `=` and `:`.
 
 ### Dynamic Completions
 
@@ -836,6 +837,10 @@ Merge order (highest priority first):
 3. Config file defaults
 4. Schema defaults
 
+Nested objects merge key by key, so `--server.port 1` overrides only that key
+and keeps a `server.host` from the config file. Parsing never modifies the
+`defaults:` you pass in.
+
 ## Config Files
 
 Load configuration from standard XDG locations with `load_config`. Supports YAML and JSON:
@@ -848,22 +853,40 @@ cli.run(defaults: config) do |result|
 end
 ```
 
-Paths searched (first found wins, or merged if `merge: true`):
-1. `./.config/myapp.yaml` / `.yml` / `.json` (project local)
-2. `./.config/myapp/config.yaml` / `.yml` / `.json` (project local, directory style)
+Paths searched (merged by default, or first found wins with `merge: false`):
+1. `./.config/myapp.yaml` / `.yml` / `.json` (project local, `project: true` only)
+2. `./.config/myapp/config.yaml` / `.yml` / `.json` (project local, directory style, `project: true` only)
 3. `$XDG_CONFIG_HOME/myapp.yaml` / `.yml` / `.json` (user global, typically `~/.config`)
 4. `$XDG_CONFIG_HOME/myapp/config.yaml` / `.yml` / `.json` (user global, directory style)
 
-YAML is preferred over JSON when both exist at the same location.
+YAML is preferred over JSON when both exist at the same location. An empty or
+relative `$XDG_CONFIG_HOME` is ignored in favor of `~/.config`, as the XDG spec
+requires.
 
-By default, configs are deep-merged with project overriding user:
+### Project-Local Configs
+
+By default only the user's own config is read. Project-local configs are opt-in:
+
+```crystal
+config = cli.load_config(project: true)
+```
+
+They are off by default because they are read from the *current directory*
+and take precedence over the user's config. Running your tool inside a
+directory someone else controls, such as a freshly cloned repository, would
+otherwise let that directory set any option your schema defines. Opt in when
+per-project settings are the point (a formatter's style rules, a build tool's
+targets), and think twice if an option can point the tool at a server, a
+credential, or a command to run.
+
+When enabled, configs are deep-merged with project overriding user:
 
 ```crystal
 # Merge all found configs (default) - project wins over user
-config = cli.load_config
+config = cli.load_config(project: true)
 
 # Or first-found wins
-config = cli.load_config(merge: false)
+config = cli.load_config(merge: false, project: true)
 ```
 
 ### Deep Merge
@@ -877,7 +900,7 @@ database:
   port: 5432
   user: default_user
 
-# Project config (.config/myapp.yaml)
+# Project config (.config/myapp.yaml, read with project: true)
 database:
   host: production.example.com
 
@@ -890,7 +913,9 @@ database:
 
 ### Config Warnings
 
-Invalid config files emit warnings to STDERR by default. To suppress:
+Invalid config files (unparseable, or not a mapping at the top level) are
+skipped with a warning to STDERR by default; an empty file is simply ignored.
+To suppress the warnings:
 
 ```crystal
 Jargon.config_warnings = false
@@ -898,14 +923,14 @@ config = cli.load_config
 Jargon.config_warnings = true
 ```
 
-Example project config (`.config/myapp.yaml`):
+Example config (`~/.config/myapp.yaml`):
 ```yaml
 host: localhost
 port: 8080
 debug: true
 ```
 
-Or JSON (`.config/myapp.json`):
+Or JSON (`~/.config/myapp.json`):
 ```json
 {
   "host": "localhost",
@@ -914,11 +939,12 @@ Or JSON (`.config/myapp.json`):
 }
 ```
 
-The `defaults:` parameter accepts any JSON-like data, so you can load config however you prefer:
+The `defaults:` parameter accepts a JSON object (`JSON::Any` or
+`Hash(String, JSON::Any)`), so you can load config however you prefer:
 
 ```crystal
 # From YAML
-config = YAML.parse(File.read("config.yaml"))
+config = JSON.parse(YAML.parse(File.read("config.yaml")).to_json)
 cli.run(defaults: config) { |result| ... }
 
 # From JSON
@@ -1028,9 +1054,10 @@ data = cli.json(ARGV)
 data = cli.json(ARGV, defaults: config)
 
 # Config file loading
-config = cli.load_config              # merge all found configs (project wins)
-config = cli.load_config(merge: false) # first found wins
-paths = cli.config_paths              # list of paths searched
+config = cli.load_config                # merge user configs found
+config = cli.load_config(project: true) # also ./.config/ (project wins)
+config = cli.load_config(merge: false)  # first found wins
+paths = cli.config_paths                # list of paths searched (takes project: too)
 
 # Result methods (from parse or run)
 result.valid?      # => true/false

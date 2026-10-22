@@ -2,6 +2,16 @@
 
 ## Completed
 
+- **No colon assignment; review hardening** (v0.21.0) — bare assignment is `key=value` only, so `key:value` and JSON-like operands pass through as positionals. Project-local configs (`./.config/`) are opt-in via `load_config(project: true)`; see "Config Loading Follow-ups". Fixes from a security and performance review:
+  - Invalid UTF-8 and regex limits produce validation errors instead of raising.
+  - Email and hostname regexes are linear, with RFC length caps.
+  - Did-you-mean skips candidates that differ in length by more than 2.
+  - Recursive `$ref` is safe in help and defaults; `flatten` raises on it.
+  - Nested defaults merge key by key without aliasing or mutating.
+  - Completion shims quote names, and bash rejoins COMP_WORDBREAKS splits.
+  - `--flag=value` completes, and `--` ends options in completion and help.
+
+  Ameba runs clean (`just ameba`, then `just lint`).
 - **Mixin isolation and `required` union** (v0.20.1) — `merge_schema` copied a mixin's `properties` hash by reference, so options added to one subcommand after a `$ref` leaked into every other subcommand sharing that mixin (found via camelot). `required` lists are now unioned across mixins and the subcommand's own list instead of first/last-wins. Last-wins `properties` flattening is documented in the README as a deliberate approximation of `allOf`; see "Other Ideas".
 - **Consistent positional parsing** (v0.20.0) — variadics are greedy (capture `:`/`=` tokens and negative numbers literally, stop only at a real flag); negative numbers parse as values everywhere (`short_flag?` exempts `-<digit>`); variadic items coerce to the array's `items` type; new `cli.bare_assignment(false)` opt-out for implicit `key:value`/`key=value` assignment. Remaining edges under "Positional Parsing Follow-ups" below.
 - **Subcommand descriptions in top-level `--help`** (v0.19.1) — the command list shows each subcommand's `description:`, column-aligned. (transfs req #5)
@@ -117,6 +127,17 @@ during that work and are low-priority refinements.
 - **Double error on a bad variadic item.** A non-coercible variadic token (e.g. `nums 1 oops 3` against `items: {type: integer}`) emits *two* messages: the coercion error (`Invalid integer value 'oops' for vals`) and the validator's type error (`expected Integer, got String`). Consistent with how scalar flags already double up (coerce + validate), so it was left as-is. If it reads as noisy in practice, suppress the validator pass for tokens that already failed coercion. Low priority.
 
 - **`bare_assignment` is per-CLI, not inherited.** The setting applies to a CLI and its directly-attached Schema subcommands, but a *nested* `CLI` keeps its own (default-on) setting. To turn it off across a deep subcommand tree today you must set it on each nested CLI. Fix if it bites: propagate the parent's setting into nested CLIs at parse/dispatch time (or expose a recursive setter). Low priority until a nested-CLI user actually needs it.
+
+### Config Loading Follow-ups
+
+Raised 2026-10-22, when v0.21.0 made project-local configs opt-in
+(`load_config(project: true)`). Not scheduled; to be considered.
+
+- **Per-subcommand control of project config — TO CONSIDER.** `project:` is a single yes/no for the whole CLI. A tool might want project settings for some subcommands (`fmt`, `build`) but never for others (`deploy`, `login`). Most tools are probably fine with yes/no, so the open question is whether this is worth supporting at all, and if so, how:
+  - *App does it today:* the app can already peek at `ARGV` for the subcommand and pick `project:` itself. That works, but means duplicating Jargon's subcommand resolution (abbreviations, default subcommand, nesting).
+  - *Declarative, on the subcommand:* a schema keyword or a registration call (shaped like `cli.completer(path)`) naming which subcommands accept project config. The catch: `load_config` runs *before* parsing, so it can't know the subcommand. Jargon would have to load config itself after dispatch, which couples config loading into `parse`/`run` (today the two stay separate, joined only by `defaults:`).
+  - *Finer still, per option:* mark individual options as user-config-only, so a project file can set `style` but never `server`. More precise trust, but a new schema keyword.
+- **Config keys cross subcommands (related, confirmed).** A config file is one flat hash handed to whichever subcommand runs, and `defaults:` copies *every* key into the result. So a key meant for `fetch` (`url`) appears in `fmt`'s data, and fails validation there if `fmt` has `additionalProperties: false`. Options: drop default keys the dispatched schema doesn't define, and/or support per-subcommand sections in the file (`fetch: {url: ...}`). Either is worth settling together with the item above, since both decide how config maps onto subcommands.
 
 ### Other Ideas
 

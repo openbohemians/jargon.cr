@@ -89,9 +89,11 @@ module Jargon
     # Scan args for an auto-help flag, returning {requested?, index}. A schema
     # may claim `--help`/`-h` for itself (a `help` property or a property with
     # short `h`); when it does, the flag belongs to the user's schema and does
-    # not trigger Jargon's built-in help, so we report {false, -1}.
+    # not trigger Jargon's built-in help, so we report {false, -1}. Scanning
+    # stops at a POSIX `--`: anything after it is a literal operand.
     private def any_help_requested?(args : Array(String), schema : Schema?) : {Bool, Int32}
       args.each_with_index do |arg, i|
+        break if arg == "--"
         if arg == "--help"
           if schema && user_defined_help?(schema)
             return {false, -1}
@@ -150,19 +152,39 @@ module Jargon
       if props = root.properties
         props.each do |name, prop|
           next if positional_names.includes?(name)
-          build_help_lines(lines, name, resolve_property(prop, schema), "", schema)
+          build_help_lines(lines, name, prop, "", schema)
         end
       end
 
       lines.join("\n")
     end
 
-    private def build_help_lines(lines : Array(String), name : String, prop : Property, prefix : String, schema : Schema)
+    # `expanding` holds the `$ref`s being descended through on this path. A ref
+    # already in it is recursive (a tree-shaped schema): its option is listed
+    # but not expanded again, which would never end.
+    private def build_help_lines(lines : Array(String), name : String, prop : Property, prefix : String, schema : Schema, expanding : Set(String) = Set(String).new)
+      ref = prop.ref
+      prop = resolve_property(prop, schema)
       full_name = prefix.empty? ? name : "#{prefix}.#{name}"
+      desc = prop.description || ""
+
+      lines << help_option_line(full_name, prop)
+      lines << "      #{desc}" unless desc.empty?
+      return if ref && expanding.includes?(ref)
+
+      if prop.type.object? && (nested_props = prop.properties)
+        inner = ref ? expanding | Set{ref} : expanding
+        nested_props.each do |nested_name, nested_prop|
+          build_help_lines(lines, nested_name, nested_prop, full_name, schema, inner)
+        end
+      end
+    end
+
+    # One option's listing: its flag spelling, value type, and required/default.
+    private def help_option_line(full_name : String, prop : Property) : String
       type_str = prop.type.to_s.downcase
       required_str = prop.required? ? " (required)" : ""
       default_str = prop.default ? " [default: #{prop.default}]" : ""
-      desc = prop.description || ""
 
       flag_str = if short = prop.short
                    "-#{short}, --#{full_name}"
@@ -171,16 +193,9 @@ module Jargon
                  end
 
       if prop.type.boolean?
-        lines << "  #{flag_str}#{required_str}#{default_str}"
+        "  #{flag_str}#{required_str}#{default_str}"
       else
-        lines << "  #{flag_str}=<#{type_str}>#{required_str}#{default_str}"
-      end
-      lines << "      #{desc}" unless desc.empty?
-
-      if prop.type.object? && (nested_props = prop.properties)
-        nested_props.each do |nested_name, nested_prop|
-          build_help_lines(lines, nested_name, resolve_property(nested_prop, schema), full_name, schema)
-        end
+        "  #{flag_str}=<#{type_str}>#{required_str}#{default_str}"
       end
     end
   end

@@ -49,16 +49,14 @@ module Jargon
     # Resolve a local `$ref` pointer (e.g. `#/$defs/Name`) to its definition,
     # or nil if the pointer is non-local or unknown.
     def resolve_ref(ref : String) : Property?
-      return nil unless ref.starts_with?("#/")
+      return unless ref.starts_with?("#/")
 
       parts = ref[2..].split("/")
-      return nil unless parts.size >= 2
+      return unless parts.size >= 2
 
       case parts[0]
       when "definitions", "$defs"
         definitions[parts[1]]?
-      else
-        nil
       end
     end
   end

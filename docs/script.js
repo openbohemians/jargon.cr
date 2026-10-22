@@ -219,7 +219,7 @@ if (terminal) {
       { type: "output", text: "}", pause: 350 },
       {
         type: "prompt",
-        text: "$ mycmd db.host:db.local db.port:5432 mode:replica",
+        text: "$ mycmd db.host=db.local db.port=5432 mode=replica",
         pause: 250,
       },
       { type: "output", text: "{", pause: 0 },

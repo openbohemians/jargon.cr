@@ -33,7 +33,7 @@ cli = Jargon.cli("pretty", json: <<-JSON)
       }
     }
   }
-JSON
+  JSON
 
 result = cli.run
 

@@ -140,7 +140,10 @@ module Jargon
 
     private def self.validate_multiple_of(num : Float64, prop : Property, errors : Array(String), label : String)
       return unless mult = prop.multiple_of
-      unless (num % mult).abs < 1e-10
+      # Compare the quotient to the nearest integer within a few ulps: float
+      # modulo misreports decimal multiples (0.3 % 0.1 == 0.09999999999999998).
+      quotient = num / mult
+      unless (quotient - quotient.round).abs <= 4 * Float64::EPSILON * Math.max(1.0, quotient.abs)
         errors << "Value for #{label} must be a multiple of #{format_num(mult)}"
       end
     end
@@ -157,14 +160,27 @@ module Jargon
       if max = prop.max_length
         errors << "Value for #{label} must be at most #{max} characters" if str.size > max
       end
-      if pattern = prop.pattern
-        errors << "Value for #{label} must match pattern: #{pattern.source}" unless pattern.matches?(str)
-      end
+      validate_pattern(str, prop, errors, label)
       if fmt = prop.format
         unless valid_format?(str, fmt)
           errors << "Value for #{label} must be a valid #{fmt}"
         end
       end
+    end
+
+    # PCRE2 raises, rather than failing to match, on input that isn't valid
+    # UTF-8 and when a pattern backtracks past its match limit. Report both as
+    # validation errors so hostile input can't crash a parse.
+    private def self.validate_pattern(str : String, prop : Property, errors : Array(String), label : String)
+      return unless pattern = prop.pattern
+
+      if !str.valid_encoding?
+        errors << "Value for #{label} must be valid UTF-8 to match pattern: #{pattern.source}"
+      elsif !pattern.matches?(str)
+        errors << "Value for #{label} must match pattern: #{pattern.source}"
+      end
+    rescue ex : Regex::Error
+      errors << "Value for #{label} could not be checked against pattern: #{ex.message}"
     end
 
     private def self.check_additional_properties(data : Hash(String, JSON::Any), prop : Property, errors : Array(String), prefix : String, known_props : Hash(String, Property))
@@ -186,29 +202,79 @@ module Jargon
     private def self.valid_format?(value : String, format : String) : Bool
       case format
       when "email"
-        value.matches?(/^[^@\s]+@[^@\s]+\.[^@\s]+$/)
+        valid_format_email?(value)
       when "uri", "url"
-        value.matches?(/^[a-z][a-z0-9+.-]*:\/\/.+$/i)
+        valid_format_uri?(value)
       when "uuid"
-        value.matches?(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+        valid_format_uuid?(value)
       when "date"
-        value.matches?(/^\d{4}-\d{2}-\d{2}$/)
+        valid_format_date?(value)
       when "time"
-        value.matches?(/^\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})?$/)
+        valid_format_time?(value)
       when "date-time"
-        value.matches?(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})?$/)
+        valid_format_date_time?(value)
       when "ipv4"
-        parts = value.split(".")
-        parts.size == 4 && parts.all? { |p| p.to_i?.try { |n| n >= 0 && n <= 255 } || false }
+        valid_format_ipv4?(value)
       when "ipv6"
-        value.matches?(/^([0-9a-f]{0,4}:){2,7}[0-9a-f]{0,4}$/i)
+        valid_format_ipv6?(value)
       when "hostname"
-        value.matches?(/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i)
+        valid_format_hostname?(value)
       when "path"
         true # Any string is a valid path; expansion happens at the CLI layer
       else
         true # Unknown formats pass (per JSON Schema spec)
       end
+    end
+
+    # Dot-free domain labels keep this linear (a looser `[^@\s]+\.[^@\s]+`
+    # backtracks quadratically); the RFC 5321 length cap bounds the
+    # per-label stack the repeated group uses.
+    private def self.valid_format_email?(value : String) : Bool
+      value.bytesize <= 254 && format_match?(value, /^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$/)
+    end
+
+    private def self.valid_format_uri?(value : String) : Bool
+      format_match?(value, /^[a-z][a-z0-9+.-]*:\/\/.+$/i)
+    end
+
+    private def self.valid_format_uuid?(value : String) : Bool
+      format_match?(value, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+    end
+
+    private def self.valid_format_date?(value : String) : Bool
+      format_match?(value, /^\d{4}-\d{2}-\d{2}$/)
+    end
+
+    private def self.valid_format_time?(value : String) : Bool
+      format_match?(value, /^\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})?$/)
+    end
+
+    private def self.valid_format_date_time?(value : String) : Bool
+      format_match?(value, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})?$/)
+    end
+
+    private def self.valid_format_ipv4?(value : String) : Bool
+      parts = value.split(".")
+      parts.size == 4 && parts.all? { |p| p.to_i?.try { |n| n >= 0 && n <= 255 } || false }
+    end
+
+    private def self.valid_format_ipv6?(value : String) : Bool
+      format_match?(value, /^([0-9a-f]{0,4}:){2,7}[0-9a-f]{0,4}$/i)
+    end
+
+    # RFC 1035 caps a name at 253 bytes, which also bounds the stack the
+    # repeated label group uses.
+    private def self.valid_format_hostname?(value : String) : Bool
+      value.bytesize <= 253 && format_match?(value, /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i)
+    end
+
+    # Bytes that aren't valid UTF-8 can't spell any textual format, and PCRE2
+    # would raise on them rather than fail to match. Should a value still
+    # exhaust a regex limit, it is simply not that format.
+    private def self.format_match?(value : String, regex : Regex) : Bool
+      value.valid_encoding? && value.matches?(regex)
+    rescue Regex::Error
+      false
     end
 
     private def self.valid_type?(value : JSON::Any, expected : Property::Type) : Bool

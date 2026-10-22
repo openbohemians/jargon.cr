@@ -72,7 +72,7 @@ describe Jargon do
       result["name"].as_s.should eq("John")
     end
 
-    it "parses string values with colon style" do
+    it "does not treat a colon as an assignment separator" do
       cli = Jargon.cli("cli", json: %({
         "type": "object",
         "properties": {
@@ -81,8 +81,25 @@ describe Jargon do
       }))
 
       result = cli.parse(["name:John"])
+      result.valid?.should be_false
+      result.data.as_h.has_key?("name").should be_false
+      result.errors.should eq(["Unexpected argument 'name:John'"])
+    end
+
+    it "passes JSON-like operands through literally" do
+      cli = Jargon.cli("cli", json: %({
+        "type": "object",
+        "positional": ["doc"],
+        "properties": {
+          "doc": {"type": "string"},
+          "name": {"type": "string"}
+        }
+      }))
+
+      result = cli.parse([%({"name":"John"}), "--name", "Jane"])
       result.valid?.should be_true
-      result["name"].as_s.should eq("John")
+      result["doc"].as_s.should eq(%({"name":"John"}))
+      result["name"].as_s.should eq("Jane")
     end
 
     it "parses string values with traditional style" do
@@ -251,6 +268,23 @@ describe Jargon do
       result = cli.parse(["tags=a,b,c"])
       result.valid?.should be_true
       result["tags"].as_a.map(&.as_s).should eq(["a", "b", "c"])
+    end
+
+    it "coerces comma-separated array items to the items type" do
+      cli = Jargon.cli("cli", json: %({
+        "type": "object",
+        "properties": {
+          "nums": {"type": "array", "items": {"type": "integer"}}
+        }
+      }))
+
+      result = cli.parse(["--nums", "1, 2,3"])
+      result.valid?.should be_true
+      result["nums"].as_a.map(&.as_i64).should eq([1, 2, 3])
+
+      result = cli.parse(["--nums", "1,x"])
+      result.valid?.should be_false
+      result.errors.first.should eq("Invalid integer value 'x' for nums")
     end
   end
 
@@ -533,6 +567,23 @@ describe Jargon do
       result.errors.first.should contain("multiple of 5")
     end
 
+    it "validates decimal multipleOf without float modulo error" do
+      cli = Jargon.cli("cli", json: %({
+        "type": "object",
+        "properties": {
+          "step": {"type": "number", "multipleOf": 0.1},
+          "price": {"type": "number", "multipleOf": 0.01}
+        }
+      }))
+
+      cli.parse(["--step", "0.3"]).valid?.should be_true
+      cli.parse(["--price", "19.99"]).valid?.should be_true
+
+      result = cli.parse(["--step", "0.35"])
+      result.valid?.should be_false
+      result.errors.first.should contain("multiple of 0.1")
+    end
+
     it "validates format: email" do
       cli = Jargon.cli("cli", json: %({
         "type": "object",
@@ -547,6 +598,48 @@ describe Jargon do
       result = cli.parse(["--email", "not-an-email"])
       result.valid?.should be_false
       result.errors.first.should contain("valid email")
+    end
+
+    it "rejects pathological email and hostname values without exhausting the regex engine" do
+      cli = Jargon.cli("cli", json: %({
+        "type": "object",
+        "properties": {
+          "email": {"type": "string", "format": "email"},
+          "host": {"type": "string", "format": "hostname"}
+        }
+      }))
+
+      cli.parse(["--email", "a@" + "." * 50_000 + "@"]).errors.should eq(["Value for email must be a valid email"])
+      cli.parse(["--email", "x@" + "a." * 50_000 + "a"]).errors.should eq(["Value for email must be a valid email"])
+      cli.parse(["--host", "a." * 50_000 + "a"]).errors.should eq(["Value for host must be a valid hostname"])
+      cli.parse(["--email", "first.last@mail.example.co.uk", "--host", "mail.example.co.uk"]).valid?.should be_true
+    end
+
+    it "reports invalid UTF-8 as a validation error rather than raising" do
+      cli = Jargon.cli("cli", json: %({
+        "type": "object",
+        "properties": {
+          "code": {"type": "string", "pattern": "^a"},
+          "email": {"type": "string", "format": "email"}
+        }
+      }))
+      bad = String.new(Bytes[0x61, 0xFF, 0x62])
+
+      cli.parse(["--code", bad]).errors.should eq(["Value for code must be valid UTF-8 to match pattern: ^a"])
+      cli.parse(["--email", bad]).errors.should eq(["Value for email must be a valid email"])
+    end
+
+    it "reports a pattern that exhausts the regex match limit rather than raising" do
+      cli = Jargon.cli("cli", json: %q({
+        "type": "object",
+        "properties": {
+          "word": {"type": "string", "pattern": "^(a+)+$"}
+        }
+      }))
+
+      result = cli.parse(["--word", "a" * 30 + "b"])
+      result.valid?.should be_false
+      result.errors.first.should contain("could not be checked against pattern")
     end
 
     it "validates format: uri" do
@@ -733,7 +826,7 @@ describe Jargon do
         }
       }))
 
-      result = cli.parse(["name=John", "--age", "30", "active:true"])
+      result = cli.parse(["name=John", "--age", "30", "active=true"])
       result.valid?.should be_true
       result["name"].as_s.should eq("John")
       result["age"].as_i64.should eq(30)
@@ -1084,23 +1177,23 @@ describe Jargon do
       }
     })
 
-    it "implicitly assigns a bare key:value when on (default)" do
+    it "implicitly assigns a bare key=value when on (default)" do
       cli = Jargon.cli("app", json: bare_schema)
-      result = cli.parse(["host:8080"])
+      result = cli.parse(["host=8080"])
       result.valid?.should be_true
       result["host"].as_s.should eq("8080")
     end
 
-    it "rejects a bare key:value as an unexpected argument when off" do
+    it "rejects a bare key=value as an unexpected argument when off" do
       cli = Jargon.cli("app", json: bare_schema)
       cli.bare_assignment(false)
-      result = cli.parse(["host:8080"])
+      result = cli.parse(["host=8080"])
       result.valid?.should be_false
       result.data.as_h.has_key?("host").should be_false
-      result.errors.should contain("Unexpected argument 'host:8080'")
+      result.errors.should contain("Unexpected argument 'host=8080'")
     end
 
-    it "lets an open positional slot capture a colon operand literally even when on" do
+    it "lets an open positional slot capture an = operand literally even when on" do
       cli = Jargon.cli("spend", json: %q({
         "type": "object",
         "positional": ["amount", "account"],
@@ -1112,10 +1205,10 @@ describe Jargon do
       }))
       # The positional 'account' wins before the implicit-assignment path runs,
       # so 'host' is never assigned regardless of the toggle.
-      result = cli.parse(["1", "host:8080"])
+      result = cli.parse(["1", "host=8080"])
       result.valid?.should be_true
       result["amount"].as_f.should eq(1.0)
-      result["account"].as_s.should eq("host:8080")
+      result["account"].as_s.should eq("host=8080")
       result.data.as_h.has_key?("host").should be_false
     end
 
@@ -1145,6 +1238,18 @@ describe Jargon do
       result["verbose"].as_bool.should be_true
       result["cmd"].as_s.should eq("echo")
       result["rest"].as_a.map(&.as_s).should eq(["--foo", "bar"])
+    end
+
+    it "treats --help after -- as a literal operand, not a help request" do
+      cli = Jargon.cli("app", json: %({
+        "type": "object",
+        "positional": ["rest"],
+        "properties": {"rest": {"type": "array"}}
+      }))
+
+      result = cli.parse(["--", "--help"])
+      result.help_requested?.should be_false
+      result["rest"].as_a.map(&.as_s).should eq(["--help"])
     end
 
     it "discards the -- marker and parses options before it normally" do
@@ -1886,9 +1991,9 @@ describe Jargon do
       # `only_first` was merged into `first` after `output` was referenced;
       # it must not show up in `second`, which references the same mixin.
       second = cli.subcommands["second"].as(Jargon::Schema)
-      second.root.properties.not_nil!.keys.sort.should eq(["format", "token"])
+      second.root.properties.not_nil!.keys.sort!.should eq(["format", "token"])
       # `required` lists from every mixin are unioned rather than the first winning.
-      second.root.properties.not_nil!.values.select(&.required?).map(&.name).sort.should eq(["format", "token"])
+      second.root.properties.not_nil!.values.select(&.required?).map(&.name).sort!.should eq(["format", "token"])
 
       cli.parse(["second", "--only_first", "x"]).valid?.should be_false
     end
@@ -1910,7 +2015,7 @@ describe Jargon do
         YAML
 
       report = cli.subcommands["report"].as(Jargon::Schema)
-      report.root.properties.not_nil!.values.select(&.required?).map(&.name).sort.should eq(["format", "title"])
+      report.root.properties.not_nil!.values.select(&.required?).map(&.name).sort!.should eq(["format", "title"])
       cli.parse(["report", "--title", "x"]).valid?.should be_false
       cli.parse(["report", "--title", "x", "--format", "json"]).valid?.should be_true
     end
@@ -3202,6 +3307,60 @@ describe Jargon do
         c = Jargon::Completion.new(cli)
         c.candidates(["myapp", "--name", ""], 2).should eq([] of String)
       end
+
+      it "counts a colon-bearing operand as a filled positional slot" do
+        cli = Jargon.cli("myapp", json: %({
+          "type": "object",
+          "positional": ["src", "mode"],
+          "properties": {
+            "src": {"type": "string"},
+            "mode": {"type": "string", "enum": ["fast", "safe"]}
+          }
+        }))
+        c = Jargon::Completion.new(cli)
+        c.candidates(["myapp", "host:8080", ""], 2).should eq(["fast", "safe"])
+      end
+
+      positional_pair = %({
+        "type": "object",
+        "positional": ["a", "b"],
+        "properties": {
+          "a": {"type": "string"},
+          "b": {"type": "string", "enum": ["b1"]},
+          "mode": {"type": "string", "enum": ["fast", "safe"]}
+        }
+      })
+
+      it "fills positional slots with k=v and negative-number words, as the parser does" do
+        c = Jargon::Completion.new(Jargon.cli("myapp", json: positional_pair))
+        c.candidates(["myapp", "x=1", ""], 2).should eq(["b1"])
+        c.candidates(["myapp", "-5", ""], 2).should eq(["b1"])
+      end
+
+      it "treats words after -- as operands, not flags" do
+        c = Jargon::Completion.new(Jargon.cli("myapp", json: positional_pair))
+        c.candidates(["myapp", "--", "-x", ""], 3).should eq(["b1"])
+      end
+
+      it "completes the value half of a --flag=value word" do
+        cli = Jargon.cli("myapp", json: %({
+          "type": "object",
+          "properties": {
+            "mode": {"type": "string", "enum": ["fast", "safe"]},
+            "verbose": {"type": "boolean"}
+          }
+        }))
+        c = Jargon::Completion.new(cli)
+        c.candidates(["myapp", "--mode=f"], 1).should eq(["--mode=fast"])
+        c.candidates(["myapp", "--mode="], 1).should eq(["--mode=fast", "--mode=safe"])
+        c.candidates(["myapp", "--verbose="], 1).should eq([] of String)
+      end
+
+      it "does not read the word after --flag=value as that flag's value" do
+        c = Jargon::Completion.new(Jargon.cli("myapp", json: positional_pair))
+        c.candidates(["myapp", "--mode=fast", ""], 2).should eq([] of String) # slot a: no enum
+        c.candidates(["myapp", "--mode=fast", "x", ""], 3).should eq(["b1"])
+      end
     end
 
     describe "dynamic completers" do
@@ -3224,6 +3383,16 @@ describe Jargon do
         cli.completer("out") { |_ctx| ["a.txt", "b.txt"] }
         c = Jargon::Completion.new(cli)
         c.candidates(["app", "--out", ""], 2).should eq(["a.txt", "b.txt"])
+      end
+
+      it "passes only the value half of --flag=value to a completer" do
+        cli = Jargon.cli("app", json: %({
+          "type": "object",
+          "properties": {"out": {"type": "string"}}
+        }))
+        cli.completer("out") { |ctx| ["#{ctx.partial}.txt"] }
+        c = Jargon::Completion.new(cli)
+        c.candidates(["app", "--out=rep"], 1).should eq(["--out=rep.txt"])
       end
 
       it "invokes a completer scoped to a subcommand field" do
@@ -3278,9 +3447,53 @@ describe Jargon do
         cli = Jargon.cli("myapp", json: %({"type": "object", "properties": {"name": {"type": "string"}}}))
         bash = cli.bash_completion
         bash.should contain("_myapp_complete")
-        bash.should contain("myapp __complete")
-        bash.should contain("$COMP_CWORD")
+        bash.should contain(%(myapp __complete "$cword" "${words[@]}"))
+        bash.should contain("COMP_WORDBREAKS")
         bash.should contain("complete -F _myapp_complete myapp")
+      end
+
+      it "bash shim rejoins words split at = and : and trims candidates to match" do
+        bash = Process.find_executable("bash")
+        next unless bash # the shim logic needs a real bash to run
+
+        cli = Jargon.cli("myapp", json: %({"type": "object", "properties": {"mode": {"type": "string"}}}))
+        # Stand-in for the program: log what it was called with, and offer one
+        # candidate extending the word under the cursor.
+        script = <<-SH
+          #{cli.bash_completion}
+          myapp() { echo "called: $*" >&2; local -a w=("${@:3}"); echo "${w[$2]}X"; }
+          try() { COMPREPLY=(); _myapp_complete; echo "reply: ${COMPREPLY[*]}" >&2; }
+          COMP_WORDBREAKS=$' \\t\\n"\\'><=;|&(:'
+          COMP_LINE='myapp --mode=f'; COMP_WORDS=(myapp --mode = f); COMP_CWORD=3; try
+          COMP_LINE='myapp --mode='; COMP_WORDS=(myapp --mode =); COMP_CWORD=2; try
+          COMP_LINE='myapp Expenses:Fo'; COMP_WORDS=(myapp Expenses : Fo); COMP_CWORD=3; try
+          COMP_LINE='myapp a : b'; COMP_WORDS=(myapp a : b); COMP_CWORD=3; try
+          COMP_WORDBREAKS=${COMP_WORDBREAKS//:}
+          COMP_LINE='myapp Expenses:Fo'; COMP_WORDS=(myapp Expenses:Fo); COMP_CWORD=1; try
+          SH
+        err = IO::Memory.new
+        Process.run(bash, ["-c", script], error: err).success?.should be_true
+        err.to_s.lines.should eq([
+          "called: __complete 1 myapp --mode=f", "reply: fX",
+          "called: __complete 1 myapp --mode=", "reply: X",
+          "called: __complete 1 myapp Expenses:Fo", "reply: FoX",
+          "called: __complete 3 myapp a : b", "reply: bX",
+          "called: __complete 1 myapp Expenses:Fo", "reply: Expenses:FoX",
+        ])
+      end
+
+      it "quotes a program name or command that isn't a plain word" do
+        cli = Jargon.cli("my app", json: %({"type": "object", "properties": {"q": {"type": "string"}}}))
+        cli.bash_completion(command: "/opt/My Tools/app").should contain("'/opt/My Tools/app' __complete")
+        cli.bash_completion.should contain("complete -F _my_app_complete 'my app'")
+
+        zsh = cli.zsh_completion(command: "it's")
+        zsh.should contain(%q('it'\''s' __complete))
+        zsh.should contain("compdef _my_app 'my app'")
+        zsh.should_not contain("#compdef") # compinit can't parse a quoted name
+
+        cli.fish_completion(command: %q(a\b'c)).should contain(%q('a\\b\'c' __complete))
+        cli.fish_completion.should contain("complete -c 'my app' -f")
       end
 
       it "generates a zsh shim that calls back via __complete" do
@@ -3414,9 +3627,19 @@ describe Jargon do
   end
 
   describe "load_config" do
-    it "returns config_paths in correct order" do
+    it "searches only user config paths by default" do
       cli = Jargon.cli("myapp", json: %({"type": "object", "properties": {}}))
       paths = cli.config_paths
+
+      paths.size.should eq(6)
+      paths.none?(&.starts_with?("./")).should be_true
+      paths[0].should contain("myapp.yaml")
+      paths[3].should contain("myapp/config.yaml")
+    end
+
+    it "returns config_paths in correct order with project: true" do
+      cli = Jargon.cli("myapp", json: %({"type": "object", "properties": {}}))
+      paths = cli.config_paths(project: true)
 
       # Project local paths first (yaml, yml, json for each base)
       paths[0].should eq("./.config/myapp.yaml")
@@ -3428,6 +3651,40 @@ describe Jargon do
       # User global paths
       paths[6].should contain("myapp.yaml")
       paths[9].should contain("myapp/config.yaml")
+    end
+
+    it "ignores an empty or relative XDG_CONFIG_HOME, per the XDG spec" do
+      original = ENV["XDG_CONFIG_HOME"]?
+      cli = Jargon.cli("myapp", json: %({"type": "object", "properties": {}}))
+      fallback = Path.home.join(".config", "myapp.yaml").to_s
+
+      begin
+        ENV["XDG_CONFIG_HOME"] = ""
+        cli.config_paths[0].should eq(fallback)
+        ENV["XDG_CONFIG_HOME"] = "relative/dir"
+        cli.config_paths[0].should eq(fallback)
+        ENV["XDG_CONFIG_HOME"] = "/abs/xdg"
+        cli.config_paths[0].should eq("/abs/xdg/myapp.yaml")
+      ensure
+        ENV["XDG_CONFIG_HOME"] = original
+      end
+    end
+
+    it "treats a non-mapping config as invalid and an empty one as absent" do
+      Dir.mkdir_p("./.config")
+      File.write("./.config/testlist.yaml", "- a\n- b\n")
+      File.write("./.config/testempty.yaml", "")
+
+      begin
+        Jargon.config_warnings = false # Suppress the non-mapping warning
+        schema = %({"type": "object", "properties": {}})
+        Jargon.cli("testlist", json: schema).load_config(merge: false, project: true).should be_nil
+        Jargon.cli("testempty", json: schema).load_config(merge: false, project: true).should be_nil
+      ensure
+        Jargon.config_warnings = true
+        File.delete("./.config/testlist.yaml")
+        File.delete("./.config/testempty.yaml")
+      end
     end
 
     it "loads JSON config from project .config directory" do
@@ -3443,7 +3700,7 @@ describe Jargon do
           }
         }))
 
-        config = cli.load_config
+        config = cli.load_config(project: true)
         config.should_not be_nil
         config.not_nil!["host"].as_s.should eq("from-config")
         config.not_nil!["port"].as_i.should eq(9000)
@@ -3466,7 +3723,7 @@ describe Jargon do
           }
         }))
 
-        config = cli.load_config
+        config = cli.load_config(project: true)
         config.should_not be_nil
         config.not_nil!["host"].as_s.should eq("yaml-host")
         config.not_nil!["port"].as_i.should eq(8080)
@@ -3489,7 +3746,7 @@ describe Jargon do
           }
         }))
 
-        config = cli.load_config(merge: false)
+        config = cli.load_config(merge: false, project: true)
         config.should_not be_nil
         config.not_nil!["source"].as_s.should eq("yaml")
       ensure
@@ -3516,7 +3773,7 @@ describe Jargon do
           }
         }))
 
-        config = cli.load_config
+        config = cli.load_config(project: true)
         result = cli.parse(["--count", "10"], defaults: config)
 
         result["verbose"].as_bool.should be_true # From config
@@ -3548,7 +3805,7 @@ describe Jargon do
           }
         }))
 
-        config = cli.load_config(merge: true)
+        config = cli.load_config(merge: true, project: true)
         config.should_not be_nil
         config.not_nil!["host"].as_s.should eq("project-host") # Project wins
         config.not_nil!["port"].as_i.should eq(8080)           # From user
@@ -3579,7 +3836,7 @@ describe Jargon do
       begin
         cli = Jargon.cli("testapp4", json: %({"type": "object", "properties": {}}))
 
-        config = cli.load_config(merge: true)
+        config = cli.load_config(merge: true, project: true)
         config.should_not be_nil
         db = config.not_nil!["database"]
         db["host"].as_s.should eq("production.example.com") # Project wins
@@ -3589,6 +3846,30 @@ describe Jargon do
         File.delete("./.config/testapp4.json")
         File.delete("#{xdg_config}/testapp4/config.json")
         Dir.delete("#{xdg_config}/testapp4") rescue nil
+      end
+    end
+
+    it "ignores project-local configs unless project: true" do
+      xdg_config = ENV["XDG_CONFIG_HOME"]? || Path.home.join(".config").to_s
+      Dir.mkdir_p("#{xdg_config}/testoptin")
+      File.write("#{xdg_config}/testoptin/config.json", %({"host": "user-host"}))
+      Dir.mkdir_p("./.config")
+      File.write("./.config/testoptin.json", %({"host": "project-host"}))
+      File.write("./.config/testprojonly.json", %({"host": "project-host"}))
+
+      begin
+        schema = %({"type": "object", "properties": {"host": {"type": "string"}}})
+        cli = Jargon.cli("testoptin", json: schema)
+        cli.load_config.not_nil!["host"].as_s.should eq("user-host")
+        cli.load_config(merge: false).not_nil!["host"].as_s.should eq("user-host")
+        cli.load_config(project: true).not_nil!["host"].as_s.should eq("project-host")
+
+        Jargon.cli("testprojonly", json: schema).load_config.should be_nil
+      ensure
+        File.delete("./.config/testoptin.json")
+        File.delete("./.config/testprojonly.json")
+        File.delete("#{xdg_config}/testoptin/config.json")
+        Dir.delete("#{xdg_config}/testoptin") rescue nil
       end
     end
   end
@@ -3675,6 +3956,53 @@ describe Jargon do
 
       result.subcommand.should eq("run")
       result["env"].as_s.should eq("production")
+    end
+
+    server_schema = %({
+      "type": "object",
+      "properties": {
+        "server": {
+          "type": "object",
+          "properties": {
+            "host": {"type": "string"},
+            "port": {"type": "integer", "default": 80}
+          }
+        }
+      }
+    })
+
+    it "fills nested objects key by key, so a CLI value keeps sibling defaults" do
+      cli = Jargon.cli("app", json: server_schema)
+      result = cli.parse(["--server.port", "1"], defaults: JSON.parse(%({"server": {"host": "cfg"}})))
+
+      result["server"]["host"].as_s.should eq("cfg")
+      result["server"]["port"].as_i64.should eq(1)
+    end
+
+    it "never mutates the caller's defaults" do
+      cli = Jargon.cli("app", json: server_schema)
+      defaults = JSON.parse(%({"server": {"host": "cfg"}}))
+      result = cli.parse([] of String, defaults: defaults)
+
+      result["server"]["port"].as_i64.should eq(80)
+      defaults.to_json.should eq(%({"server":{"host":"cfg"}}))
+    end
+
+    it "does not share schema defaults between results" do
+      cli = Jargon.cli("app", json: %({
+        "type": "object",
+        "properties": {"tags": {"type": "array", "default": ["a"]}}
+      }))
+
+      cli.parse([] of String)["tags"].as_a << JSON::Any.new("b")
+      cli.parse([] of String)["tags"].as_a.map(&.as_s).should eq(["a"])
+    end
+
+    it "raises ArgumentError for defaults that aren't an object" do
+      cli = Jargon.cli("app", json: server_schema)
+      expect_raises(ArgumentError, "defaults must be a JSON object") do
+        cli.parse([] of String, defaults: JSON.parse(%(["a"])))
+      end
     end
   end
 
@@ -3778,9 +4106,9 @@ describe Jargon do
 
       begin
         Jargon.config_warnings = false # Suppress warning during test
-        cli = Jargon.cli("cli", json: %({"type": "object", "properties": {}}))
+        cli = Jargon.cli("testbad", json: %({"type": "object", "properties": {}}))
         # Returns nil and prints warning to STDERR (suppressed here)
-        config = cli.load_config
+        config = cli.load_config(project: true)
         config.should be_nil
       ensure
         Jargon.config_warnings = true
@@ -3796,7 +4124,7 @@ describe Jargon do
         Jargon.config_warnings = false # Suppress warning during test
         cli = Jargon.cli("testbadyaml", json: %({"type": "object", "properties": {}}))
         # Returns nil and prints warning to STDERR (suppressed here)
-        config = cli.load_config
+        config = cli.load_config(project: true)
         config.should be_nil
       ensure
         Jargon.config_warnings = true
@@ -3853,6 +4181,37 @@ describe Jargon do
       # Should not crash
       result = cli.parse([] of String)
       result.valid?.should be_true
+    end
+
+    recursive_schema = %({
+      "type": "object",
+      "$defs": {
+        "Node": {
+          "type": "object",
+          "default": {},
+          "properties": {
+            "child": {"$ref": "#/$defs/Node"},
+            "name": {"type": "string"}
+          }
+        }
+      },
+      "properties": {"root": {"$ref": "#/$defs/Node"}}
+    })
+
+    it "lists a recursive $ref in help without expanding it forever" do
+      help = Jargon.cli("cli", json: recursive_schema).help
+      help.should contain("--root.child=<object>")
+      help.should contain("--root.name=<string>")
+      help.should_not contain("--root.child.name")
+    end
+
+    it "applies defaults through a recursive $ref without nesting forever" do
+      cli = Jargon.cli("cli", json: recursive_schema)
+      cli.parse([] of String).data.to_json.should eq(%({"root":{}}))
+
+      result = cli.parse(["--root.child.child.name", "leaf"])
+      result.valid?.should be_true
+      result["root"]["child"]["child"]["name"].as_s.should eq("leaf")
     end
   end
 
@@ -4077,6 +4436,28 @@ describe Jargon do
 
       parsed["properties"]["verbose"]["short"].as_s.should eq("v")
       parsed["properties"]["verbose"]["description"].as_s.should eq("Verbose output")
+    end
+
+    it "raises ArgumentError for a recursive $ref instead of recursing forever" do
+      schema = %({
+        "$defs": {"Node": {"type": "object", "properties": {"child": {"$ref": "#/$defs/Node"}}}},
+        "properties": {"root": {"$ref": "#/$defs/Node"}}
+      })
+
+      expect_raises(ArgumentError, "Cannot flatten recursive $ref '#/$defs/Node'") do
+        Jargon.flatten(schema)
+      end
+    end
+
+    it "still flattens one definition used by several properties" do
+      schema = %({
+        "$defs": {"Port": {"type": "integer"}},
+        "properties": {"a": {"$ref": "#/$defs/Port"}, "b": {"$ref": "#/$defs/Port"}}
+      })
+
+      parsed = JSON.parse(Jargon.flatten(schema))
+      parsed["properties"]["a"]["type"].as_s.should eq("integer")
+      parsed["properties"]["b"]["type"].as_s.should eq("integer")
     end
   end
 end

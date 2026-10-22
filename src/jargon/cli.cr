@@ -7,6 +7,11 @@ require "./validator"
 require "./completion"
 
 module Jargon
+  # Option defaults for `CLI#parse`, `CLI#json`, and `CLI#run` (e.g. from
+  # `CLI#load_config`): a JSON object, parsed or as a hash. They rank below
+  # CLI arguments and environment variables.
+  alias Defaults = JSON::Any | Hash(String, JSON::Any)
+
   # A command-line parser driven by one or more schemas. A CLI is either *flat*
   # (a single `schema`) or in *subcommand mode* (a map of named `subcommands`,
   # each its own Schema or nested CLI). Build one with `Jargon.cli`/`Jargon.new`,
@@ -332,18 +337,20 @@ module Jargon
       @subcommand_key = key
     end
 
-    # Control whether a bare `key:value` / `key=value` token — no leading
-    # dashes — may implicitly assign to a named property. On by default. When
-    # off, such a token is never read as an assignment: it falls to positional
-    # capture if a slot is open, otherwise it is an unexpected argument. Turn it
-    # off for deterministic parsing with zero implicit-assignment magic, e.g.
-    # when operands legitimately contain colons (`host:8080`, `16:9`) and you
-    # never want one silently absorbed as `host=8080`. Note that a positional
-    # slot already captures colon-bearing operands literally regardless of this
-    # setting; the switch only governs the implicit-assignment fallback. It does
-    # not affect `--flag=value`, which is standard long-option syntax and always
-    # honored. Applies to this CLI and its directly attached Schema subcommands;
-    # a nested CLI keeps its own setting.
+    # Control whether a bare `key=value` token — no leading dashes — may
+    # implicitly assign to a named property. On by default. When off, such a
+    # token is never read as an assignment: it falls to positional capture if a
+    # slot is open, otherwise it is an unexpected argument. Turn it off for
+    # deterministic parsing with zero implicit-assignment magic, e.g. when
+    # operands legitimately contain `=` (`name=value` pairs passed through to
+    # another tool) and you never want one silently absorbed as a property.
+    # Note that a positional slot already captures `=`-bearing operands
+    # literally regardless of this setting; the switch only governs the
+    # implicit-assignment fallback. It does not affect `--flag=value`, which is
+    # standard long-option syntax and always honored. Applies to this CLI and
+    # its directly attached Schema subcommands; a nested CLI keeps its own
+    # setting. (A colon is never an assignment separator: `key:value` is always
+    # an ordinary token.)
     def bare_assignment(enabled : Bool)
       @bare_assignment = enabled
     end
@@ -351,12 +358,12 @@ module Jargon
     # Parse arguments into a `Result` (parsed data plus any validation errors);
     # never raises on invalid input. `defaults` seeds values not given on the
     # command line (e.g. from a config file), below CLI args and env vars.
-    def parse(args : Array(String) = ARGV, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = nil) : Result
+    def parse(args : Array(String) = ARGV, *, defaults : Defaults? = nil) : Result
       parse(args, STDIN, defaults: defaults)
     end
 
     # :ditto: `input` supplies the stream read for the `-` (stdin JSON) form.
-    def parse(args : Array(String), input : IO, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = nil) : Result
+    def parse(args : Array(String), input : IO, *, defaults : Defaults? = nil) : Result
       if !@subcommands.empty?
         parse_with_subcommands(args, input, defaults)
       elsif schema = @schema
@@ -368,11 +375,11 @@ module Jargon
 
     # Parse and return just the data, raising `ParseError` on validation errors.
     # Use when you want the values directly and treat invalid input as fatal.
-    def json(args : Array(String) = ARGV, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = nil) : JSON::Any
+    def json(args : Array(String) = ARGV, *, defaults : Defaults? = nil) : JSON::Any
       json(args, STDIN, defaults: defaults)
     end
 
-    def json(args : Array(String), input : IO, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = nil) : JSON::Any
+    def json(args : Array(String), input : IO, *, defaults : Defaults? = nil) : JSON::Any
       result = parse(args, input, defaults: defaults)
       raise ParseError.new(result.errors) unless result.valid?
       result.data
@@ -380,22 +387,22 @@ module Jargon
 
     # Run the CLI with automatic --help, --completions, and error handling.
     # Prints help/completions and exits 0, prints errors and exits 1, otherwise returns/yields result.
-    def run(args : Array(String) = ARGV, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = nil) : Result
+    def run(args : Array(String) = ARGV, *, defaults : Defaults? = nil) : Result
       run(args, STDIN, defaults: defaults)
     end
 
-    def run(args : Array(String) = ARGV, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = nil, &) : Nil
+    def run(args : Array(String) = ARGV, *, defaults : Defaults? = nil, &) : Nil
       run(args, STDIN, defaults: defaults) { |r| yield r }
     end
 
-    def run(args : Array(String), input : IO, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = nil) : Result
+    def run(args : Array(String), input : IO, *, defaults : Defaults? = nil) : Result
       handle_completion(args)
       result = parse(args, input, defaults: defaults)
       handle_run_result(result)
       result
     end
 
-    def run(args : Array(String), input : IO, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = nil, &) : Nil
+    def run(args : Array(String), input : IO, *, defaults : Defaults? = nil, &) : Nil
       handle_completion(args)
       result = parse(args, input, defaults: defaults)
       handle_run_result(result)
@@ -427,7 +434,7 @@ module Jargon
       end
     end
 
-    private def parse_with_subcommands(args : Array(String), input : IO, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = nil) : Result
+    private def parse_with_subcommands(args : Array(String), input : IO, defaults : Defaults? = nil) : Result
       # Handle "xerp -" - full JSON with subcommand field
       return parse_from_stdin_full(input, defaults) if args == ["-"]
 
@@ -458,7 +465,7 @@ module Jargon
       arg == "--help" || arg == "-h"
     end
 
-    private def dispatch_subcommand(subcmd : Schema | CLI, subcmd_name : String, args : Array(String), input : IO, defaults : JSON::Any | Hash(String, JSON::Any) | Nil) : Result
+    private def dispatch_subcommand(subcmd : Schema | CLI, subcmd_name : String, args : Array(String), input : IO, defaults : Defaults?) : Result
       case subcmd
       when CLI
         result = subcmd.parse(args, input, defaults: defaults)
@@ -480,7 +487,7 @@ module Jargon
     end
 
     private def check_completions_flag(args : Array(String)) : Result?
-      return nil unless args.size >= 2 && args[0] == "--completions"
+      return unless args.size >= 2 && args[0] == "--completions"
       shell = args[1]
       if shell.in?("bash", "zsh", "fish")
         Result.new({} of String => JSON::Any, [] of String, nil, false, nil, shell)
@@ -489,7 +496,7 @@ module Jargon
       end
     end
 
-    private def parse_from_stdin_full(input : IO, defaults : JSON::Any | Hash(String, JSON::Any) | Nil) : Result
+    private def parse_from_stdin_full(input : IO, defaults : Defaults?) : Result
       json_str = input.gets_to_end
       json = JSON.parse(json_str)
       data = json.as_h? || {} of String => JSON::Any
@@ -532,7 +539,7 @@ module Jargon
       Result.new({} of String => JSON::Any, ["Invalid JSON from stdin: #{ex.message}"])
     end
 
-    private def parse_from_stdin_args(input : IO, schema : Schema, defaults : JSON::Any | Hash(String, JSON::Any) | Nil) : Result
+    private def parse_from_stdin_args(input : IO, schema : Schema, defaults : Defaults?) : Result
       json_str = input.gets_to_end
       json = JSON.parse(json_str)
       data = json.as_h? || {} of String => JSON::Any
@@ -548,7 +555,7 @@ module Jargon
       Result.new({} of String => JSON::Any, ["Invalid JSON from stdin: #{ex.message}"])
     end
 
-    private def parse_flat(args : Array(String), schema : Schema, input : IO = STDIN, subcommand_path : String? = nil, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = nil) : Result
+    private def parse_flat(args : Array(String), schema : Schema, input : IO = STDIN, subcommand_path : String? = nil, defaults : Defaults? = nil) : Result
       # Handle "xerp mark -" - JSON args for this schema
       if args == ["-"]
         return parse_from_stdin_args(input, schema, defaults)
@@ -731,10 +738,9 @@ module Jargon
       if key
         errors << coerce_error if coerce_error
         set_nested_value(data, key, value, errors)
-      elsif bare_assignment? && (arg.includes?("=") || arg.includes?(":"))
+      elsif bare_assignment? && arg.includes?("=")
         # Looks like an assignment to an unknown property — suggest a fix.
-        sep = arg.includes?("=") ? "=" : ":"
-        unknown_key = arg.split(sep, 2)[0]
+        unknown_key = arg.split("=", 2)[0]
         errors << unknown_option_error(unknown_key, available_options(schema), "")
       else
         errors << "Unexpected argument '#{arg}'"
@@ -869,7 +875,7 @@ module Jargon
         case sub = cli.subcommands[name]?
         when CLI    then cli = sub
         when Schema then parts_schema = sub
-        else             return nil
+        else             return
         end
       end
       parts_schema || cli.schema
@@ -894,12 +900,10 @@ module Jargon
     end
 
     private def parse_argument(arg : String, args : Array(String), index : Int32, schema : Schema) : {String?, JSON::Any?, Int32, String?}
-      # Support key=value and key:value styles, unless bare assignment is off.
-      return {nil, nil, 1, nil} unless bare_assignment?
-      sep = arg.includes?("=") ? "=" : (arg.includes?(":") ? ":" : nil)
-      return {nil, nil, 1, nil} unless sep
+      # Support key=value style, unless bare assignment is off.
+      return {nil, nil, 1, nil} unless bare_assignment? && arg.includes?("=")
 
-      parts = arg.split(sep, 2)
+      parts = arg.split("=", 2)
       key = parts[0]
       return {nil, nil, 1, nil} unless property_exists?(key, schema)
 
@@ -941,13 +945,13 @@ module Jargon
             elsif resolved.type.object?
               current = resolved
             else
-              return nil
+              return
             end
           else
-            return nil
+            return
           end
         else
-          return nil
+          return
         end
       end
 
@@ -970,8 +974,16 @@ module Jargon
       when Property::Type::Integer, Property::Type::Number, Property::Type::Boolean
         coerce_scalar(key, value, type)
       when Property::Type::Array
-        items = value.split(",").map { |v| JSON::Any.new(v.strip) }
-        {JSON::Any.new(items), nil}
+        # Coerce each comma-separated item to the array's `items` type, as a
+        # variadic positional does; report the first item that doesn't fit.
+        item_type = prop.try(&.items).try(&.type)
+        first_error = nil
+        items = value.split(",").map do |v|
+          coerced, error = coerce_scalar(key, v.strip, item_type)
+          first_error ||= error
+          coerced
+        end
+        {JSON::Any.new(items), first_error}
       else
         # Expand ~ for path format
         if prop.try(&.format) == "path"
@@ -1064,11 +1076,25 @@ module Jargon
       end
     end
 
-    private def apply_user_defaults(data : Hash(String, JSON::Any), defaults : JSON::Any | Hash(String, JSON::Any) | Nil)
+    private def apply_user_defaults(data : Hash(String, JSON::Any), defaults : Defaults?)
       return unless defaults
-      default_hash = defaults.is_a?(JSON::Any) ? defaults.as_h : defaults
-      default_hash.each do |key, value|
-        data[key] = value unless data.has_key?(key)
+      default_hash = defaults.is_a?(JSON::Any) ? defaults.as_h? : defaults
+      raise ArgumentError.new("defaults must be a JSON object") unless default_hash
+      fill_user_defaults(data, default_hash)
+    end
+
+    # Fill keys missing from `data`, recursing into objects present on both
+    # sides so `--server.port 1` keeps a config-supplied `server.host`. Values
+    # are cloned: parsing must never mutate the caller's defaults.
+    private def fill_user_defaults(data : Hash(String, JSON::Any), defaults : Hash(String, JSON::Any))
+      defaults.each do |key, value|
+        if existing = data[key]?
+          if (existing_hash = existing.as_h?) && (default_hash = value.as_h?)
+            fill_user_defaults(existing_hash, default_hash)
+          end
+        else
+          data[key] = value.clone
+        end
       end
     end
 
@@ -1077,21 +1103,30 @@ module Jargon
       return unless props = root.properties
 
       props.each do |name, prop|
-        apply_property_defaults(data, name, resolve_property(prop, schema), schema)
+        apply_property_defaults(data, name, prop, schema)
       end
     end
 
-    private def apply_property_defaults(data : Hash(String, JSON::Any), name : String, prop : Property, schema : Schema)
-      unless data.has_key?(name)
+    # `expanding` holds the `$ref`s being descended through on this path. A
+    # default on a ref already in it belongs to a recursive (tree-shaped)
+    # schema and would nest copies of itself forever, so it is skipped; data
+    # the user supplied is still descended, which terminates with the data.
+    private def apply_property_defaults(data : Hash(String, JSON::Any), name : String, prop : Property, schema : Schema, expanding : Set(String) = Set(String).new)
+      ref = prop.ref
+      recursive = ref ? expanding.includes?(ref) : false
+      prop = resolve_property(prop, schema)
+
+      unless data.has_key?(name) || recursive
         if default = prop.default
-          data[name] = default
+          data[name] = default.clone # never alias the schema's default into results
         end
       end
 
       if prop.type.object? && (nested_props = prop.properties)
         if nested_data = data[name]?.try(&.as_h?)
+          inner = ref ? expanding | Set{ref} : expanding
           nested_props.each do |nested_name, nested_prop|
-            apply_property_defaults(nested_data, nested_name, resolve_property(nested_prop, schema), schema)
+            apply_property_defaults(nested_data, nested_name, nested_prop, schema, inner)
           end
         end
       end
@@ -1100,13 +1135,16 @@ module Jargon
     # Find best suggestion for a typo using Levenshtein distance
     # Returns nil if no good match found (distance > 2 or > 30% of length)
     private def find_suggestion(input : String, candidates : Array(String)) : String?
-      return nil if candidates.empty?
-      return nil if input.size < 2 # Don't suggest for single-character inputs
+      return if candidates.empty?
+      return if input.size < 2 # Don't suggest for single-character inputs
 
       best_match : String? = nil
       best_distance = Int32::MAX
 
       candidates.each do |candidate|
+        # Distance is at least the length difference, so skip candidates that
+        # can't qualify before paying for the O(n*m) comparison.
+        next if (input.size - candidate.size).abs > 2
         distance = levenshtein_distance(input, candidate)
         max_len = Math.max(input.size, candidate.size)
         max_allowed = (max_len * 0.3).to_i
@@ -1168,7 +1206,7 @@ module Jargon
     # Returns nil if no match, ambiguous, or too short (< 3 chars for non-exact)
     private def resolve_subcommand(input : String) : String?
       return input if @subcommands.has_key?(input) # Exact match
-      return nil if input.size < 3                 # Too short for abbreviation
+      return if input.size < 3                     # Too short for abbreviation
 
       matches = @subcommands.keys.select(&.starts_with?(input))
       matches.size == 1 ? matches.first : nil # Unambiguous only

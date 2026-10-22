@@ -33,46 +33,83 @@ module Jargon
 
     # ---- shim generation -------------------------------------------------
 
+    # Bash splits words at `=` and `:` (they are in COMP_WORDBREAKS), so
+    # `--mode=fa` arrives as `--mode`, `=`, `fa`. The shim rejoins pieces that
+    # have no whitespace between them in COMP_LINE, so the program sees the
+    # same words zsh and fish report, then trims each candidate back to the
+    # part after the last break, which is all readline replaces.
     def bash(command : String) : String
       program = @cli.program_name
       func = "_#{sanitize(program)}_complete"
       <<-BASH
-      #{func}() {
-          readarray -t COMPREPLY < <(#{command} #{COMPLETE_VERB} "$COMP_CWORD" "${COMP_WORDS[@]}")
-      }
-      complete -F #{func} #{program}
-      BASH
+        #{func}() {
+            local brk=${COMP_WORDBREAKS//[^=:]} rest=$COMP_LINE word gap i j=-1 cword=0 prefix=
+            local -a words=()
+            for ((i = 0; i < ${#COMP_WORDS[@]}; i++)); do
+                word=${COMP_WORDS[i]}
+                if [[ -z $word ]]; then gap=$rest; else gap=${rest%%"$word"*}; rest=${rest#*"$word"}; fi
+                if [[ -n $brk && $j -ge 0 && -z $gap && ( $word == [$brk]* || ${words[j]} == *[$brk] ) ]]; then
+                    words[j]+=$word
+                else
+                    words[++j]=$word
+                fi
+                ((i == COMP_CWORD)) && cword=$j
+            done
+            [[ -n $brk && ${words[cword]} == *[$brk]* ]] && prefix=${words[cword]%"${words[cword]##*[$brk]}"}
+            readarray -t COMPREPLY < <(#{sh_quote(command)} #{COMPLETE_VERB} "$cword" "${words[@]}")
+            if [[ -n $prefix ]]; then COMPREPLY=("${COMPREPLY[@]#"$prefix"}"); fi
+        }
+        complete -F #{func} #{sh_quote(program)}
+        BASH
     end
 
     def zsh(command : String) : String
       program = @cli.program_name
       func = "_#{sanitize(program)}"
+      # `#compdef` is a comment compinit parses, so quoting can't make an
+      # unusual name safe there; the explicit `compdef` call covers it.
+      header = plain_word?(program) ? "#compdef #{program}\n" : ""
       <<-ZSH
-      #compdef #{program}
-      #{func}() {
-          local -a candidates
-          candidates=("${(@f)$(#{command} #{COMPLETE_VERB} $((CURRENT - 1)) $words)}")
-          compadd -U -- $candidates
-      }
-      compdef #{func} #{program}
-      ZSH
+        #{header}#{func}() {
+            local -a candidates
+            candidates=("${(@f)$(#{sh_quote(command)} #{COMPLETE_VERB} $((CURRENT - 1)) $words)}")
+            compadd -U -- $candidates
+        }
+        compdef #{func} #{sh_quote(program)}
+        ZSH
     end
 
     def fish(command : String) : String
       program = @cli.program_name
       func = "__#{sanitize(program)}_complete"
       <<-FISH
-      function #{func}
-          set -l tokens (commandline --current-process --tokenize --cut-at-cursor)
-          set -l current (commandline --current-token)
-          #{command} #{COMPLETE_VERB} (count $tokens) $tokens $current
-      end
-      complete -c #{program} -f -a '(#{func})'
-      FISH
+        function #{func}
+            set -l tokens (commandline --current-process --tokenize --cut-at-cursor)
+            set -l current (commandline --current-token)
+            #{fish_quote(command)} #{COMPLETE_VERB} (count $tokens) $tokens $current
+        end
+        complete -c #{fish_quote(program)} -f -a '(#{func})'
+        FISH
     end
 
     private def sanitize(name : String) : String
       name.gsub(/[^a-zA-Z0-9_]/, "_")
+    end
+
+    # Words made only of these characters need no quoting in bash, zsh, or
+    # fish, so ordinary command names and paths render unchanged.
+    private def plain_word?(word : String) : Bool
+      word.valid_encoding? && word.matches?(/\A[A-Za-z0-9_.\/+:@,-]+\z/)
+    end
+
+    # Quote a word for bash/zsh (POSIX single quotes).
+    private def sh_quote(word : String) : String
+      plain_word?(word) ? word : "'#{word.gsub("'", %q('\''))}'"
+    end
+
+    # Quote a word for fish, whose single quotes honor `\\` and `\'` escapes.
+    private def fish_quote(word : String) : String
+      plain_word?(word) ? word : "'#{word.gsub("\\", "\\\\").gsub("'", "\\'")}'"
     end
 
     # ---- runtime engine --------------------------------------------------
@@ -115,16 +152,10 @@ module Jargon
     end
 
     private def complete_schema(schema : Schema, args : Array(String), cursor : Int32, path : String, partial : String) : Array(String)
-      # Completing a flag name.
-      return flag_name_candidates(schema, partial) if partial.starts_with?("-")
-
-      # Completing the value of the preceding value-taking flag. This is
-      # terminal: the current token IS that flag's value, so never fall through
-      # to positional completion (an absent enum/completer just means no
-      # candidates).
-      if cursor >= 1 && (prev = args[cursor - 1]?) && prev.starts_with?("-")
-        if (field = field_for_flag(prev, schema)) && !boolean?(schema, field)
-          return value_candidates(schema, field, path, partial, args) || [] of String
+      # After a POSIX `--` every word is an operand, never a flag.
+      unless args.first(cursor.clamp(0, args.size)).includes?("--")
+        if candidates = flag_word_candidates(schema, args, cursor, path, partial)
+          return candidates
         end
       end
 
@@ -134,6 +165,30 @@ module Jargon
       end
 
       [] of String
+    end
+
+    # Candidates when the word under the cursor is a flag or a flag's value;
+    # nil when it is an operand.
+    private def flag_word_candidates(schema : Schema, args : Array(String), cursor : Int32, path : String, partial : String) : Array(String)?
+      # Completing the value half of a `--flag=value` word. Candidates keep
+      # the `--flag=` prefix, since the shell replaces the whole word.
+      if partial.starts_with?("--") && (eq = partial.index('='))
+        field = field_for_flag(partial, schema)
+        return [] of String if field.nil? || boolean?(schema, field)
+        values = value_candidates(schema, field, path, partial[(eq + 1)..], args) || [] of String
+        return values.map { |value| partial[..eq] + value }
+      end
+
+      # Completing a flag name.
+      return flag_name_candidates(schema, partial) if partial == "-" || flag_token?(partial)
+
+      # Completing the value of the preceding value-taking flag. This is
+      # terminal: the current token IS that flag's value, so never fall
+      # through to positional completion (an absent enum/completer just
+      # means no candidates).
+      if cursor >= 1 && (prev = args[cursor - 1]?) && (field = value_flag_field(schema, prev))
+        value_candidates(schema, field, path, partial, args) || [] of String
+      end
     end
 
     private def value_candidates(schema : Schema, field : String, path : String, partial : String, args : Array(String)) : Array(String)?
@@ -166,7 +221,7 @@ module Jargon
     # a variadic array and the cursor is past the declared slots.
     private def positional_at(schema : Schema, args : Array(String), cursor : Int32) : String?
       names = schema.positional
-      return nil if names.empty?
+      return if names.empty?
 
       idx = positional_index(schema, args, Math.min(cursor, args.size))
       return names[idx] if idx < names.size
@@ -176,15 +231,21 @@ module Jargon
     end
 
     # Count how many positional slots are filled within args[0...limit],
-    # skipping flags and the values that value-taking flags consume.
+    # skipping flags and the values that value-taking flags consume. Mirrors
+    # the parser: an open slot takes any non-flag word (`k=v` and `-5`
+    # included), and every word after `--` is an operand.
     private def positional_index(schema : Schema, args : Array(String), limit : Int32) : Int32
       idx = 0
       i = 0
+      options_ended = false
       while i < limit
         tok = args[i]
-        if value_taking_flag?(schema, tok) && i + 1 < limit
+        if !options_ended && tok == "--"
+          options_ended = true
+          i += 1
+        elsif !options_ended && value_flag_field(schema, tok) && i + 1 < limit
           i += 2
-        elsif skip_token?(tok)
+        elsif !options_ended && flag_token?(tok)
           i += 1
         else
           idx += 1
@@ -194,17 +255,19 @@ module Jargon
       idx
     end
 
-    private def value_taking_flag?(schema : Schema, token : String) : Bool
-      return false unless token.starts_with?("-")
-      if field = field_for_flag(token, schema)
-        !boolean?(schema, field)
-      else
-        false
-      end
+    # A leading dash marks a flag, except a lone `-` and a negative number
+    # like `-5`, which the parser reads as values.
+    private def flag_token?(token : String) : Bool
+      token.starts_with?("-") && token.size > 1 && !token[1].ascii_number?
     end
 
-    private def skip_token?(token : String) : Bool
-      token.starts_with?("-") || token.includes?("=") || token.includes?(":")
+    # The field a flag sets when it takes the following word as its value
+    # (`--name`, `-n`); nil for booleans, `--name=value`, and non-flags.
+    private def value_flag_field(schema : Schema, token : String) : String?
+      return if !flag_token?(token) || token.includes?("=")
+      if (field = field_for_flag(token, schema)) && !boolean?(schema, field)
+        field
+      end
     end
 
     private def collect_arguments(schema : Schema, args : Array(String)) : Hash(String, String)
@@ -212,11 +275,12 @@ module Jargon
       i = 0
       while i < args.size
         tok = args[i]
+        break if tok == "--" # the rest are literal operands
         if tok.starts_with?("--") && tok.includes?("=")
           k, v = tok[2..].split("=", 2)
           result[k] = v
           i += 1
-        elsif tok.starts_with?("-")
+        elsif flag_token?(tok)
           field = field_for_flag(tok, schema)
           if field && !boolean?(schema, field) && i + 1 < args.size
             result[field] = args[i + 1]
