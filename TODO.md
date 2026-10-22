@@ -2,7 +2,7 @@
 
 ## Completed
 
-- **Type errors name schema types** (unreleased) — "Invalid type for x: expected integer, got object" instead of "expected Integer, got Hash(String, JSON::Any)", so an end user sees the words the schema uses rather than Crystal's classes. jargon.rs says the same.
+- **Type errors name schema types** (v0.22.1) — "Invalid type for x: expected integer, got object" instead of "expected Integer, got Hash(String, JSON::Any)", so an end user sees the words the schema uses rather than Crystal's classes. jargon.rs says the same.
 - **Fixes found by the Rust port** (v0.22.0) — porting to Rust (jargon.rs) turned up these, now fixed in both implementations where they applied:
   - Help shows a default that isn't a string as JSON (`[default: ["a",1]]`, `[default: null]`), not in Crystal's inspect form.
   - `nan`, `inf`, and numbers too large for a float are invalid numbers, since JSON can't hold them.
