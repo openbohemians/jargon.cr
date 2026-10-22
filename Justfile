@@ -39,6 +39,11 @@ test-file FILE:
 test-verbose:
   crystal spec --verbose
 
+# Record the conformance cases other implementations (jargon.rs) test against
+conformance:
+  rm -f conformance/*.json
+  JARGON_RECORD=conformance crystal spec
+
 # Generate API documentation
 doc: doc-api
 

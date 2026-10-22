@@ -1,0 +1,229 @@
+[
+  {
+    "spec": "help > generates help text",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"name\": {\"type\": \"string\", \"description\": \"The user name\"}\n        },\n        \"required\": [\"name\"]\n      }"
+      }
+    ],
+    "subcommand": null,
+    "expect": "Usage: myapp [options]\n\nOptions:\n      --name=<string> (required)\n      The user name"
+  },
+  {
+    "spec": "subcommands > infers type: object when multi-doc YAML omits type but has properties",
+    "cli": [
+      {
+        "op": "from_yaml",
+        "program": "myapp",
+        "text": "---\nname: fmt\ndescription: Format files\npositional: [file]\nproperties:\n  file:\n    type: string\n  output:\n    type: string\n    short: o\n    description: Output path\n---\nname: check\ndescription: Check files\nproperties:\n  group:\n    type: string\n    short: g"
+      }
+    ],
+    "subcommand": "fmt",
+    "expect": "Usage: myapp fmt [file] [options]\n\nArguments:\n  file    \n\nOptions:\n  -o, --output=<string>\n      Output path"
+  },
+  {
+    "spec": "help with new features > generates help with short flags",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\", \"short\": \"n\", \"description\": \"Number of items\"}\n        }\n      }"
+      }
+    ],
+    "subcommand": null,
+    "expect": "Usage: cli [options]\n\nOptions:\n  -n, --count=<integer>\n      Number of items"
+  },
+  {
+    "spec": "help with new features > generates help with positional args",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"file\"],\n        \"properties\": {\n          \"file\": {\"type\": \"string\", \"description\": \"Input file\"},\n          \"verbose\": {\"type\": \"boolean\"}\n        }\n      }"
+      }
+    ],
+    "subcommand": null,
+    "expect": "Usage: myapp [file] [options]\n\nArguments:\n  file    Input file\n\nOptions:\n      --verbose"
+  },
+  {
+    "spec": "help with new features > generates help for subcommands",
+    "cli": [
+      {
+        "op": "new",
+        "program": "myapp"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "run",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "test",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      }
+    ],
+    "subcommand": null,
+    "expect": "Usage: myapp <command> [options]\n\nCommands:\n  run\n  test\n\nRun 'myapp <command> --help' for command-specific options."
+  },
+  {
+    "spec": "help with new features > shows subcommand descriptions in the top-level command list",
+    "cli": [
+      {
+        "op": "new",
+        "program": "myapp"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "tag",
+        "text": "{\"type\": \"object\", \"description\": \"Attach tags\", \"properties\": {}}"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "forget",
+        "text": "{\"type\": \"object\", \"description\": \"Remove a document\", \"properties\": {}}"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "ls",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      }
+    ],
+    "subcommand": null,
+    "expect": "Usage: myapp <command> [options]\n\nCommands:\n  tag     Attach tags\n  forget  Remove a document\n  ls\n\nRun 'myapp <command> --help' for command-specific options."
+  },
+  {
+    "spec": "help with new features > shows nested subcommand descriptions",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\"type\": \"object\", \"description\": \"Add a remote\", \"properties\": {}}"
+          }
+        ]
+      }
+    ],
+    "subcommand": null,
+    "expect": "Usage: git <command> [options]\n\nCommands:\n  remote\n    add  Add a remote\n\nRun 'git <command> --help' for command-specific options."
+  },
+  {
+    "spec": "nested subcommands > shows nested commands in help",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\"type\": \"object\", \"properties\": {}}"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "remove",
+            "text": "{\"type\": \"object\", \"properties\": {}}"
+          }
+        ]
+      },
+      {
+        "op": "subcommand_json",
+        "name": "status",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      }
+    ],
+    "subcommand": null,
+    "expect": "Usage: git <command> [options]\n\nCommands:\n  remote\n    add\n    remove\n  status\n\nRun 'git <command> --help' for command-specific options."
+  },
+  {
+    "spec": "automatic help detection > cli.help(subcommand) generates correct output",
+    "cli": [
+      {
+        "op": "new",
+        "program": "myapp"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "query",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"text\"],\n        \"properties\": {\n          \"text\": {\"type\": \"string\", \"description\": \"Search text\"},\n          \"limit\": {\"type\": \"integer\", \"short\": \"n\", \"description\": \"Result limit\"}\n        },\n        \"required\": [\"text\"]\n      }"
+      }
+    ],
+    "subcommand": "query",
+    "expect": "Usage: myapp query <text> [options]\n\nArguments:\n  text    Search text\n\nOptions:\n  -n, --limit=<integer>\n      Result limit"
+  },
+  {
+    "spec": "automatic help detection > cli.help(subcommand) works for nested subcommands",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"name\"],\n        \"properties\": {\n          \"name\": {\"type\": \"string\", \"description\": \"Remote name\"}\n        },\n        \"required\": [\"name\"]\n      }"
+          }
+        ]
+      }
+    ],
+    "subcommand": "remote add",
+    "expect": "Usage: remote add <name> [options]\n\nArguments:\n  name    Remote name\n\nOptions:"
+  },
+  {
+    "spec": "automatic help detection > cli.help(subcommand) returns error for unknown subcommand",
+    "cli": [
+      {
+        "op": "new",
+        "program": "myapp"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "query",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      }
+    ],
+    "subcommand": "unknown",
+    "expect": "Unknown subcommand: unknown"
+  },
+  {
+    "spec": "$ref edge cases > lists a recursive $ref in help without expanding it forever",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n      \"type\": \"object\",\n      \"$defs\": {\n        \"Node\": {\n          \"type\": \"object\",\n          \"default\": {},\n          \"properties\": {\n            \"child\": {\"$ref\": \"#/$defs/Node\"},\n            \"name\": {\"type\": \"string\"}\n          }\n        }\n      },\n      \"properties\": {\"root\": {\"$ref\": \"#/$defs/Node\"}}\n    }"
+      }
+    ],
+    "subcommand": null,
+    "expect": "Usage: cli [options]\n\nOptions:\n      --root=<object> [default: {}]\n      --root.child=<object> [default: {}]\n      --root.name=<string>"
+  }
+]

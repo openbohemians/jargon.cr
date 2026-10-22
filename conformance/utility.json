@@ -1,0 +1,81 @@
+[
+  {
+    "spec": "schema merge > merges global properties into subcommand schema",
+    "merge": [
+      "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"file\": {\"type\": \"string\"}\n        }\n      }",
+      "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"verbose\": {\"type\": \"boolean\", \"short\": \"v\"},\n          \"config\": {\"type\": \"string\", \"short\": \"c\"}\n        }\n      }"
+    ],
+    "expect": "{\"type\":\"object\",\"properties\":{\"verbose\":{\"type\":\"boolean\",\"short\":\"v\"},\"config\":{\"type\":\"string\",\"short\":\"c\"},\"file\":{\"type\":\"string\"}}}"
+  },
+  {
+    "spec": "schema merge > sub properties take precedence over global",
+    "merge": [
+      "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"output\": {\"type\": \"string\", \"default\": \"file.txt\"}\n        }\n      }",
+      "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"output\": {\"type\": \"string\", \"default\": \"stdout\"}\n        }\n      }"
+    ],
+    "expect": "{\"type\":\"object\",\"properties\":{\"output\":{\"type\":\"string\",\"default\":\"file.txt\"}}}"
+  },
+  {
+    "spec": "schema merge > works with CLI parsing",
+    "merge": [
+      "{\n        \"type\": \"object\",\n        \"positional\": [\"file\"],\n        \"properties\": {\n          \"file\": {\"type\": \"string\"}\n        }\n      }",
+      "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"verbose\": {\"type\": \"boolean\", \"short\": \"v\"}\n        }\n      }"
+    ],
+    "expect": "{\"type\":\"object\",\"positional\":[\"file\"],\"properties\":{\"verbose\":{\"type\":\"boolean\",\"short\":\"v\"},\"file\":{\"type\":\"string\"}}}"
+  },
+  {
+    "spec": "schema merge > handles empty properties gracefully",
+    "merge": [
+      "{\"type\": \"object\"}",
+      "{\"type\": \"object\", \"properties\": {\"verbose\": {\"type\": \"boolean\"}}}"
+    ],
+    "expect": "{\"type\":\"object\",\"properties\":{\"verbose\":{\"type\":\"boolean\"}}}"
+  },
+  {
+    "spec": "schema flatten > resolves $ref from $defs",
+    "flatten": "{\n        \"type\": \"object\",\n        \"$defs\": {\n          \"name\": {\"type\": \"string\", \"minLength\": 1}\n        },\n        \"properties\": {\n          \"user\": {\"$ref\": \"#/$defs/name\"}\n        }\n      }",
+    "expect": "{\"type\":\"object\",\"properties\":{\"user\":{\"type\":\"string\",\"minLength\":1}}}"
+  },
+  {
+    "spec": "schema flatten > resolves $ref from definitions",
+    "flatten": "{\n        \"type\": \"object\",\n        \"definitions\": {\n          \"count\": {\"type\": \"integer\", \"minimum\": 0}\n        },\n        \"properties\": {\n          \"total\": {\"$ref\": \"#/definitions/count\"}\n        }\n      }",
+    "expect": "{\"type\":\"object\",\"properties\":{\"total\":{\"type\":\"integer\",\"minimum\":0}}}"
+  },
+  {
+    "spec": "schema flatten > resolves nested $refs",
+    "flatten": "{\n        \"type\": \"object\",\n        \"$defs\": {\n          \"address\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"city\": {\"$ref\": \"#/$defs/city\"}\n            }\n          },\n          \"city\": {\"type\": \"string\"}\n        },\n        \"properties\": {\n          \"home\": {\"$ref\": \"#/$defs/address\"}\n        }\n      }",
+    "expect": "{\"type\":\"object\",\"properties\":{\"home\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}}}}}"
+  },
+  {
+    "spec": "schema flatten > resolves $refs in allOf",
+    "flatten": "{\n        \"type\": \"object\",\n        \"$defs\": {\n          \"base\": {\"properties\": {\"id\": {\"type\": \"string\"}}}\n        },\n        \"allOf\": [\n          {\"$ref\": \"#/$defs/base\"},\n          {\"properties\": {\"name\": {\"type\": \"string\"}}}\n        ]\n      }",
+    "expect": "{\"type\":\"object\",\"allOf\":[{\"properties\":{\"id\":{\"type\":\"string\"}}},{\"properties\":{\"name\":{\"type\":\"string\"}}}]}"
+  },
+  {
+    "spec": "schema flatten > resolves $refs in array items",
+    "flatten": "{\n        \"type\": \"object\",\n        \"$defs\": {\n          \"tag\": {\"type\": \"string\", \"minLength\": 1}\n        },\n        \"properties\": {\n          \"tags\": {\n            \"type\": \"array\",\n            \"items\": {\"$ref\": \"#/$defs/tag\"}\n          }\n        }\n      }",
+    "expect": "{\"type\":\"object\",\"properties\":{\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"minLength\":1}}}}"
+  },
+  {
+    "spec": "schema flatten > keeps unresolvable $refs unchanged",
+    "flatten": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"external\": {\"$ref\": \"https://example.com/schema.json\"}\n        }\n      }",
+    "expect": "{\"type\":\"object\",\"properties\":{\"external\":{\"$ref\":\"https://example.com/schema.json\"}}}"
+  },
+  {
+    "spec": "schema flatten > preserves Jargon extensions in flattened output",
+    "flatten": "{\n        \"type\": \"object\",\n        \"$defs\": {\n          \"verbose\": {\"type\": \"boolean\", \"short\": \"v\", \"description\": \"Verbose output\"}\n        },\n        \"properties\": {\n          \"verbose\": {\"$ref\": \"#/$defs/verbose\"}\n        }\n      }",
+    "expect": "{\"type\":\"object\",\"properties\":{\"verbose\":{\"type\":\"boolean\",\"short\":\"v\",\"description\":\"Verbose output\"}}}"
+  },
+  {
+    "spec": "schema flatten > raises ArgumentError for a recursive $ref instead of recursing forever",
+    "flatten": "{\n        \"$defs\": {\"Node\": {\"type\": \"object\", \"properties\": {\"child\": {\"$ref\": \"#/$defs/Node\"}}}},\n        \"properties\": {\"root\": {\"$ref\": \"#/$defs/Node\"}}\n      }",
+    "expect": {
+      "raises": "Cannot flatten recursive $ref '#/$defs/Node': the definition contains itself"
+    }
+  },
+  {
+    "spec": "schema flatten > still flattens one definition used by several properties",
+    "flatten": "{\n        \"$defs\": {\"Port\": {\"type\": \"integer\"}},\n        \"properties\": {\"a\": {\"$ref\": \"#/$defs/Port\"}, \"b\": {\"$ref\": \"#/$defs/Port\"}}\n      }",
+    "expect": "{\"properties\":{\"a\":{\"type\":\"integer\"},\"b\":{\"type\":\"integer\"}}}"
+  }
+]

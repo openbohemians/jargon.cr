@@ -1,0 +1,494 @@
+[
+  {
+    "spec": "shell completion > candidates engine > completes long flag names from a flat schema",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\n            \"name\": {\"type\": \"string\"},\n            \"verbose\": {\"type\": \"boolean\", \"short\": \"v\"}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "--"
+    ],
+    "cword": 1,
+    "expect": [
+      "--help",
+      "--name",
+      "--verbose"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes short and long flag names when partial is a single dash",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\", \"short\": \"v\"}}\n        }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "-"
+    ],
+    "cword": 1,
+    "expect": [
+      "--help",
+      "-h",
+      "--verbose",
+      "-v"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > filters flag names by the typed prefix",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"number\": {\"type\": \"integer\"}}\n        }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "--na"
+    ],
+    "cword": 1,
+    "expect": [
+      "--name"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > excludes positional fields from flag-name candidates",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"file\"],\n          \"properties\": {\n            \"file\": {\"type\": \"string\"},\n            \"verbose\": {\"type\": \"boolean\", \"short\": \"v\"}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "--"
+    ],
+    "cword": 1,
+    "expect": [
+      "--help",
+      "--verbose"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes enum values for a flag (string and numeric)",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\n            \"format\": {\"type\": \"string\", \"enum\": [\"json\", \"yaml\", \"xml\"]},\n            \"level\": {\"type\": \"integer\", \"enum\": [1, 2, 3]}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "--format",
+      ""
+    ],
+    "cword": 2,
+    "expect": [
+      "json",
+      "yaml",
+      "xml"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes enum values for a flag (string and numeric)",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\n            \"format\": {\"type\": \"string\", \"enum\": [\"json\", \"yaml\", \"xml\"]},\n            \"level\": {\"type\": \"integer\", \"enum\": [1, 2, 3]}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "--format",
+      "y"
+    ],
+    "cword": 2,
+    "expect": [
+      "yaml"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes enum values for a flag (string and numeric)",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\n            \"format\": {\"type\": \"string\", \"enum\": [\"json\", \"yaml\", \"xml\"]},\n            \"level\": {\"type\": \"integer\", \"enum\": [1, 2, 3]}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "--level",
+      ""
+    ],
+    "cword": 2,
+    "expect": [
+      "1",
+      "2",
+      "3"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > lists and filters subcommands at the first position",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "save",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      }
+    ],
+    "words": [
+      "git",
+      ""
+    ],
+    "cword": 1,
+    "expect": [
+      "fetch",
+      "save"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > lists and filters subcommands at the first position",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "save",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      }
+    ],
+    "words": [
+      "git",
+      "fe"
+    ],
+    "cword": 1,
+    "expect": [
+      "fetch"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes flags within a chosen subcommand",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"url\": {\"type\": \"string\"}, \"depth\": {\"type\": \"integer\", \"short\": \"d\"}}\n        }"
+      }
+    ],
+    "words": [
+      "git",
+      "fetch",
+      "--"
+    ],
+    "cword": 2,
+    "expect": [
+      "--help",
+      "--url",
+      "--depth"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes flags within a nested subcommand CLI",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}}\n        }"
+          }
+        ]
+      }
+    ],
+    "words": [
+      "git",
+      "remote",
+      ""
+    ],
+    "cword": 2,
+    "expect": [
+      "add"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes flags within a nested subcommand CLI",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}}\n        }"
+          }
+        ]
+      }
+    ],
+    "words": [
+      "git",
+      "remote",
+      "add",
+      "--"
+    ],
+    "cword": 3,
+    "expect": [
+      "--help",
+      "--name",
+      "--url"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > returns nothing for a flag value with no enum or completer",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n          \"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}}\n        }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "--name",
+      ""
+    ],
+    "cword": 2,
+    "expect": []
+  },
+  {
+    "spec": "shell completion > candidates engine > counts a colon-bearing operand as a filled positional slot",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"src\", \"mode\"],\n          \"properties\": {\n            \"src\": {\"type\": \"string\"},\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "host:8080",
+      ""
+    ],
+    "cword": 2,
+    "expect": [
+      "fast",
+      "safe"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > fills positional slots with k=v and negative-number words, as the parser does",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"a\", \"b\"],\n        \"properties\": {\n          \"a\": {\"type\": \"string\"},\n          \"b\": {\"type\": \"string\", \"enum\": [\"b1\"]},\n          \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]}\n        }\n      }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "x=1",
+      ""
+    ],
+    "cword": 2,
+    "expect": [
+      "b1"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > fills positional slots with k=v and negative-number words, as the parser does",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"a\", \"b\"],\n        \"properties\": {\n          \"a\": {\"type\": \"string\"},\n          \"b\": {\"type\": \"string\", \"enum\": [\"b1\"]},\n          \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]}\n        }\n      }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "-5",
+      ""
+    ],
+    "cword": 2,
+    "expect": [
+      "b1"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > treats words after -- as operands, not flags",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"a\", \"b\"],\n        \"properties\": {\n          \"a\": {\"type\": \"string\"},\n          \"b\": {\"type\": \"string\", \"enum\": [\"b1\"]},\n          \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]}\n        }\n      }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "--",
+      "-x",
+      ""
+    ],
+    "cword": 3,
+    "expect": [
+      "b1"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes the value half of a --flag=value word",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]},\n            \"verbose\": {\"type\": \"boolean\"}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "--mode=f"
+    ],
+    "cword": 1,
+    "expect": [
+      "--mode=fast"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes the value half of a --flag=value word",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]},\n            \"verbose\": {\"type\": \"boolean\"}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "--mode="
+    ],
+    "cword": 1,
+    "expect": [
+      "--mode=fast",
+      "--mode=safe"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes the value half of a --flag=value word",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]},\n            \"verbose\": {\"type\": \"boolean\"}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "--verbose="
+    ],
+    "cword": 1,
+    "expect": []
+  },
+  {
+    "spec": "shell completion > candidates engine > does not read the word after --flag=value as that flag's value",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"a\", \"b\"],\n        \"properties\": {\n          \"a\": {\"type\": \"string\"},\n          \"b\": {\"type\": \"string\", \"enum\": [\"b1\"]},\n          \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]}\n        }\n      }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "--mode=fast",
+      ""
+    ],
+    "cword": 2,
+    "expect": []
+  },
+  {
+    "spec": "shell completion > candidates engine > does not read the word after --flag=value as that flag's value",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"a\", \"b\"],\n        \"properties\": {\n          \"a\": {\"type\": \"string\"},\n          \"b\": {\"type\": \"string\", \"enum\": [\"b1\"]},\n          \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]}\n        }\n      }"
+      }
+    ],
+    "words": [
+      "myapp",
+      "--mode=fast",
+      "x",
+      ""
+    ],
+    "cword": 3,
+    "expect": [
+      "b1"
+    ]
+  },
+  {
+    "spec": "shell completion > handle_completion dispatch > answers the __complete verb by printing candidates",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "app",
+        "text": "{\n          \"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"number\": {\"type\": \"integer\"}}\n        }"
+      }
+    ],
+    "words": [
+      "app",
+      "--n"
+    ],
+    "cword": 1,
+    "expect": [
+      "--name",
+      "--number"
+    ]
+  }
+]

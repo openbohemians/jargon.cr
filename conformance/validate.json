@@ -1,0 +1,230 @@
+[
+  {
+    "spec": "nested subcommands > validates nested subcommand data",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n        \"type\": \"object\",\n        \"properties\": {\"name\": {\"type\": \"string\"}},\n        \"required\": [\"name\"]\n      }"
+          }
+        ]
+      }
+    ],
+    "data": {
+      "name": "origin"
+    },
+    "subcommand": "remote add",
+    "expect": []
+  },
+  {
+    "spec": "nested subcommands > validates nested subcommand data",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n        \"type\": \"object\",\n        \"properties\": {\"name\": {\"type\": \"string\"}},\n        \"required\": [\"name\"]\n      }"
+          }
+        ]
+      }
+    ],
+    "data": {},
+    "subcommand": "remote add",
+    "expect": [
+      "Missing required field: name"
+    ]
+  },
+  {
+    "spec": "public validate method > validates data hash directly",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"name\": {\"type\": \"string\"},\n          \"count\": {\"type\": \"integer\"}\n        },\n        \"required\": [\"name\"]\n      }"
+      }
+    ],
+    "data": {
+      "count": 42
+    },
+    "subcommand": null,
+    "expect": [
+      "Missing required field: name"
+    ]
+  },
+  {
+    "spec": "public validate method > returns empty array for valid data",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"name\": {\"type\": \"string\"}\n        },\n        \"required\": [\"name\"]\n      }"
+      }
+    ],
+    "data": {
+      "name": "John"
+    },
+    "subcommand": null,
+    "expect": []
+  },
+  {
+    "spec": "public validate method > validates subcommand data with subcommand name",
+    "cli": [
+      {
+        "op": "new",
+        "program": "myapp"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "run",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"file\": {\"type\": \"string\"}\n        },\n        \"required\": [\"file\"]\n      }"
+      }
+    ],
+    "data": {},
+    "subcommand": "run",
+    "expect": [
+      "Missing required field: file"
+    ]
+  },
+  {
+    "spec": "public validate method > validates result from subcommand",
+    "cli": [
+      {
+        "op": "new",
+        "program": "myapp"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "run",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"file\": {\"type\": \"string\"}\n        },\n        \"required\": [\"file\"]\n      }"
+      }
+    ],
+    "data": {
+      "file": "test.cr"
+    },
+    "subcommand": "run",
+    "expect": []
+  },
+  {
+    "spec": "additionalProperties > allows unknown keys by default (additionalProperties absent)",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"name\": {\"type\": \"string\"}\n        }\n      }",
+    "data": {
+      "name": "Alice",
+      "extra": "value"
+    },
+    "expect": []
+  },
+  {
+    "spec": "additionalProperties > allows unknown keys when additionalProperties is true",
+    "schema": "{\n        \"type\": \"object\",\n        \"additionalProperties\": true,\n        \"properties\": {\n          \"name\": {\"type\": \"string\"}\n        }\n      }",
+    "data": {
+      "name": "Alice",
+      "extra": "value"
+    },
+    "expect": []
+  },
+  {
+    "spec": "additionalProperties > rejects unknown keys when additionalProperties is false",
+    "schema": "{\n        \"type\": \"object\",\n        \"additionalProperties\": false,\n        \"properties\": {\n          \"name\": {\"type\": \"string\"},\n          \"age\": {\"type\": \"integer\"}\n        }\n      }",
+    "data": {
+      "name": "Alice",
+      "unknown": "bad"
+    },
+    "expect": [
+      "Unknown property 'unknown': additionalProperties is false"
+    ]
+  },
+  {
+    "spec": "additionalProperties > reports multiple unknown keys",
+    "schema": "{\n        \"type\": \"object\",\n        \"additionalProperties\": false,\n        \"properties\": {\n          \"name\": {\"type\": \"string\"}\n        }\n      }",
+    "data": {
+      "name": "Alice",
+      "foo": "a",
+      "bar": "b"
+    },
+    "expect": [
+      "Unknown property 'foo': additionalProperties is false",
+      "Unknown property 'bar': additionalProperties is false"
+    ]
+  },
+  {
+    "spec": "additionalProperties > passes when all keys are known and additionalProperties is false",
+    "schema": "{\n        \"type\": \"object\",\n        \"additionalProperties\": false,\n        \"properties\": {\n          \"name\": {\"type\": \"string\"},\n          \"age\": {\"type\": \"integer\"}\n        }\n      }",
+    "data": {
+      "name": "Alice",
+      "age": 30
+    },
+    "expect": []
+  },
+  {
+    "spec": "additionalProperties > works on nested objects",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"user\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n              \"name\": {\"type\": \"string\"}\n            }\n          }\n        }\n      }",
+    "data": {
+      "user": {
+        "name": "Alice",
+        "extra": "bad"
+      }
+    },
+    "expect": [
+      "Unknown property 'user.extra': additionalProperties is false"
+    ]
+  },
+  {
+    "spec": "Jargon::Validator > validates data directly against a schema",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"name\": {\"type\": \"string\"},\n          \"age\": {\"type\": \"integer\"}\n        },\n        \"required\": [\"name\"]\n      }",
+    "data": {
+      "name": "Alice"
+    },
+    "expect": []
+  },
+  {
+    "spec": "Jargon::Validator > returns errors for invalid data",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"name\": {\"type\": \"string\"},\n          \"age\": {\"type\": \"integer\", \"minimum\": 0}\n        },\n        \"required\": [\"name\"]\n      }",
+    "data": {},
+    "expect": [
+      "Missing required field: name"
+    ]
+  },
+  {
+    "spec": "Jargon::Validator > validates numeric constraints",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"port\": {\"type\": \"integer\", \"minimum\": 1, \"maximum\": 65535}\n        }\n      }",
+    "data": {
+      "port": 0
+    },
+    "expect": [
+      "Value for port must be >= 1"
+    ]
+  },
+  {
+    "spec": "Jargon::Validator > validates enum constraints",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"level\": {\"type\": \"string\", \"enum\": [\"info\", \"warn\", \"error\"]}\n        }\n      }",
+    "data": {
+      "level": "debug"
+    },
+    "expect": [
+      "Invalid value for level: must be one of info, warn, error"
+    ]
+  }
+]

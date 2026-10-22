@@ -1,0 +1,158 @@
+[
+  {
+    "spec": "shell completion > shim generation > generates a bash shim that calls back via __complete",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}}}"
+      }
+    ],
+    "shell": "bash",
+    "command": "myapp",
+    "expect": "_myapp_complete() {\n    local brk=${COMP_WORDBREAKS//[^=:]} rest=$COMP_LINE word gap i j=-1 cword=0 prefix=\n    local -a words=()\n    for ((i = 0; i < ${#COMP_WORDS[@]}; i++)); do\n        word=${COMP_WORDS[i]}\n        if [[ -z $word ]]; then gap=$rest; else gap=${rest%%\"$word\"*}; rest=${rest#*\"$word\"}; fi\n        if [[ -n $brk && $j -ge 0 && -z $gap && ( $word == [$brk]* || ${words[j]} == *[$brk] ) ]]; then\n            words[j]+=$word\n        else\n            words[++j]=$word\n        fi\n        ((i == COMP_CWORD)) && cword=$j\n    done\n    [[ -n $brk && ${words[cword]} == *[$brk]* ]] && prefix=${words[cword]%\"${words[cword]##*[$brk]}\"}\n    readarray -t COMPREPLY < <(myapp __complete \"$cword\" \"${words[@]}\")\n    if [[ -n $prefix ]]; then COMPREPLY=(\"${COMPREPLY[@]#\"$prefix\"}\"); fi\n}\ncomplete -F _myapp_complete myapp"
+  },
+  {
+    "spec": "shell completion > shim generation > bash shim rejoins words split at = and : and trims candidates to match",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\"type\": \"object\", \"properties\": {\"mode\": {\"type\": \"string\"}}}"
+      }
+    ],
+    "shell": "bash",
+    "command": "myapp",
+    "expect": "_myapp_complete() {\n    local brk=${COMP_WORDBREAKS//[^=:]} rest=$COMP_LINE word gap i j=-1 cword=0 prefix=\n    local -a words=()\n    for ((i = 0; i < ${#COMP_WORDS[@]}; i++)); do\n        word=${COMP_WORDS[i]}\n        if [[ -z $word ]]; then gap=$rest; else gap=${rest%%\"$word\"*}; rest=${rest#*\"$word\"}; fi\n        if [[ -n $brk && $j -ge 0 && -z $gap && ( $word == [$brk]* || ${words[j]} == *[$brk] ) ]]; then\n            words[j]+=$word\n        else\n            words[++j]=$word\n        fi\n        ((i == COMP_CWORD)) && cword=$j\n    done\n    [[ -n $brk && ${words[cword]} == *[$brk]* ]] && prefix=${words[cword]%\"${words[cword]##*[$brk]}\"}\n    readarray -t COMPREPLY < <(myapp __complete \"$cword\" \"${words[@]}\")\n    if [[ -n $prefix ]]; then COMPREPLY=(\"${COMPREPLY[@]#\"$prefix\"}\"); fi\n}\ncomplete -F _myapp_complete myapp"
+  },
+  {
+    "spec": "shell completion > shim generation > quotes a program name or command that isn't a plain word",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "my app",
+        "text": "{\"type\": \"object\", \"properties\": {\"q\": {\"type\": \"string\"}}}"
+      }
+    ],
+    "shell": "bash",
+    "command": "/opt/My Tools/app",
+    "expect": "_my_app_complete() {\n    local brk=${COMP_WORDBREAKS//[^=:]} rest=$COMP_LINE word gap i j=-1 cword=0 prefix=\n    local -a words=()\n    for ((i = 0; i < ${#COMP_WORDS[@]}; i++)); do\n        word=${COMP_WORDS[i]}\n        if [[ -z $word ]]; then gap=$rest; else gap=${rest%%\"$word\"*}; rest=${rest#*\"$word\"}; fi\n        if [[ -n $brk && $j -ge 0 && -z $gap && ( $word == [$brk]* || ${words[j]} == *[$brk] ) ]]; then\n            words[j]+=$word\n        else\n            words[++j]=$word\n        fi\n        ((i == COMP_CWORD)) && cword=$j\n    done\n    [[ -n $brk && ${words[cword]} == *[$brk]* ]] && prefix=${words[cword]%\"${words[cword]##*[$brk]}\"}\n    readarray -t COMPREPLY < <('/opt/My Tools/app' __complete \"$cword\" \"${words[@]}\")\n    if [[ -n $prefix ]]; then COMPREPLY=(\"${COMPREPLY[@]#\"$prefix\"}\"); fi\n}\ncomplete -F _my_app_complete 'my app'"
+  },
+  {
+    "spec": "shell completion > shim generation > quotes a program name or command that isn't a plain word",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "my app",
+        "text": "{\"type\": \"object\", \"properties\": {\"q\": {\"type\": \"string\"}}}"
+      }
+    ],
+    "shell": "bash",
+    "command": "my app",
+    "expect": "_my_app_complete() {\n    local brk=${COMP_WORDBREAKS//[^=:]} rest=$COMP_LINE word gap i j=-1 cword=0 prefix=\n    local -a words=()\n    for ((i = 0; i < ${#COMP_WORDS[@]}; i++)); do\n        word=${COMP_WORDS[i]}\n        if [[ -z $word ]]; then gap=$rest; else gap=${rest%%\"$word\"*}; rest=${rest#*\"$word\"}; fi\n        if [[ -n $brk && $j -ge 0 && -z $gap && ( $word == [$brk]* || ${words[j]} == *[$brk] ) ]]; then\n            words[j]+=$word\n        else\n            words[++j]=$word\n        fi\n        ((i == COMP_CWORD)) && cword=$j\n    done\n    [[ -n $brk && ${words[cword]} == *[$brk]* ]] && prefix=${words[cword]%\"${words[cword]##*[$brk]}\"}\n    readarray -t COMPREPLY < <('my app' __complete \"$cword\" \"${words[@]}\")\n    if [[ -n $prefix ]]; then COMPREPLY=(\"${COMPREPLY[@]#\"$prefix\"}\"); fi\n}\ncomplete -F _my_app_complete 'my app'"
+  },
+  {
+    "spec": "shell completion > shim generation > quotes a program name or command that isn't a plain word",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "my app",
+        "text": "{\"type\": \"object\", \"properties\": {\"q\": {\"type\": \"string\"}}}"
+      }
+    ],
+    "shell": "zsh",
+    "command": "it's",
+    "expect": "_my_app() {\n    local -a candidates\n    candidates=(\"${(@f)$('it'\\''s' __complete $((CURRENT - 1)) $words)}\")\n    compadd -U -- $candidates\n}\ncompdef _my_app 'my app'"
+  },
+  {
+    "spec": "shell completion > shim generation > quotes a program name or command that isn't a plain word",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "my app",
+        "text": "{\"type\": \"object\", \"properties\": {\"q\": {\"type\": \"string\"}}}"
+      }
+    ],
+    "shell": "fish",
+    "command": "a\\b'c",
+    "expect": "function __my_app_complete\n    set -l tokens (commandline --current-process --tokenize --cut-at-cursor)\n    set -l current (commandline --current-token)\n    'a\\\\b\\'c' __complete (count $tokens) $tokens $current\nend\ncomplete -c 'my app' -f -a '(__my_app_complete)'"
+  },
+  {
+    "spec": "shell completion > shim generation > quotes a program name or command that isn't a plain word",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "my app",
+        "text": "{\"type\": \"object\", \"properties\": {\"q\": {\"type\": \"string\"}}}"
+      }
+    ],
+    "shell": "fish",
+    "command": "my app",
+    "expect": "function __my_app_complete\n    set -l tokens (commandline --current-process --tokenize --cut-at-cursor)\n    set -l current (commandline --current-token)\n    'my app' __complete (count $tokens) $tokens $current\nend\ncomplete -c 'my app' -f -a '(__my_app_complete)'"
+  },
+  {
+    "spec": "shell completion > shim generation > generates a zsh shim that calls back via __complete",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}}}"
+      }
+    ],
+    "shell": "zsh",
+    "command": "myapp",
+    "expect": "#compdef myapp\n_myapp() {\n    local -a candidates\n    candidates=(\"${(@f)$(myapp __complete $((CURRENT - 1)) $words)}\")\n    compadd -U -- $candidates\n}\ncompdef _myapp myapp"
+  },
+  {
+    "spec": "shell completion > shim generation > generates a fish shim that calls back via __complete",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}}}"
+      }
+    ],
+    "shell": "fish",
+    "command": "myapp",
+    "expect": "function __myapp_complete\n    set -l tokens (commandline --current-process --tokenize --cut-at-cursor)\n    set -l current (commandline --current-token)\n    myapp __complete (count $tokens) $tokens $current\nend\ncomplete -c myapp -f -a '(__myapp_complete)'"
+  },
+  {
+    "spec": "shell completion > shim generation > points the shim at a configurable target command",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "transfs",
+        "text": "{\"type\": \"object\", \"properties\": {\"q\": {\"type\": \"string\"}}}"
+      }
+    ],
+    "shell": "bash",
+    "command": "transfs-complete",
+    "expect": "_transfs_complete() {\n    local brk=${COMP_WORDBREAKS//[^=:]} rest=$COMP_LINE word gap i j=-1 cword=0 prefix=\n    local -a words=()\n    for ((i = 0; i < ${#COMP_WORDS[@]}; i++)); do\n        word=${COMP_WORDS[i]}\n        if [[ -z $word ]]; then gap=$rest; else gap=${rest%%\"$word\"*}; rest=${rest#*\"$word\"}; fi\n        if [[ -n $brk && $j -ge 0 && -z $gap && ( $word == [$brk]* || ${words[j]} == *[$brk] ) ]]; then\n            words[j]+=$word\n        else\n            words[++j]=$word\n        fi\n        ((i == COMP_CWORD)) && cword=$j\n    done\n    [[ -n $brk && ${words[cword]} == *[$brk]* ]] && prefix=${words[cword]%\"${words[cword]##*[$brk]}\"}\n    readarray -t COMPREPLY < <(transfs-complete __complete \"$cword\" \"${words[@]}\")\n    if [[ -n $prefix ]]; then COMPREPLY=(\"${COMPREPLY[@]#\"$prefix\"}\"); fi\n}\ncomplete -F _transfs_complete transfs"
+  },
+  {
+    "spec": "shell completion > shim generation > points the shim at a configurable target command",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "transfs",
+        "text": "{\"type\": \"object\", \"properties\": {\"q\": {\"type\": \"string\"}}}"
+      }
+    ],
+    "shell": "zsh",
+    "command": "transfs-complete",
+    "expect": "#compdef transfs\n_transfs() {\n    local -a candidates\n    candidates=(\"${(@f)$(transfs-complete __complete $((CURRENT - 1)) $words)}\")\n    compadd -U -- $candidates\n}\ncompdef _transfs transfs"
+  },
+  {
+    "spec": "shell completion > shim generation > points the shim at a configurable target command",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "transfs",
+        "text": "{\"type\": \"object\", \"properties\": {\"q\": {\"type\": \"string\"}}}"
+      }
+    ],
+    "shell": "fish",
+    "command": "transfs-complete",
+    "expect": "function __transfs_complete\n    set -l tokens (commandline --current-process --tokenize --cut-at-cursor)\n    set -l current (commandline --current-token)\n    transfs-complete __complete (count $tokens) $tokens $current\nend\ncomplete -c transfs -f -a '(__transfs_complete)'"
+  }
+]

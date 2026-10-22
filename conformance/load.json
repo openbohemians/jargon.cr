@@ -1,0 +1,52 @@
+[
+  {
+    "spec": "subcommands > raises when properties is present under an explicit non-object type",
+    "schema": "{\n          \"type\": \"string\",\n          \"properties\": {\"name\": {\"type\": \"string\"}}\n        }",
+    "expect": {
+      "raises": "Schema 'root' declares type 'string' but has 'properties' (did you mean type: object?)"
+    }
+  },
+  {
+    "spec": "subcommands > raises when items is present under an explicit non-array type",
+    "schema": "{\n          \"type\": \"object\",\n          \"items\": {\"type\": \"string\"}\n        }",
+    "expect": {
+      "raises": "Schema 'root' declares type 'object' but has 'items' (did you mean type: array?)"
+    }
+  },
+  {
+    "spec": "subcommands > errors on unknown $ref",
+    "cli": [
+      {
+        "op": "new",
+        "program": "myapp"
+      },
+      {
+        "op": "subcommand_file",
+        "name": null,
+        "ext": ".yaml",
+        "text": "---\n$id: dummy\nproperties:\n  x: {type: string}\n---\nname: fetch\nallOf:\n  - {$ref: nonexistent}\n  - properties:\n      url:\n        type: string"
+      }
+    ],
+    "expect": {
+      "raises": "Unknown $ref: nonexistent"
+    }
+  },
+  {
+    "spec": "subcommands > errors when multi-doc schema missing both name and $id",
+    "cli": [
+      {
+        "op": "new",
+        "program": "myapp"
+      },
+      {
+        "op": "subcommand_file",
+        "name": null,
+        "ext": ".yaml",
+        "text": "---\ntype: object\nproperties:\n  url:\n    type: string\n---\nname: save\ntype: object\nproperties:\n  file:\n    type: string"
+      }
+    ],
+    "expect": {
+      "raises": "Schema must have either 'name' (subcommand) or '$id' (mixin)"
+    }
+  }
+]
