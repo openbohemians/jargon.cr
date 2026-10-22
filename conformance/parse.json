@@ -208,7 +208,7 @@
       },
       "errors": [
         "Invalid number value 'nan' for rate",
-        "Invalid type for rate: expected Number, got String"
+        "Invalid type for rate: expected number, got string"
       ],
       "subcommand": null,
       "help": false,
@@ -234,7 +234,7 @@
       },
       "errors": [
         "Invalid number value 'NaN' for rate",
-        "Invalid type for rate: expected Number, got String"
+        "Invalid type for rate: expected number, got string"
       ],
       "subcommand": null,
       "help": false,
@@ -260,7 +260,7 @@
       },
       "errors": [
         "Invalid number value 'inf' for rate",
-        "Invalid type for rate: expected Number, got String"
+        "Invalid type for rate: expected number, got string"
       ],
       "subcommand": null,
       "help": false,
@@ -286,7 +286,7 @@
       },
       "errors": [
         "Invalid number value '-inf' for rate",
-        "Invalid type for rate: expected Number, got String"
+        "Invalid type for rate: expected number, got string"
       ],
       "subcommand": null,
       "help": false,
@@ -312,7 +312,7 @@
       },
       "errors": [
         "Invalid number value 'Infinity' for rate",
-        "Invalid type for rate: expected Number, got String"
+        "Invalid type for rate: expected number, got string"
       ],
       "subcommand": null,
       "help": false,
@@ -338,7 +338,7 @@
       },
       "errors": [
         "Invalid number value '1e400' for rate",
-        "Invalid type for rate: expected Number, got String"
+        "Invalid type for rate: expected number, got string"
       ],
       "subcommand": null,
       "help": false,
@@ -922,7 +922,7 @@
       },
       "errors": [
         "Invalid boolean value 'treu' for verbose. Use: true/false, yes/no, on/off, 1/0",
-        "Invalid type for verbose: expected Boolean, got String"
+        "Invalid type for verbose: expected boolean, got string"
       ],
       "subcommand": null,
       "help": false,
@@ -1007,7 +1007,7 @@
       },
       "errors": [
         "Invalid integer value 'x' for nums",
-        "Invalid type for nums[1]: expected Integer, got String"
+        "Invalid type for nums[1]: expected integer, got string"
       ],
       "subcommand": null,
       "help": false,
@@ -3028,7 +3028,7 @@
       },
       "errors": [
         "Invalid integer value 'oops' for vals",
-        "Invalid type for vals[1]: expected Integer, got String"
+        "Invalid type for vals[1]: expected integer, got string"
       ],
       "subcommand": null,
       "help": false,
@@ -6896,7 +6896,7 @@
       },
       "errors": [
         "Invalid integer value 'abc' for count",
-        "Invalid type for count: expected Integer, got String"
+        "Invalid type for count: expected integer, got string"
       ],
       "subcommand": null,
       "help": false,
@@ -6923,7 +6923,7 @@
       },
       "errors": [
         "Invalid number value 'not-a-number' for rate",
-        "Invalid type for rate: expected Number, got String"
+        "Invalid type for rate: expected number, got string"
       ],
       "subcommand": null,
       "help": false,
@@ -6950,7 +6950,7 @@
       },
       "errors": [
         "Invalid integer value '10x' for count",
-        "Invalid type for count: expected Integer, got String"
+        "Invalid type for count: expected integer, got string"
       ],
       "subcommand": null,
       "help": false,
@@ -6977,7 +6977,7 @@
       },
       "errors": [
         "Invalid number value '3.14abc' for rate",
-        "Invalid type for rate: expected Number, got String"
+        "Invalid type for rate: expected number, got string"
       ],
       "subcommand": null,
       "help": false,

@@ -51,7 +51,7 @@ module Jargon
 
     private def self.validate_type_match(value : JSON::Any, prop : Property, errors : Array(String), label : String)
       unless valid_type?(value, prop.type)
-        errors << "Invalid type for #{label}: expected #{prop.type}, got #{value.raw.class}"
+        errors << "Invalid type for #{label}: expected #{prop.type.to_s.downcase}, got #{json_type(value)}"
       end
     end
 
@@ -276,6 +276,20 @@ module Jargon
       value.valid_encoding? && value.matches?(regex)
     rescue Regex::Error
       false
+    end
+
+    # A value's type as a schema names it, which is what a user knows, not
+    # the class that holds it.
+    private def self.json_type(value : JSON::Any) : String
+      case value.raw
+      when Int64   then "integer"
+      when Float64 then "number"
+      when String  then "string"
+      when Bool    then "boolean"
+      when Array   then "array"
+      when Hash    then "object"
+      else              "null"
+      end
     end
 
     private def self.valid_type?(value : JSON::Any, expected : Property::Type) : Bool

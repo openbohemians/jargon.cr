@@ -1,5 +1,79 @@
 [
   {
+    "spec": "validation > names types in type errors as a schema does",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\"},\n          \"name\": {\"type\": \"string\"}\n        }\n      }",
+    "data": {
+      "count": {
+        "a": 1
+      }
+    },
+    "expect": [
+      "Invalid type for count: expected integer, got object"
+    ]
+  },
+  {
+    "spec": "validation > names types in type errors as a schema does",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\"},\n          \"name\": {\"type\": \"string\"}\n        }\n      }",
+    "data": {
+      "count": [
+        1
+      ]
+    },
+    "expect": [
+      "Invalid type for count: expected integer, got array"
+    ]
+  },
+  {
+    "spec": "validation > names types in type errors as a schema does",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\"},\n          \"name\": {\"type\": \"string\"}\n        }\n      }",
+    "data": {
+      "count": 1.5
+    },
+    "expect": [
+      "Invalid type for count: expected integer, got number"
+    ]
+  },
+  {
+    "spec": "validation > names types in type errors as a schema does",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\"},\n          \"name\": {\"type\": \"string\"}\n        }\n      }",
+    "data": {
+      "count": true
+    },
+    "expect": [
+      "Invalid type for count: expected integer, got boolean"
+    ]
+  },
+  {
+    "spec": "validation > names types in type errors as a schema does",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\"},\n          \"name\": {\"type\": \"string\"}\n        }\n      }",
+    "data": {
+      "count": null
+    },
+    "expect": [
+      "Invalid type for count: expected integer, got null"
+    ]
+  },
+  {
+    "spec": "validation > names types in type errors as a schema does",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\"},\n          \"name\": {\"type\": \"string\"}\n        }\n      }",
+    "data": {
+      "count": "x"
+    },
+    "expect": [
+      "Invalid type for count: expected integer, got string"
+    ]
+  },
+  {
+    "spec": "validation > names types in type errors as a schema does",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\"},\n          \"name\": {\"type\": \"string\"}\n        }\n      }",
+    "data": {
+      "name": 2
+    },
+    "expect": [
+      "Invalid type for name: expected string, got integer"
+    ]
+  },
+  {
     "spec": "validation > keeps built-in formats from matching before a trailing newline",
     "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"email\": {\"type\": \"string\", \"format\": \"email\"},\n          \"uuid\": {\"type\": \"string\", \"format\": \"uuid\"},\n          \"date\": {\"type\": \"string\", \"format\": \"date\"},\n          \"ip\": {\"type\": \"string\", \"format\": \"ipv4\"}\n        }\n      }",
     "data": {

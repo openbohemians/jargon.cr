@@ -344,6 +344,28 @@ describe Jargon do
   end
 
   describe "validation" do
+    it "names types in type errors as a schema does" do
+      schema = Jargon::Schema.from_json(%({
+        "type": "object",
+        "properties": {
+          "count": {"type": "integer"},
+          "name": {"type": "string"}
+        }
+      }))
+      got = {
+        "object"  => JSON.parse(%({"a": 1})),
+        "array"   => JSON.parse("[1]"),
+        "number"  => JSON::Any.new(1.5),
+        "boolean" => JSON::Any.new(true),
+        "null"    => JSON::Any.new(nil),
+        "string"  => JSON::Any.new("x"),
+      }
+      got.each do |type, value|
+        Jargon::Validator.validate({"count" => value}, schema).should eq(["Invalid type for count: expected integer, got #{type}"])
+      end
+      Jargon::Validator.validate({"name" => JSON::Any.new(2_i64)}, schema).should eq(["Invalid type for name: expected string, got integer"])
+    end
+
     it "keeps built-in formats from matching before a trailing newline" do
       schema = Jargon::Schema.from_json(%({
         "type": "object",

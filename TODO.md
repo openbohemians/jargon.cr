@@ -2,6 +2,7 @@
 
 ## Completed
 
+- **Type errors name schema types** (unreleased) — "Invalid type for x: expected integer, got object" instead of "expected Integer, got Hash(String, JSON::Any)", so an end user sees the words the schema uses rather than Crystal's classes. jargon.rs says the same.
 - **Fixes found by the Rust port** (v0.22.0) — porting to Rust (jargon.rs) turned up these, now fixed in both implementations where they applied:
   - Help shows a default that isn't a string as JSON (`[default: ["a",1]]`, `[default: null]`), not in Crystal's inspect form.
   - `nan`, `inf`, and numbers too large for a float are invalid numbers, since JSON can't hold them.
@@ -145,10 +146,6 @@ Raised 2026-10-22, when v0.21.0 made project-local configs opt-in
   - *Declarative, on the subcommand:* a schema keyword or a registration call (shaped like `cli.completer(path)`) naming which subcommands accept project config. The catch: `load_config` runs *before* parsing, so it can't know the subcommand. Jargon would have to load config itself after dispatch, which couples config loading into `parse`/`run` (today the two stay separate, joined only by `defaults:`).
   - *Finer still, per option:* mark individual options as user-config-only, so a project file can set `style` but never `server`. More precise trust, but a new schema keyword.
 - **Config keys cross subcommands (related, confirmed).** A config file is one flat hash handed to whichever subcommand runs, and `defaults:` copies *every* key into the result. So a key meant for `fetch` (`url`) appears in `fmt`'s data, and fails validation there if `fmt` has `additionalProperties: false`. Options: drop default keys the dispatched schema doesn't define, and/or support per-subcommand sections in the file (`fetch: {url: ...}`). Either is worth settling together with the item above, since both decide how config maps onto subcommands.
-
-### Type Errors Name Crystal Classes
-
-Raised 2026-10-22 by the Rust port. "Invalid type for x: expected Integer, got Hash(String, JSON::Any)" shows an end user Crystal's internals. JSON names ("got object", "got integer") would read better, and other implementations wouldn't have to imitate Crystal's class names (jargon.rs does for now). Changing it changes the messages in both implementations, so decide it for both; re-record with `just conformance` and resync jargon.rs.
 
 ### Other Ideas
 
