@@ -221,6 +221,7 @@ required:
   - name</code></pre>
 <pre><code class="language-crystal">schema <span class="o">=</span> <span class="t">File</span>.read(<span class="s">&quot;schema.yaml&quot;</span>)
 cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;myapp&quot;</span>, yaml: schema)</code></pre>
+<p>YAML (schemas and config files alike) is read by the YAML 1.1 core schema, as <code>YAML.parse</code> reads it (<code>yes</code> is true, <code>0x1F</code> is 31), except that a date or time stays the string it was written as: <code>default: 2026-10-22</code> is <code>&quot;2026-10-22&quot;</code>.</p>
 <h2><a id="argument-styles" class="anchor" href="#argument-styles">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -313,7 +314,7 @@ result <span class="o">=</span> cli.parse([<span class="s">&quot;user.name=John&
 <li><code>minLength</code>/<code>maxLength</code>: string length</li>
 <li><code>minItems</code>/<code>maxItems</code>: array length</li>
 <li><code>uniqueItems</code>: no duplicate values in array</li>
-<li><code>pattern</code>: regex validation for strings</li>
+<li><code>pattern</code>: regex validation for strings. As in JSON Schema, <code>$</code> matches only at the end of the value, not before a final newline</li>
 <li><code>format</code>: semantic formats (<code>email</code>, <code>uri</code>, <code>uuid</code>, <code>date</code>, <code>time</code>, <code>date-time</code>, <code>ipv4</code>, <code>ipv6</code>, <code>hostname</code>, <code>path</code>). The <code>path</code> format expands <code>~</code> to the user's home directory</li>
 <li><code>enum</code>: allowed values (works for array items too)</li>
 <li><code>const</code>: exact value match</li>
