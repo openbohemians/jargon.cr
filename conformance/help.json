@@ -12,6 +12,18 @@
     "expect": "Usage: myapp [options]\n\nOptions:\n      --name=<string> (required)\n      The user name"
   },
   {
+    "spec": "help > shows a default that isn't a string as JSON",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"tags\": {\"type\": \"array\", \"default\": [\"a\", 1]},\n          \"limits\": {\"type\": \"object\", \"default\": {\"max\": 2}},\n          \"label\": {\"type\": \"string\", \"default\": null},\n          \"name\": {\"type\": \"string\", \"default\": \"x\"},\n          \"ratio\": {\"type\": \"number\", \"default\": 0.5}\n        }\n      }"
+      }
+    ],
+    "subcommand": null,
+    "expect": "Usage: myapp [options]\n\nOptions:\n      --tags=<array> [default: [\"a\",1]]\n      --limits=<object> [default: {\"max\":2}]\n      --label=<string> [default: null]\n      --name=<string> [default: x]\n      --ratio=<number> [default: 0.5]"
+  },
+  {
     "spec": "subcommands > infers type: object when multi-doc YAML omits type but has properties",
     "cli": [
       {
@@ -225,7 +237,33 @@
       }
     ],
     "subcommand": "remote add",
-    "expect": "Usage: remote add <name> [options]\n\nArguments:\n  name    Remote name\n\nOptions:"
+    "expect": "Usage: git remote add <name> [options]\n\nArguments:\n  name    Remote name\n\nOptions:"
+  },
+  {
+    "spec": "automatic help detection > cli.help(subcommand) works for nested subcommands",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"name\"],\n        \"properties\": {\n          \"name\": {\"type\": \"string\", \"description\": \"Remote name\"}\n        },\n        \"required\": [\"name\"]\n      }"
+          }
+        ]
+      }
+    ],
+    "subcommand": "remote",
+    "expect": "Usage: git remote <command> [options]\n\nCommands:\n  add\n\nRun 'git remote <command> --help' for command-specific options."
   },
   {
     "spec": "automatic help detection > cli.help(subcommand) returns error for unknown subcommand",

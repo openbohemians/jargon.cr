@@ -195,8 +195,9 @@ module Jargon
       end
     end
 
+    # A whole number prints without a fraction; Int64 holds any below 9e15.
     private def self.format_num(n : Float64) : String
-      n.to_i == n ? n.to_i.to_s : n.to_s
+      n == n.trunc && n.abs < 9.0e15 ? n.to_i64.to_s : n.to_s
     end
 
     private def self.valid_format?(value : String, format : String) : Bool
@@ -230,42 +231,42 @@ module Jargon
     # backtracks quadratically); the RFC 5321 length cap bounds the
     # per-label stack the repeated group uses.
     private def self.valid_format_email?(value : String) : Bool
-      value.bytesize <= 254 && format_match?(value, /^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$/)
+      value.bytesize <= 254 && format_match?(value, /\A[^@\s]+@[^@\s.]+(\.[^@\s.]+)+\z/)
     end
 
     private def self.valid_format_uri?(value : String) : Bool
-      format_match?(value, /^[a-z][a-z0-9+.-]*:\/\/.+$/i)
+      format_match?(value, /\A[a-z][a-z0-9+.-]*:\/\/.+\z/i)
     end
 
     private def self.valid_format_uuid?(value : String) : Bool
-      format_match?(value, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+      format_match?(value, /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i)
     end
 
     private def self.valid_format_date?(value : String) : Bool
-      format_match?(value, /^\d{4}-\d{2}-\d{2}$/)
+      format_match?(value, /\A[0-9]{4}-[0-9]{2}-[0-9]{2}\z/)
     end
 
     private def self.valid_format_time?(value : String) : Bool
-      format_match?(value, /^\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})?$/)
+      format_match?(value, /\A[0-9]{2}:[0-9]{2}:[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?\z/)
     end
 
     private def self.valid_format_date_time?(value : String) : Bool
-      format_match?(value, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})?$/)
+      format_match?(value, /\A[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?\z/)
     end
 
     private def self.valid_format_ipv4?(value : String) : Bool
       parts = value.split(".")
-      parts.size == 4 && parts.all? { |p| p.to_i?.try { |n| n >= 0 && n <= 255 } || false }
+      parts.size == 4 && parts.all? { |part| part.matches?(/\A[0-9]{1,3}\z/) && part.to_i <= 255 }
     end
 
     private def self.valid_format_ipv6?(value : String) : Bool
-      format_match?(value, /^([0-9a-f]{0,4}:){2,7}[0-9a-f]{0,4}$/i)
+      format_match?(value, /\A([0-9a-f]{0,4}:){2,7}[0-9a-f]{0,4}\z/i)
     end
 
     # RFC 1035 caps a name at 253 bytes, which also bounds the stack the
     # repeated label group uses.
     private def self.valid_format_hostname?(value : String) : Bool
-      value.bytesize <= 253 && format_match?(value, /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i)
+      value.bytesize <= 253 && format_match?(value, /\A[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*\z/i)
     end
 
     # Bytes that aren't valid UTF-8 can't spell any textual format, and PCRE2

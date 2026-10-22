@@ -3,41 +3,44 @@ module Jargon
     # Render the program's help text: a command listing when subcommands are
     # defined, an option listing for a flat CLI, or a bare usage line otherwise.
     def help : String
-      if !@subcommands.empty?
-        help_with_subcommands
-      elsif s = @schema
-        help_flat(s)
-      else
-        "Usage: #{program_name} <command> [options]"
-      end
+      help_as(program_name)
     end
 
     # Render help for a single subcommand. `subcommand` is space-separated for
     # nested commands (e.g. `"remote add"`).
     def help(subcommand : String) : String
+      subcommand_help_as(program_name, subcommand)
+    end
+
+    # The help, with `command` (the program's name, followed by the
+    # subcommands leading to this CLI when it is nested) in its usage lines.
+    protected def help_as(command : String) : String
+      if !@subcommands.empty?
+        help_with_subcommands(command)
+      elsif s = @schema
+        build_help_text(s, command)
+      else
+        "Usage: #{command} <command> [options]"
+      end
+    end
+
+    protected def subcommand_help_as(command : String, subcommand : String) : String
       parts = subcommand.split(" ", 2)
       subcmd_name = parts[0]
+      subcmd_command = "#{command} #{subcmd_name}"
 
-      unless subcmd = @subcommands[subcmd_name]?
-        return "Unknown subcommand: #{subcmd_name}"
-      end
-
-      case subcmd
+      case subcmd = @subcommands[subcmd_name]?
       when CLI
-        if parts.size > 1
-          subcmd.help(parts[1])
-        else
-          subcmd.help
-        end
+        parts.size > 1 ? subcmd.subcommand_help_as(subcmd_command, parts[1]) : subcmd.help_as(subcmd_command)
       when Schema
-        help_flat_for_subcommand(subcmd, subcmd_name)
+        build_help_text(subcmd, subcmd_command)
       else
         "Unknown subcommand: #{subcmd_name}"
       end
     end
 
-    private def help_with_subcommands : String
-      lines = ["Usage: #{program_name} <command> [options]", "", "Commands:"]
+    private def help_with_subcommands(command : String) : String
+      lines = ["Usage: #{command} <command> [options]", "", "Commands:"]
 
       width = @subcommands.keys.max_of?(&.size) || 0
       @subcommands.each do |name, subcmd|
@@ -57,7 +60,7 @@ module Jargon
       end
 
       lines << ""
-      lines << "Run '#{program_name} <command> --help' for command-specific options."
+      lines << "Run '#{command} <command> --help' for command-specific options."
       lines.join("\n")
     end
 
@@ -109,21 +112,13 @@ module Jargon
       {false, -1}
     end
 
-    private def help_flat_for_subcommand(schema : Schema, subcmd_name : String) : String
-      build_help_text(schema, subcmd_name)
-    end
-
-    private def help_flat(schema : Schema) : String
-      build_help_text(schema, nil)
-    end
-
-    private def build_help_text(schema : Schema, subcmd_name : String?) : String
+    private def build_help_text(schema : Schema, command : String) : String
       lines = [] of String
       positional_names = schema.positional
       root = resolve_property(schema.root, schema)
 
       # Build usage line
-      usage_parts = subcmd_name ? ["Usage: #{program_name} #{subcmd_name}"] : ["Usage: #{program_name}"]
+      usage_parts = ["Usage: #{command}"]
       positional_names.each do |name|
         if prop = root.properties.try(&.[name]?)
           usage_parts << (prop.required? ? "<#{name}>" : "[#{name}]")
@@ -184,7 +179,8 @@ module Jargon
     private def help_option_line(full_name : String, prop : Property) : String
       type_str = prop.type.to_s.downcase
       required_str = prop.required? ? " (required)" : ""
-      default_str = prop.default ? " [default: #{prop.default}]" : ""
+      # A string as itself, anything else as JSON (`[1, 2]`, `null`).
+      default_str = (default = prop.default) ? " [default: #{default.as_s? || default.to_json}]" : ""
 
       flag_str = if short = prop.short
                    "-#{short}, --#{full_name}"

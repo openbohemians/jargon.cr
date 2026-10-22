@@ -51,7 +51,7 @@ module Jargon
     end
 
     def self.yaml_documents(text : String) : Array(JSON::Any)?
-      YAML.parse_all(text).map { |doc| JSON.parse(doc.to_json) }
+      YAMLReader.parse_all(text).map { |doc| JSON.parse(doc.to_json) }
     rescue YAML::ParseException
       nil
     end

@@ -86,6 +86,8 @@ schema = File.read("schema.yaml")
 cli = Jargon.cli("myapp", yaml: schema)
 ```
 
+YAML (schemas and config files alike) is read by the YAML 1.1 core schema, as `YAML.parse` reads it (`yes` is true, `0x1F` is 31), except that a date or time stays the string it was written as: `default: 2026-10-22` is `"2026-10-22"`.
+
 ## Argument Styles
 
 Two styles are supported interchangeably:
@@ -187,7 +189,7 @@ Standard JSON Schema validation keywords are supported:
 - `minLength`/`maxLength`: string length
 - `minItems`/`maxItems`: array length
 - `uniqueItems`: no duplicate values in array
-- `pattern`: regex validation for strings
+- `pattern`: regex validation for strings. As in JSON Schema, `$` matches only at the end of the value, not before a final newline
 - `format`: semantic formats (`email`, `uri`, `uuid`, `date`, `time`, `date-time`, `ipv4`, `ipv6`, `hostname`, `path`). The `path` format expands `~` to the user's home directory
 - `enum`: allowed values (works for array items too)
 - `const`: exact value match

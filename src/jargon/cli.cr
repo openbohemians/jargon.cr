@@ -1,4 +1,4 @@
-require "yaml"
+require "./yaml_reader"
 require "./schema"
 require "./result"
 require "./config"
@@ -59,14 +59,14 @@ module Jargon
         cli.load_multi_yaml(yaml)
         cli
       else
-        json = YAML.parse(yaml).to_json
+        json = YAMLReader.parse(yaml).to_json
         from_json(json, program_name)
       end
     end
 
     # Check if YAML content has multiple documents
     protected def self.multi_yaml?(content : String) : Bool
-      YAML.parse_all(content).size > 1
+      YAMLReader.parse_all(content).size > 1
     end
 
     # Check if JSON content has multiple objects (relaxed JSONL)
@@ -132,7 +132,7 @@ module Jargon
     end
 
     def subcommand(name : String, *, yaml : String)
-      json = YAML.parse(yaml).to_json
+      json = YAMLReader.parse(yaml).to_json
       @subcommands[name] = Schema.from_json(json)
     end
 
@@ -157,7 +157,7 @@ module Jargon
       else
         # Single-doc: load as single subcommand
         schema = if is_yaml
-                   json = YAML.parse(content).to_json
+                   json = YAMLReader.parse(content).to_json
                    Schema.from_json(json)
                  else
                    Schema.from_json(content)
@@ -185,7 +185,7 @@ module Jargon
     end
 
     protected def load_multi_yaml(content : String)
-      docs = YAML.parse_all(content).map { |doc| JSON.parse(doc.to_json) }
+      docs = YAMLReader.parse_all(content).map { |doc| JSON.parse(doc.to_json) }
       load_multi_docs(docs)
     end
 
@@ -1007,7 +1007,8 @@ module Jargon
           {JSON::Any.new(value), "Invalid integer value '#{value}' for #{key}"}
         end
       when Property::Type::Number
-        if float_val = value.to_f64?(strict: true)
+        # JSON has no infinities or NaN, which to_f64? reads.
+        if (float_val = value.to_f64?(strict: true)) && float_val.finite?
           {JSON::Any.new(float_val), nil}
         else
           {JSON::Any.new(value), "Invalid number value '#{value}' for #{key}"}

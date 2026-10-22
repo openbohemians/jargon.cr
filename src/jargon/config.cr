@@ -1,4 +1,4 @@
-require "yaml"
+require "./yaml_reader"
 
 module Jargon
   # Control whether config parse warnings are emitted to STDERR
@@ -89,7 +89,7 @@ module Jargon
       content = File.read(path)
       config = case File.extname(path).downcase
                when ".yaml", ".yml"
-                 JSON.parse(YAML.parse(content).to_json)
+                 JSON.parse(YAMLReader.parse(content).to_json)
                when ".json"
                  JSON.parse(content)
                end

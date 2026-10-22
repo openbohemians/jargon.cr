@@ -2,6 +2,13 @@
 
 ## Completed
 
+- **Fixes found by the Rust port** (v0.22.0) — porting to Rust (jargon.rs) turned up these, now fixed in both implementations where they applied:
+  - Help shows a default that isn't a string as JSON (`[default: ["a",1]]`, `[default: null]`), not in Crystal's inspect form.
+  - `nan`, `inf`, and numbers too large for a float are invalid numbers, since JSON can't hold them.
+  - A whole-number bound beyond Int32 (`maximum: 3e9`) no longer raises OverflowError in its validation message.
+  - Built-in formats no longer accept a trailing newline (`\z`, not `$`), and user `pattern`s compile with DOLLAR_ENDONLY, so `$` means the end of the value, as in JSON Schema. Dates, times, and ipv4 take ASCII digits only, and ipv4 no longer allows whitespace or a sign around a part.
+  - A nested subcommand's help names the whole command (`Usage: git remote add ...`), as does a nested group's help.
+  - YAML dates and times stay strings (`Jargon::YAMLReader`), instead of becoming timestamps that fail `format: date`.
 - **No colon assignment; review hardening** (v0.21.0) — bare assignment is `key=value` only, so `key:value` and JSON-like operands pass through as positionals. Project-local configs (`./.config/`) are opt-in via `load_config(project: true)`; see "Config Loading Follow-ups". Fixes from a security and performance review:
   - Invalid UTF-8 and regex limits produce validation errors instead of raising.
   - Email and hostname regexes are linear, with RFC length caps.
@@ -139,17 +146,9 @@ Raised 2026-10-22, when v0.21.0 made project-local configs opt-in
   - *Finer still, per option:* mark individual options as user-config-only, so a project file can set `style` but never `server`. More precise trust, but a new schema keyword.
 - **Config keys cross subcommands (related, confirmed).** A config file is one flat hash handed to whichever subcommand runs, and `defaults:` copies *every* key into the result. So a key meant for `fetch` (`url`) appears in `fmt`'s data, and fails validation there if `fmt` has `additionalProperties: false`. Options: drop default keys the dispatched schema doesn't define, and/or support per-subcommand sections in the file (`fetch: {url: ...}`). Either is worth settling together with the item above, since both decide how config maps onto subcommands.
 
-### Bugs Found by the Rust Port
+### Type Errors Name Crystal Classes
 
-Found 2026-10-22 while porting to Rust (`~/Projects/jargon.rs`), where these behave correctly. Fixing one here changes its conformance cases; re-record with `just conformance` and resync jargon.rs.
-
-- **Help prints non-string defaults in Crystal's inspect form.** `[default: #{prop.default}]` uses `JSON::Any#to_s`, so an array default shows as `[JSON::Any(1)]`, an object as `{"a" => JSON::Any(1)}`, and a null default as `[default: ]`. Fix: `prop.default.as_s? || prop.default.to_json`, as the validation messages already do.
-- **`nan` and `inf` are accepted as numbers.** `String#to_f64?` reads `nan`, `inf` and `Infinity`, so `--ratio nan` parses, but the value can't be written as JSON (`to_json` raises). Fix: reject non-finite values in `coerce_scalar`.
-- **A large whole-number bound crashes validation.** `Validator.format_num` calls `n.to_i`, which is Int32, so a bound such as `maximum: 3e9` raises OverflowError when a value violates it. Fix: `to_i64` with a range check.
-- **Built-in formats accept a trailing newline.** PCRE's `$` also matches before a final `\n`, so `"a@b.co\n"` is a valid email, and likewise for uuid, date, time and the others. Fix: `\z` instead of `$`. User `pattern`s have the same `$`, where JSON Schema (ECMA-262) means end of input only; the DOLLAR_ENDONLY option would fix those.
-- **A nested subcommand's help names only the nested CLI.** `help("remote add")` prints `Usage: remote add <name> [options]`, using the nested CLI's own program name, instead of `Usage: git remote add ...`. Fix: pass the parent's path down to the nested help.
-- **YAML dates become timestamps.** Crystal's YAML types a plain `2026-10-22` as a time, so it reaches Jargon as `"2026-10-22T00:00:00Z"`, and a `format: date` field then fails on its own YAML default or config value. Reported to @oyl, asking whether oyl.cr could read YAML to JSON with dates kept as strings. (jargon.rs reads only JSON, so this bug has no counterpart there.)
-- **To consider: type errors name Crystal classes.** "Invalid type for x: expected Integer, got Hash(String, JSON::Any)" shows an end user Crystal's internals. JSON names ("got object", "got integer") would read better, and other implementations wouldn't have to imitate Crystal's class names (jargon.rs does for now).
+Raised 2026-10-22 by the Rust port. "Invalid type for x: expected Integer, got Hash(String, JSON::Any)" shows an end user Crystal's internals. JSON names ("got object", "got integer") would read better, and other implementations wouldn't have to imitate Crystal's class names (jargon.rs does for now). Changing it changes the messages in both implementations, so decide it for both; re-record with `just conformance` and resync jargon.rs.
 
 ### Other Ideas
 

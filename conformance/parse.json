@@ -191,6 +191,186 @@
     }
   },
   {
+    "spec": "type coercion > rejects infinities and NaN as numbers, which JSON can't hold",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\"type\": \"object\", \"properties\": {\"rate\": {\"type\": \"number\"}}}"
+      }
+    ],
+    "args": [
+      "--rate=nan"
+    ],
+    "expect": {
+      "data": {
+        "rate": "nan"
+      },
+      "errors": [
+        "Invalid number value 'nan' for rate",
+        "Invalid type for rate: expected Number, got String"
+      ],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > rejects infinities and NaN as numbers, which JSON can't hold",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\"type\": \"object\", \"properties\": {\"rate\": {\"type\": \"number\"}}}"
+      }
+    ],
+    "args": [
+      "--rate=NaN"
+    ],
+    "expect": {
+      "data": {
+        "rate": "NaN"
+      },
+      "errors": [
+        "Invalid number value 'NaN' for rate",
+        "Invalid type for rate: expected Number, got String"
+      ],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > rejects infinities and NaN as numbers, which JSON can't hold",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\"type\": \"object\", \"properties\": {\"rate\": {\"type\": \"number\"}}}"
+      }
+    ],
+    "args": [
+      "--rate=inf"
+    ],
+    "expect": {
+      "data": {
+        "rate": "inf"
+      },
+      "errors": [
+        "Invalid number value 'inf' for rate",
+        "Invalid type for rate: expected Number, got String"
+      ],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > rejects infinities and NaN as numbers, which JSON can't hold",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\"type\": \"object\", \"properties\": {\"rate\": {\"type\": \"number\"}}}"
+      }
+    ],
+    "args": [
+      "--rate=-inf"
+    ],
+    "expect": {
+      "data": {
+        "rate": "-inf"
+      },
+      "errors": [
+        "Invalid number value '-inf' for rate",
+        "Invalid type for rate: expected Number, got String"
+      ],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > rejects infinities and NaN as numbers, which JSON can't hold",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\"type\": \"object\", \"properties\": {\"rate\": {\"type\": \"number\"}}}"
+      }
+    ],
+    "args": [
+      "--rate=Infinity"
+    ],
+    "expect": {
+      "data": {
+        "rate": "Infinity"
+      },
+      "errors": [
+        "Invalid number value 'Infinity' for rate",
+        "Invalid type for rate: expected Number, got String"
+      ],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > rejects infinities and NaN as numbers, which JSON can't hold",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\"type\": \"object\", \"properties\": {\"rate\": {\"type\": \"number\"}}}"
+      }
+    ],
+    "args": [
+      "--rate=1e400"
+    ],
+    "expect": {
+      "data": {
+        "rate": "1e400"
+      },
+      "errors": [
+        "Invalid number value '1e400' for rate",
+        "Invalid type for rate: expected Number, got String"
+      ],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > rejects infinities and NaN as numbers, which JSON can't hold",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\"type\": \"object\", \"properties\": {\"rate\": {\"type\": \"number\"}}}"
+      }
+    ],
+    "args": [
+      "--rate",
+      "1e300"
+    ],
+    "expect": {
+      "data": {
+        "rate": 1.0e+300
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
     "spec": "type coercion > coerces integer values",
     "cli": [
       {
@@ -2190,6 +2370,39 @@
     "expect": {
       "data": {
         "name": "~/something"
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults > keeps a YAML schema's date default as written",
+    "cli": [
+      {
+        "op": "from_yaml",
+        "program": "cli",
+        "text": "type: object\nproperties:\n  since:\n    type: string\n    format: date\n    default: 2026-10-22",
+        "documents": [
+          {
+            "type": "object",
+            "properties": {
+              "since": {
+                "type": "string",
+                "format": "date",
+                "default": "2026-10-22"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "args": [],
+    "expect": {
+      "data": {
+        "since": "2026-10-22"
       },
       "errors": [],
       "subcommand": null,
@@ -6359,6 +6572,34 @@
     "expect": {
       "data": {
         "name": "test"
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "load_config > keeps YAML dates as written",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "testdate",
+        "text": "{\"type\": \"object\", \"properties\": {\"since\": {\"type\": \"string\", \"format\": \"date\"}}}"
+      }
+    ],
+    "args": [],
+    "defaults": {
+      "since": "2026-10-22",
+      "at": "2026-10-22 10:30:00",
+      "count": 31
+    },
+    "expect": {
+      "data": {
+        "since": "2026-10-22",
+        "at": "2026-10-22 10:30:00",
+        "count": 31
       },
       "errors": [],
       "subcommand": null,

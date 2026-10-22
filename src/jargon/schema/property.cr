@@ -149,9 +149,11 @@ module Jargon
       json[key]?.try(&.as_i?.try(&.to_i32))
     end
 
+    # In JSON Schema (ECMA-262) `$` is the end of the value, where PCRE's
+    # would also match before a final newline.
     private def self.parse_pattern(json : JSON::Any) : Regex?
       if pattern_str = json["pattern"]?.try(&.as_s?)
-        Regex.new(pattern_str)
+        Regex.new(pattern_str, :dollar_endonly)
       end
     end
 

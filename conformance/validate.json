@@ -1,5 +1,150 @@
 [
   {
+    "spec": "validation > keeps built-in formats from matching before a trailing newline",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"email\": {\"type\": \"string\", \"format\": \"email\"},\n          \"uuid\": {\"type\": \"string\", \"format\": \"uuid\"},\n          \"date\": {\"type\": \"string\", \"format\": \"date\"},\n          \"ip\": {\"type\": \"string\", \"format\": \"ipv4\"}\n        }\n      }",
+    "data": {
+      "email": "a@b.co",
+      "uuid": "123e4567-e89b-12d3-a456-426614174000",
+      "date": "2026-10-22",
+      "ip": "10.0.0.1"
+    },
+    "expect": []
+  },
+  {
+    "spec": "validation > keeps built-in formats from matching before a trailing newline",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"email\": {\"type\": \"string\", \"format\": \"email\"},\n          \"uuid\": {\"type\": \"string\", \"format\": \"uuid\"},\n          \"date\": {\"type\": \"string\", \"format\": \"date\"},\n          \"ip\": {\"type\": \"string\", \"format\": \"ipv4\"}\n        }\n      }",
+    "data": {
+      "email": "a@b.co\n"
+    },
+    "expect": [
+      "Value for email must be a valid email"
+    ]
+  },
+  {
+    "spec": "validation > keeps built-in formats from matching before a trailing newline",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"email\": {\"type\": \"string\", \"format\": \"email\"},\n          \"uuid\": {\"type\": \"string\", \"format\": \"uuid\"},\n          \"date\": {\"type\": \"string\", \"format\": \"date\"},\n          \"ip\": {\"type\": \"string\", \"format\": \"ipv4\"}\n        }\n      }",
+    "data": {
+      "uuid": "123e4567-e89b-12d3-a456-426614174000\n"
+    },
+    "expect": [
+      "Value for uuid must be a valid uuid"
+    ]
+  },
+  {
+    "spec": "validation > keeps built-in formats from matching before a trailing newline",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"email\": {\"type\": \"string\", \"format\": \"email\"},\n          \"uuid\": {\"type\": \"string\", \"format\": \"uuid\"},\n          \"date\": {\"type\": \"string\", \"format\": \"date\"},\n          \"ip\": {\"type\": \"string\", \"format\": \"ipv4\"}\n        }\n      }",
+    "data": {
+      "date": "2026-10-22\n"
+    },
+    "expect": [
+      "Value for date must be a valid date"
+    ]
+  },
+  {
+    "spec": "validation > keeps built-in formats from matching before a trailing newline",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"email\": {\"type\": \"string\", \"format\": \"email\"},\n          \"uuid\": {\"type\": \"string\", \"format\": \"uuid\"},\n          \"date\": {\"type\": \"string\", \"format\": \"date\"},\n          \"ip\": {\"type\": \"string\", \"format\": \"ipv4\"}\n        }\n      }",
+    "data": {
+      "ip": "10.0.0.1\n"
+    },
+    "expect": [
+      "Value for ip must be a valid ipv4"
+    ]
+  },
+  {
+    "spec": "validation > reads digits in date and time formats and ipv4 as ASCII digits only",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"date\": {\"type\": \"string\", \"format\": \"date\"},\n          \"ip\": {\"type\": \"string\", \"format\": \"ipv4\"}\n        }\n      }",
+    "data": {
+      "date": "٢٠٢٦-10-22"
+    },
+    "expect": [
+      "Value for date must be a valid date"
+    ]
+  },
+  {
+    "spec": "validation > reads digits in date and time formats and ipv4 as ASCII digits only",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"date\": {\"type\": \"string\", \"format\": \"date\"},\n          \"ip\": {\"type\": \"string\", \"format\": \"ipv4\"}\n        }\n      }",
+    "data": {
+      "date": "2026-10-22"
+    },
+    "expect": []
+  },
+  {
+    "spec": "validation > reads digits in date and time formats and ipv4 as ASCII digits only",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"date\": {\"type\": \"string\", \"format\": \"date\"},\n          \"ip\": {\"type\": \"string\", \"format\": \"ipv4\"}\n        }\n      }",
+    "data": {
+      "ip": " 10.0.0.1"
+    },
+    "expect": [
+      "Value for ip must be a valid ipv4"
+    ]
+  },
+  {
+    "spec": "validation > reads digits in date and time formats and ipv4 as ASCII digits only",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"date\": {\"type\": \"string\", \"format\": \"date\"},\n          \"ip\": {\"type\": \"string\", \"format\": \"ipv4\"}\n        }\n      }",
+    "data": {
+      "ip": "10.0.0.+1"
+    },
+    "expect": [
+      "Value for ip must be a valid ipv4"
+    ]
+  },
+  {
+    "spec": "validation > reads digits in date and time formats and ipv4 as ASCII digits only",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"date\": {\"type\": \"string\", \"format\": \"date\"},\n          \"ip\": {\"type\": \"string\", \"format\": \"ipv4\"}\n        }\n      }",
+    "data": {
+      "ip": "10.0.0.256"
+    },
+    "expect": [
+      "Value for ip must be a valid ipv4"
+    ]
+  },
+  {
+    "spec": "validation > reads digits in date and time formats and ipv4 as ASCII digits only",
+    "schema": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"date\": {\"type\": \"string\", \"format\": \"date\"},\n          \"ip\": {\"type\": \"string\", \"format\": \"ipv4\"}\n        }\n      }",
+    "data": {
+      "ip": "10.0.0.1"
+    },
+    "expect": []
+  },
+  {
+    "spec": "validation > anchors a pattern's $ at the end of the value, as JSON Schema does",
+    "schema": "{\"type\": \"object\", \"properties\": {\"code\": {\"type\": \"string\", \"pattern\": \"^[a-z]+$\"}}}",
+    "data": {
+      "code": "abc"
+    },
+    "expect": []
+  },
+  {
+    "spec": "validation > anchors a pattern's $ at the end of the value, as JSON Schema does",
+    "schema": "{\"type\": \"object\", \"properties\": {\"code\": {\"type\": \"string\", \"pattern\": \"^[a-z]+$\"}}}",
+    "data": {
+      "code": "abc\n"
+    },
+    "expect": [
+      "Value for code must match pattern: ^[a-z]+$"
+    ]
+  },
+  {
+    "spec": "validation > reports a whole-number bound beyond Int32",
+    "schema": "{\"type\": \"object\", \"properties\": {\"size\": {\"type\": \"integer\", \"maximum\": 3e9, \"minimum\": -1e16}}}",
+    "data": {
+      "size": 4000000000
+    },
+    "expect": [
+      "Value for size must be <= 3000000000"
+    ]
+  },
+  {
+    "spec": "validation > reports a whole-number bound beyond Int32",
+    "schema": "{\"type\": \"object\", \"properties\": {\"size\": {\"type\": \"integer\", \"maximum\": 3e9, \"minimum\": -1e16}}}",
+    "data": {
+      "size": -20000000000000000
+    },
+    "expect": [
+      "Value for size must be >= -1.0e+16"
+    ]
+  },
+  {
     "spec": "nested subcommands > validates nested subcommand data",
     "cli": [
       {

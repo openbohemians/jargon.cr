@@ -130,6 +130,16 @@ describe Jargon do
   end
 
   describe "type coercion" do
+    it "rejects infinities and NaN as numbers, which JSON can't hold" do
+      cli = Jargon.cli("cli", json: %({"type": "object", "properties": {"rate": {"type": "number"}}}))
+
+      %w[nan NaN inf -inf Infinity 1e400].each do |value|
+        result = cli.parse(["--rate=#{value}"])
+        result.errors.should contain("Invalid number value '#{value}' for rate")
+      end
+      cli.parse(["--rate", "1e300"])["rate"].as_f.should eq(1e300)
+    end
+
     it "coerces integer values" do
       cli = Jargon.cli("cli", json: %({
         "type": "object",
@@ -334,6 +344,52 @@ describe Jargon do
   end
 
   describe "validation" do
+    it "keeps built-in formats from matching before a trailing newline" do
+      schema = Jargon::Schema.from_json(%({
+        "type": "object",
+        "properties": {
+          "email": {"type": "string", "format": "email"},
+          "uuid": {"type": "string", "format": "uuid"},
+          "date": {"type": "string", "format": "date"},
+          "ip": {"type": "string", "format": "ipv4"}
+        }
+      }))
+      valid = {"email" => "a@b.co", "uuid" => "123e4567-e89b-12d3-a456-426614174000", "date" => "2026-10-22", "ip" => "10.0.0.1"}
+      data = valid.transform_values { |value| JSON::Any.new(value) }
+      Jargon::Validator.validate(data, schema).should be_empty
+
+      valid.each do |field, value|
+        errors = Jargon::Validator.validate({field => JSON::Any.new(value + "\n")}, schema)
+        errors.size.should eq(1), "#{field} accepted a trailing newline"
+      end
+    end
+
+    it "reads digits in date and time formats and ipv4 as ASCII digits only" do
+      schema = Jargon::Schema.from_json(%({
+        "type": "object",
+        "properties": {
+          "date": {"type": "string", "format": "date"},
+          "ip": {"type": "string", "format": "ipv4"}
+        }
+      }))
+      ["٢٠٢٦-10-22", "2026-10-22"].map { |date| Jargon::Validator.validate({"date" => JSON::Any.new(date)}, schema).size }.should eq([1, 0])
+      [" 10.0.0.1", "10.0.0.+1", "10.0.0.256", "10.0.0.1"].map { |ip| Jargon::Validator.validate({"ip" => JSON::Any.new(ip)}, schema).size }.should eq([1, 1, 1, 0])
+    end
+
+    it "anchors a pattern's $ at the end of the value, as JSON Schema does" do
+      schema = Jargon::Schema.from_json(%({"type": "object", "properties": {"code": {"type": "string", "pattern": "^[a-z]+$"}}}))
+
+      Jargon::Validator.validate({"code" => JSON::Any.new("abc")}, schema).should be_empty
+      Jargon::Validator.validate({"code" => JSON::Any.new("abc\n")}, schema).should eq(["Value for code must match pattern: ^[a-z]+$"])
+    end
+
+    it "reports a whole-number bound beyond Int32" do
+      schema = Jargon::Schema.from_json(%({"type": "object", "properties": {"size": {"type": "integer", "maximum": 3e9, "minimum": -1e16}}}))
+
+      Jargon::Validator.validate({"size" => JSON::Any.new(4_000_000_000_i64)}, schema).should eq(["Value for size must be <= 3000000000"])
+      Jargon::Validator.validate({"size" => JSON::Any.new(-20_000_000_000_000_000_i64)}, schema).should eq(["Value for size must be >= -1.0e+16"])
+    end
+
     it "validates required fields" do
       cli = Jargon.cli("cli", json: %({
         "type": "object",
@@ -772,6 +828,21 @@ describe Jargon do
   end
 
   describe "defaults" do
+    it "keeps a YAML schema's date default as written" do
+      cli = Jargon.cli("cli", yaml: <<-YAML)
+        type: object
+        properties:
+          since:
+            type: string
+            format: date
+            default: 2026-10-22
+        YAML
+
+      result = cli.parse([] of String)
+      result.valid?.should be_true
+      result["since"].as_s.should eq("2026-10-22")
+    end
+
     it "applies default values" do
       cli = Jargon.cli("cli", json: %({
         "type": "object",
@@ -812,6 +883,26 @@ describe Jargon do
       help.should contain("--name")
       help.should contain("required")
       help.should contain("The user name")
+    end
+
+    it "shows a default that isn't a string as JSON" do
+      cli = Jargon.cli("myapp", json: %({
+        "type": "object",
+        "properties": {
+          "tags": {"type": "array", "default": ["a", 1]},
+          "limits": {"type": "object", "default": {"max": 2}},
+          "label": {"type": "string", "default": null},
+          "name": {"type": "string", "default": "x"},
+          "ratio": {"type": "number", "default": 0.5}
+        }
+      }))
+
+      help = cli.help
+      help.should contain(%(--tags=<array> [default: ["a",1]]))
+      help.should contain(%(--limits=<object> [default: {"max":2}]))
+      help.should contain(%(--label=<string> [default: null]))
+      help.should contain(%(--name=<string> [default: x]))
+      help.should contain(%(--ratio=<number> [default: 0.5]))
     end
   end
 
@@ -2933,9 +3024,13 @@ describe Jargon do
       cli.subcommand("remote", remote)
 
       help = cli.help("remote add")
-      help.should contain("Usage: remote add")
+      help.should contain("Usage: git remote add <name> [options]")
       help.should contain("<name>")
       help.should contain("Remote name")
+
+      group = cli.help("remote")
+      group.should contain("Usage: git remote <command> [options]")
+      group.should contain("Run 'git remote <command> --help'")
     end
 
     it "cli.help(subcommand) returns error for unknown subcommand" do
@@ -3627,6 +3722,23 @@ describe Jargon do
   end
 
   describe "load_config" do
+    it "keeps YAML dates as written" do
+      Dir.mkdir_p("./.config")
+      File.write("./.config/testdate.yaml", "since: 2026-10-22\nat: 2026-10-22 10:30:00\ncount: 0x1F\n")
+
+      begin
+        cli = Jargon.cli("testdate", json: %({"type": "object", "properties": {"since": {"type": "string", "format": "date"}}}))
+        config = cli.load_config(project: true).not_nil!
+        config["since"].as_s.should eq("2026-10-22")
+        config["at"].as_s.should eq("2026-10-22 10:30:00")
+        config["count"].as_i.should eq(31)
+
+        cli.parse([] of String, defaults: config).valid?.should be_true
+      ensure
+        File.delete("./.config/testdate.yaml")
+      end
+    end
+
     it "searches only user config paths by default" do
       cli = Jargon.cli("myapp", json: %({"type": "object", "properties": {}}))
       paths = cli.config_paths
