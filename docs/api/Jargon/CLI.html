@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.20.2">
+<meta name="generator" content="Crystal Docs 1.22.0">
 <meta name="crystal_docs.project_version" content="main-dev">
 <meta name="crystal_docs.project_name" content="jargon">
 
@@ -82,6 +82,11 @@
       
     </li>
   
+  <li class=" " data-id="jargon/Jargon/Defaults" data-name="jargon::defaults">
+      <a href="../Jargon/Defaults.html">Defaults</a>
+      
+    </li>
+  
   <li class=" " data-id="jargon/Jargon/ParseError" data-name="jargon::parseerror">
       <a href="../Jargon/ParseError.html">ParseError</a>
       
@@ -155,8 +160,8 @@
   <p>A command-line parser driven by one or more schemas. A CLI is either <em>flat</em>
 (a single <code><a href="../Jargon/CLI.html#schema%3ASchema%7CNil-instance-method">#schema</a></code>) or in <em>subcommand mode</em> (a map of named <code><a href="../Jargon/CLI.html#subcommands%3AHash%28String%2CSchema%7CCLI%29-instance-method">#subcommands</a></code>,
 each its own Schema or nested CLI). Build one with <code><a href="../Jargon.html#cli%28program_name%3AString%2C%2A%2Cjson%3AString%29%3ACLI-class-method">Jargon.cli</a></code>/<code><a href="../Jargon.html#new%28program_name%3AString%29%3ACLI-class-method">Jargon.new</a></code>,
-then <code><a href="../Jargon/CLI.html#parse%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%29%3AResult-instance-method">#parse</a></code> arguments into a <code><a href="../Jargon/Result.html">Result</a></code>, <code><a href="../Jargon/CLI.html#json%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%29%3AJSON%3A%3AAny-instance-method">#json</a></code> straight to validated data,
-or <code><a href="../Jargon/CLI.html#run%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%29%3AResult-instance-method">#run</a></code> to also handle <code>--help</code>, completion, and error exits.</p>
+then <code><a href="../Jargon/CLI.html#parse%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AResult-instance-method">#parse</a></code> arguments into a <code><a href="../Jargon/Result.html">Result</a></code>, <code><a href="../Jargon/CLI.html#json%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AJSON%3A%3AAny-instance-method">#json</a></code> straight to validated data,
+or <code><a href="../Jargon/CLI.html#run%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AResult-instance-method">#run</a></code> to also handle <code>--help</code>, completion, and error exits.</p>
 
 
 
@@ -263,6 +268,18 @@ or <code><a href="../Jargon/CLI.html#run%28args%3AArray%28String%29%2Cinput%3AIO
   <ul class="list-summary">
     
       <li class="entry-summary">
+        <a href="#bare_assignment%28enabled%3ABool%29-instance-method" class="signature"><strong>#bare_assignment</strong>(enabled : Bool)</a>
+        
+          <div class="summary"><p>Control whether a bare <code>key=value</code> token — no leading dashes — may implicitly assign to a named property.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bare_assignment%3F%3ABool-instance-method" class="signature"><strong>#bare_assignment?</strong> : Bool</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#bash_completion%28command%3AString%3D%40program_name%29%3AString-instance-method" class="signature"><strong>#bash_completion</strong>(command : String = @program_name) : String</a>
         
           <div class="summary"><p>Generate a shell completion shim.</p></div>
@@ -282,9 +299,9 @@ or <code><a href="../Jargon/CLI.html#run%28args%3AArray%28String%29%2Cinput%3AIO
       </li>
     
       <li class="entry-summary">
-        <a href="#config_paths%3AArray%28String%29-instance-method" class="signature"><strong>#config_paths</strong> : Array(String)</a>
+        <a href="#config_paths%28%2A%2Cproject%3ABool%3Dfalse%29%3AArray%28String%29-instance-method" class="signature"><strong>#config_paths</strong>(*, project : Bool = <span class="n">false</span>) : Array(String)</a>
         
-          <div class="summary"><p>Returns the list of config paths that would be searched</p></div>
+          <div class="summary"><p>Returns the list of config paths <code><a href="../Jargon/CLI.html#load_config%28%2A%2Cmerge%3ABool%3Dtrue%2Cproject%3ABool%3Dfalse%29%3AJSON%3A%3AAny%7CNil-instance-method">#load_config</a></code> would search, given the same <code>project:</code> setting.</p></div>
         
       </li>
     
@@ -329,19 +346,19 @@ or <code><a href="../Jargon/CLI.html#run%28args%3AArray%28String%29%2Cinput%3AIO
       </li>
     
       <li class="entry-summary">
-        <a href="#json%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%29%3AJSON%3A%3AAny-instance-method" class="signature"><strong>#json</strong>(args : Array(String), input : IO, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>) : JSON::Any</a>
+        <a href="#json%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AJSON%3A%3AAny-instance-method" class="signature"><strong>#json</strong>(args : Array(String), input : IO, *, defaults : Defaults | Nil = <span class="n">nil</span>) : JSON::Any</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#json%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%29%3AJSON%3A%3AAny-instance-method" class="signature"><strong>#json</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>) : JSON::Any</a>
+        <a href="#json%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AJSON%3A%3AAny-instance-method" class="signature"><strong>#json</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : Defaults | Nil = <span class="n">nil</span>) : JSON::Any</a>
         
           <div class="summary"><p>Parse and return just the data, raising <code><a href="../Jargon/ParseError.html">ParseError</a></code> on validation errors.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#load_config%28%2A%2Cmerge%3ABool%3Dtrue%29%3AJSON%3A%3AAny%7CNil-instance-method" class="signature"><strong>#load_config</strong>(*, merge : Bool = <span class="n">true</span>) : JSON::Any | Nil</a>
+        <a href="#load_config%28%2A%2Cmerge%3ABool%3Dtrue%2Cproject%3ABool%3Dfalse%29%3AJSON%3A%3AAny%7CNil-instance-method" class="signature"><strong>#load_config</strong>(*, merge : Bool = <span class="n">true</span>, project : Bool = <span class="n">false</span>) : JSON::Any | Nil</a>
         
           <div class="summary"><p>Load config from standard locations.</p></div>
         
@@ -358,14 +375,14 @@ or <code><a href="../Jargon/CLI.html#run%28args%3AArray%28String%29%2Cinput%3AIO
       </li>
     
       <li class="entry-summary">
-        <a href="#parse%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%29%3AResult-instance-method" class="signature"><strong>#parse</strong>(args : Array(String), input : IO, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>) : Result</a>
+        <a href="#parse%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AResult-instance-method" class="signature"><strong>#parse</strong>(args : Array(String), input : IO, *, defaults : Defaults | Nil = <span class="n">nil</span>) : Result</a>
         
           <div class="summary"><p>:ditto: <code>input</code> supplies the stream read for the <code>-</code> (stdin JSON) form.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#parse%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%29%3AResult-instance-method" class="signature"><strong>#parse</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>) : Result</a>
+        <a href="#parse%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AResult-instance-method" class="signature"><strong>#parse</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : Defaults | Nil = <span class="n">nil</span>) : Result</a>
         
           <div class="summary"><p>Parse arguments into a <code><a href="../Jargon/Result.html">Result</a></code> (parsed data plus any validation errors); never raises on invalid input.</p></div>
         
@@ -377,24 +394,24 @@ or <code><a href="../Jargon/CLI.html#run%28args%3AArray%28String%29%2Cinput%3AIO
       </li>
     
       <li class="entry-summary">
-        <a href="#run%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%29%3AResult-instance-method" class="signature"><strong>#run</strong>(args : Array(String), input : IO, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>) : Result</a>
+        <a href="#run%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AResult-instance-method" class="signature"><strong>#run</strong>(args : Array(String), input : IO, *, defaults : Defaults | Nil = <span class="n">nil</span>) : Result</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#run%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%29%3AResult-instance-method" class="signature"><strong>#run</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>) : Result</a>
+        <a href="#run%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AResult-instance-method" class="signature"><strong>#run</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : Defaults | Nil = <span class="n">nil</span>) : Result</a>
         
           <div class="summary"><p>Run the CLI with automatic --help, --completions, and error handling.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#run%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%2C%26%29%3ANil-instance-method" class="signature"><strong>#run</strong>(args : Array(String), input : IO, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>, &) : Nil</a>
+        <a href="#run%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%2C%26%29%3ANil-instance-method" class="signature"><strong>#run</strong>(args : Array(String), input : IO, *, defaults : Defaults | Nil = <span class="n">nil</span>, &) : Nil</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#run%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%2C%26%29%3ANil-instance-method" class="signature"><strong>#run</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>, &) : Nil</a>
+        <a href="#run%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%2C%26%29%3ANil-instance-method" class="signature"><strong>#run</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : Defaults | Nil = <span class="n">nil</span>, &) : Nil</a>
         
       </li>
     
@@ -623,6 +640,52 @@ Auto-detects multi-doc format for subcommands.</p>
     Instance Method Detail
   </h2>
   
+    <div class="entry-detail" id="bare_assignment(enabled:Bool)-instance-method">
+      <div class="signature">
+        
+        def <strong>bare_assignment</strong>(enabled : Bool)
+
+        <a class="method-permalink" href="#bare_assignment%28enabled%3ABool%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Control whether a bare <code>key=value</code> token — no leading dashes — may
+implicitly assign to a named property. On by default. When off, such a
+token is never read as an assignment: it falls to positional capture if a
+slot is open, otherwise it is an unexpected argument. Turn it off for
+deterministic parsing with zero implicit-assignment magic, e.g. when
+operands legitimately contain <code>=</code> (<code>name=value</code> pairs passed through to
+another tool) and you never want one silently absorbed as a property.
+Note that a positional slot already captures <code>=</code>-bearing operands
+literally regardless of this setting; the switch only governs the
+implicit-assignment fallback. It does not affect <code>--flag=value</code>, which is
+standard long-option syntax and always honored. Applies to this CLI and
+its directly attached Schema subcommands; a nested CLI keeps its own
+setting. (A colon is never an assignment separator: <code>key:value</code> is always
+an ordinary token.)</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="bare_assignment?:Bool-instance-method">
+      <div class="signature">
+        
+        def <strong>bare_assignment?</strong> : Bool
+
+        <a class="method-permalink" href="#bare_assignment%3F%3ABool-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
     <div class="entry-detail" id="bash_completion(command:String=@program_name):String-instance-method">
       <div class="signature">
         
@@ -681,17 +744,18 @@ typos and renames fail fast.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="config_paths:Array(String)-instance-method">
+    <div class="entry-detail" id="config_paths(*,project:Bool=false):Array(String)-instance-method">
       <div class="signature">
         
-        def <strong>config_paths</strong> : Array(String)
+        def <strong>config_paths</strong>(*, project : Bool = <span class="n">false</span>) : Array(String)
 
-        <a class="method-permalink" href="#config_paths%3AArray%28String%29-instance-method">#</a>
+        <a class="method-permalink" href="#config_paths%28%2A%2Cproject%3ABool%3Dfalse%29%3AArray%28String%29-instance-method">#</a>
       </div>
       
         <div class="doc">
           
-          <p>Returns the list of config paths that would be searched</p>
+          <p>Returns the list of config paths <code><a href="../Jargon/CLI.html#load_config%28%2A%2Cmerge%3ABool%3Dtrue%2Cproject%3ABool%3Dfalse%29%3AJSON%3A%3AAny%7CNil-instance-method">#load_config</a></code> would search, given the
+same <code>project:</code> setting.</p>
         </div>
       
       <br/>
@@ -818,12 +882,12 @@ defined, an option listing for a flat CLI, or a bare usage line otherwise.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="json(args:Array(String),input:IO,*,defaults:JSON::Any|Hash(String,JSON::Any)|Nil=nil):JSON::Any-instance-method">
+    <div class="entry-detail" id="json(args:Array(String),input:IO,*,defaults:Defaults|Nil=nil):JSON::Any-instance-method">
       <div class="signature">
         
-        def <strong>json</strong>(args : Array(String), input : IO, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>) : JSON::Any
+        def <strong>json</strong>(args : Array(String), input : IO, *, defaults : <a href="../Jargon/Defaults.html">Defaults</a> | Nil = <span class="n">nil</span>) : JSON::Any
 
-        <a class="method-permalink" href="#json%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%29%3AJSON%3A%3AAny-instance-method">#</a>
+        <a class="method-permalink" href="#json%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AJSON%3A%3AAny-instance-method">#</a>
       </div>
       
       <br/>
@@ -832,12 +896,12 @@ defined, an option listing for a flat CLI, or a bare usage line otherwise.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="json(args:Array(String)=ARGV,*,defaults:JSON::Any|Hash(String,JSON::Any)|Nil=nil):JSON::Any-instance-method">
+    <div class="entry-detail" id="json(args:Array(String)=ARGV,*,defaults:Defaults|Nil=nil):JSON::Any-instance-method">
       <div class="signature">
         
-        def <strong>json</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>) : JSON::Any
+        def <strong>json</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : <a href="../Jargon/Defaults.html">Defaults</a> | Nil = <span class="n">nil</span>) : JSON::Any
 
-        <a class="method-permalink" href="#json%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%29%3AJSON%3A%3AAny-instance-method">#</a>
+        <a class="method-permalink" href="#json%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AJSON%3A%3AAny-instance-method">#</a>
       </div>
       
         <div class="doc">
@@ -852,12 +916,12 @@ Use when you want the values directly and treat invalid input as fatal.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="load_config(*,merge:Bool=true):JSON::Any|Nil-instance-method">
+    <div class="entry-detail" id="load_config(*,merge:Bool=true,project:Bool=false):JSON::Any|Nil-instance-method">
       <div class="signature">
         
-        def <strong>load_config</strong>(*, merge : Bool = <span class="n">true</span>) : JSON::Any | Nil
+        def <strong>load_config</strong>(*, merge : Bool = <span class="n">true</span>, project : Bool = <span class="n">false</span>) : JSON::Any | Nil
 
-        <a class="method-permalink" href="#load_config%28%2A%2Cmerge%3ABool%3Dtrue%29%3AJSON%3A%3AAny%7CNil-instance-method">#</a>
+        <a class="method-permalink" href="#load_config%28%2A%2Cmerge%3ABool%3Dtrue%2Cproject%3ABool%3Dfalse%29%3AJSON%3A%3AAny%7CNil-instance-method">#</a>
       </div>
       
         <div class="doc">
@@ -866,11 +930,15 @@ Use when you want the values directly and treat invalid input as fatal.</p>
 Supports YAML (.yaml, .yml) and JSON (.json) files.</p>
 <p>Paths searched (in order):</p>
 <ol>
-<li>./.config/{program_name}.yaml/.yml/.json (project local, flat)</li>
-<li>./.config/{program_name}/config.yaml/.yml/.json (project local, directory)</li>
+<li>./.config/{program_name}.yaml/.yml/.json (project local, flat; project: true only)</li>
+<li>./.config/{program_name}/config.yaml/.yml/.json (project local, directory; project: true only)</li>
 <li>$XDG_CONFIG_HOME/{program_name}.yaml/.yml/.json (user global, flat)</li>
 <li>$XDG_CONFIG_HOME/{program_name}/config.yaml/.yml/.json (user global, directory)</li>
 </ol>
+<p>Project-local configs are read from the current directory, which may be
+one someone else controls (a freshly cloned repository), and they would
+take precedence over the user's own config. So they are off by default;
+pass project: true to opt in.</p>
 <p>With merge: true (default), merges all configs found (project wins over user).
 With merge: false, returns first config found.
 Returns nil if no config file found.</p>
@@ -910,12 +978,12 @@ Returns nil if no config file found.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="parse(args:Array(String),input:IO,*,defaults:JSON::Any|Hash(String,JSON::Any)|Nil=nil):Result-instance-method">
+    <div class="entry-detail" id="parse(args:Array(String),input:IO,*,defaults:Defaults|Nil=nil):Result-instance-method">
       <div class="signature">
         
-        def <strong>parse</strong>(args : Array(String), input : IO, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>) : <a href="../Jargon/Result.html">Result</a>
+        def <strong>parse</strong>(args : Array(String), input : IO, *, defaults : <a href="../Jargon/Defaults.html">Defaults</a> | Nil = <span class="n">nil</span>) : <a href="../Jargon/Result.html">Result</a>
 
-        <a class="method-permalink" href="#parse%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%29%3AResult-instance-method">#</a>
+        <a class="method-permalink" href="#parse%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AResult-instance-method">#</a>
       </div>
       
         <div class="doc">
@@ -929,12 +997,12 @@ Returns nil if no config file found.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="parse(args:Array(String)=ARGV,*,defaults:JSON::Any|Hash(String,JSON::Any)|Nil=nil):Result-instance-method">
+    <div class="entry-detail" id="parse(args:Array(String)=ARGV,*,defaults:Defaults|Nil=nil):Result-instance-method">
       <div class="signature">
         
-        def <strong>parse</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>) : <a href="../Jargon/Result.html">Result</a>
+        def <strong>parse</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : <a href="../Jargon/Defaults.html">Defaults</a> | Nil = <span class="n">nil</span>) : <a href="../Jargon/Result.html">Result</a>
 
-        <a class="method-permalink" href="#parse%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%29%3AResult-instance-method">#</a>
+        <a class="method-permalink" href="#parse%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AResult-instance-method">#</a>
       </div>
       
         <div class="doc">
@@ -964,12 +1032,12 @@ command line (e.g. from a config file), below CLI args and env vars.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="run(args:Array(String),input:IO,*,defaults:JSON::Any|Hash(String,JSON::Any)|Nil=nil):Result-instance-method">
+    <div class="entry-detail" id="run(args:Array(String),input:IO,*,defaults:Defaults|Nil=nil):Result-instance-method">
       <div class="signature">
         
-        def <strong>run</strong>(args : Array(String), input : IO, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>) : <a href="../Jargon/Result.html">Result</a>
+        def <strong>run</strong>(args : Array(String), input : IO, *, defaults : <a href="../Jargon/Defaults.html">Defaults</a> | Nil = <span class="n">nil</span>) : <a href="../Jargon/Result.html">Result</a>
 
-        <a class="method-permalink" href="#run%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%29%3AResult-instance-method">#</a>
+        <a class="method-permalink" href="#run%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AResult-instance-method">#</a>
       </div>
       
       <br/>
@@ -978,12 +1046,12 @@ command line (e.g. from a config file), below CLI args and env vars.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="run(args:Array(String)=ARGV,*,defaults:JSON::Any|Hash(String,JSON::Any)|Nil=nil):Result-instance-method">
+    <div class="entry-detail" id="run(args:Array(String)=ARGV,*,defaults:Defaults|Nil=nil):Result-instance-method">
       <div class="signature">
         
-        def <strong>run</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>) : <a href="../Jargon/Result.html">Result</a>
+        def <strong>run</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : <a href="../Jargon/Defaults.html">Defaults</a> | Nil = <span class="n">nil</span>) : <a href="../Jargon/Result.html">Result</a>
 
-        <a class="method-permalink" href="#run%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%29%3AResult-instance-method">#</a>
+        <a class="method-permalink" href="#run%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AResult-instance-method">#</a>
       </div>
       
         <div class="doc">
@@ -998,12 +1066,12 @@ Prints help/completions and exits 0, prints errors and exits 1, otherwise return
       </div>
     </div>
   
-    <div class="entry-detail" id="run(args:Array(String),input:IO,*,defaults:JSON::Any|Hash(String,JSON::Any)|Nil=nil,&amp;):Nil-instance-method">
+    <div class="entry-detail" id="run(args:Array(String),input:IO,*,defaults:Defaults|Nil=nil,&amp;):Nil-instance-method">
       <div class="signature">
         
-        def <strong>run</strong>(args : Array(String), input : IO, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>, &) : Nil
+        def <strong>run</strong>(args : Array(String), input : IO, *, defaults : <a href="../Jargon/Defaults.html">Defaults</a> | Nil = <span class="n">nil</span>, &) : Nil
 
-        <a class="method-permalink" href="#run%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%2C%26%29%3ANil-instance-method">#</a>
+        <a class="method-permalink" href="#run%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%2C%26%29%3ANil-instance-method">#</a>
       </div>
       
       <br/>
@@ -1012,12 +1080,12 @@ Prints help/completions and exits 0, prints errors and exits 1, otherwise return
       </div>
     </div>
   
-    <div class="entry-detail" id="run(args:Array(String)=ARGV,*,defaults:JSON::Any|Hash(String,JSON::Any)|Nil=nil,&amp;):Nil-instance-method">
+    <div class="entry-detail" id="run(args:Array(String)=ARGV,*,defaults:Defaults|Nil=nil,&amp;):Nil-instance-method">
       <div class="signature">
         
-        def <strong>run</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : JSON::Any | Hash(String, JSON::Any) | Nil = <span class="n">nil</span>, &) : Nil
+        def <strong>run</strong>(args : Array(String) = <span class="t">ARGV</span>, *, defaults : <a href="../Jargon/Defaults.html">Defaults</a> | Nil = <span class="n">nil</span>, &) : Nil
 
-        <a class="method-permalink" href="#run%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3AJSON%3A%3AAny%7CHash%28String%2CJSON%3A%3AAny%29%7CNil%3Dnil%2C%26%29%3ANil-instance-method">#</a>
+        <a class="method-permalink" href="#run%28args%3AArray%28String%29%3DARGV%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%2C%26%29%3ANil-instance-method">#</a>
       </div>
       
       <br/>

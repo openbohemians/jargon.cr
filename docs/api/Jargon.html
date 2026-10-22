@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.20.2">
+<meta name="generator" content="Crystal Docs 1.22.0">
 <meta name="crystal_docs.project_version" content="main-dev">
 <meta name="crystal_docs.project_name" content="jargon">
 
@@ -79,6 +79,11 @@
   
 </ul>
 
+      
+    </li>
+  
+  <li class=" " data-id="jargon/Jargon/Defaults" data-name="jargon::defaults">
+      <a href="Jargon/Defaults.html">Defaults</a>
       
     </li>
   
@@ -240,7 +245,7 @@ shell completion. Start from <code><a href="Jargon.html#cli%28program_name%3AStr
   <dl>
     
       <dt class="entry-const" id="VERSION">
-        <strong>VERSION</strong> = <code><span class="s">&quot;0.19.0&quot;</span></code>
+        <strong>VERSION</strong> = <code><span class="s">&quot;0.21.0&quot;</span></code>
       </dt>
       
     
@@ -508,7 +513,9 @@ is auto-detected and loaded as subcommands.</p>
         <div class="doc">
           
           <p>Flatten a schema by resolving all $ref pointers and removing $defs.
-Useful for AI tool definitions that don't support $ref.</p>
+Useful for AI tool definitions that don't support $ref. Raises
+<code>ArgumentError</code> on a recursive <code>$ref</code> (a schema that contains itself),
+which has no finite inline form.</p>
         </div>
       
       <br/>

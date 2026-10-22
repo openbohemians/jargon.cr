@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.20.2">
+<meta name="generator" content="Crystal Docs 1.22.0">
 <meta name="crystal_docs.project_version" content="main-dev">
 <meta name="crystal_docs.project_name" content="jargon">
 
@@ -82,6 +82,11 @@
       
     </li>
   
+  <li class=" " data-id="jargon/Jargon/Defaults" data-name="jargon::defaults">
+      <a href="Jargon/Defaults.html">Defaults</a>
+      
+    </li>
+  
   <li class=" " data-id="jargon/Jargon/ParseError" data-name="jargon::parseerror">
       <a href="Jargon/ParseError.html">ParseError</a>
       
@@ -144,7 +149,7 @@
 <li><strong>Validation</strong>: Required fields, enum values, strict type checking, <code>additionalProperties</code></li>
 <li><strong>Standalone validator</strong>: Use <code><a href="Jargon/Validator.html">Jargon::Validator</a></code> to validate data without the CLI parser</li>
 <li><strong>Defaults</strong>: Schema defaults, config file defaults, environment variables</li>
-<li><strong>Config files</strong>: Load from <code>.config/</code> (XDG spec) with deep merge support</li>
+<li><strong>Config files</strong>: Load from <code>~/.config/</code> (XDG spec), optionally project <code>.config/</code>, with deep merge support</li>
 <li><strong>Help text</strong>: Generated from schema descriptions</li>
 <li><strong>Auto help flags</strong>: <code>--help</code> and <code>-h</code> detected automatically</li>
 <li><strong>Shell completions</strong>: Generate completion shims for bash, zsh, and fish, with optional app-driven dynamic completers for live data</li>
@@ -221,17 +226,28 @@ cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&
     <use href="#octicon-link"/>
   </svg>
 </a>Argument Styles</h2>
-<p>Three styles are supported interchangeably:</p>
+<p>Two styles are supported interchangeably:</p>
 <pre><code class="language-sh"># Equals style (minimal)
 myapp name=John age=30 verbose=true
-
-# Colon style
-myapp name:John age:30 verbose:true
 
 # Traditional style
 myapp --name John --age 30 --verbose</code></pre>
 <p>Mix and match as you like:</p>
-<pre><code class="language-sh">myapp name=John --age 30 verbose:true</code></pre>
+<pre><code class="language-sh">myapp name=John --age 30 verbose=true</code></pre>
+<p>Only <code>=</code> separates a key from its value. A colon has no special meaning, so
+operands like <code>host:8080</code>, <code>12:30</code>, <code>Expenses:Food</code>, or JSON such as
+<code>{&quot;id&quot;:1}</code> are always ordinary tokens.</p>
+<p>The bare <code>key=value</code> style (no leading dashes) is an <em>implicit assignment</em>
+convenience. If your operands legitimately contain <code>=</code> — say, <code>name=value</code>
+pairs passed through to another tool — you can turn the implicit assignment
+off so those tokens are always taken literally:</p>
+<pre><code class="language-crystal">cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;myapp&quot;</span>, json: schema)
+cli.bare_assignment(<span class="n">false</span>)   <span class="c"># only --flag / --flag=value set properties now</span></code></pre>
+<p>With it off, a bare <code>key=value</code> token is never read as an assignment: it falls
+to positional capture if a slot is open, otherwise it's an unexpected argument.
+The <code>--flag=value</code> long-option form is unaffected and always honored. (Note that
+an open positional slot already captures <code>=</code>-bearing operands literally, so
+this switch only governs the implicit-assignment fallback.)</p>
 <h2><a id="nested-objects" class="anchor" href="#nested-objects">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -265,7 +281,7 @@ result <span class="o">=</span> cli.parse([<span class="s">&quot;user.name=John&
 | <code>integer</code> | <code>count=42</code> | Parsed as Int64, strict validation |
 | <code>number</code> | <code>rate=3.14</code> | Parsed as Float64, strict validation |
 | <code>boolean</code> | <code>verbose=true</code> or <code>--verbose</code> | Flag style supported |
-| <code>array</code> | <code>tags=a,b,c</code> | Comma-separated |
+| <code>array</code> | <code>tags=a,b,c</code> | Comma-separated; variadic positionals coerce items to the <code>items</code> type |
 | <code>object</code> | <code>user.name=John</code> | Dot notation |</p>
 <h3><a id="validation-constraints" class="anchor" href="#validation-constraints">
   <svg class="octicon-link" aria-hidden="true">
@@ -388,7 +404,33 @@ cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&
 result <span class="o">=</span> cli.parse([<span class="s">&quot;-n&quot;</span>, <span class="s">&quot;a.txt&quot;</span>, <span class="s">&quot;b.txt&quot;</span>, <span class="s">&quot;c.txt&quot;</span>])
 <span class="c"># =&gt; {&quot;number&quot;: true, &quot;files&quot;: [&quot;a.txt&quot;, &quot;b.txt&quot;, &quot;c.txt&quot;]}</span></code></pre>
 <pre><code class="language-sh">cat -n a.txt b.txt c.txt</code></pre>
-<p>Note: Flags should come before variadic positionals. Collection stops at the first flag encountered.</p>
+<p>A variadic positional is <strong>greedy</strong>: it captures every remaining token
+literally, including ones that look like assignments (<code>k=v</code>) or negative
+numbers (<code>-50</code>). It stops only at a genuine
+flag, so put flags before the variadic:</p>
+<pre><code class="language-sh">cat -n a.txt b.txt c.txt      # ok: flag first
+cat a.txt -n b.txt            # -n stops collection; b.txt is then unexpected</code></pre>
+<p>When the array declares an <code>items</code> type, each collected token is coerced to it:</p>
+<pre><code class="language-crystal">schema <span class="o">=</span> <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;positional&quot;: [&quot;values&quot;],
+  &quot;properties&quot;: {
+    &quot;values&quot;: {&quot;type&quot;: &quot;array&quot;, &quot;items&quot;: {&quot;type&quot;: &quot;number&quot;}}
+  }
+})</span>
+
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;stats&quot;</span>, json: schema)
+result <span class="o">=</span> cli.parse([<span class="s">&quot;1&quot;</span>, <span class="s">&quot;-50&quot;</span>, <span class="s">&quot;3.14&quot;</span>])
+<span class="c"># =&gt; {&quot;values&quot;: [1.0, -50.0, 3.14]}</span></code></pre>
+<h3><a id="negative-numbers" class="anchor" href="#negative-numbers">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Negative Numbers</h3>
+<p>A token like <code>-50</code> or <code>-3.14</code> is treated as a value, not a flag — so negative
+numbers work as flag values (<code>--offset -50</code>), as scalar positionals, and inside
+variadic positionals. Only <code>-&lt;letter&gt;</code> tokens are parsed as short flags, so a
+short flag is never confused with a negative number.</p>
 <h3><a id="end-of-options-" class="anchor" href="#end-of-options-">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -492,7 +534,7 @@ myapp --completions zsh &gt; ~/.zfunc/_myapp
 
 # Fish
 myapp --completions fish &gt; ~/.config/fish/completions/myapp.fish</code></pre>
-<p>Out of the box you get completion for subcommand names (including nested), long and short flags, and <code>enum</code> values — all derived from the schema, no extra code.</p>
+<p>Out of the box you get completion for subcommand names (including nested), long and short flags, and <code>enum</code> values (both <code>--mode &lt;Tab&gt;</code> and <code>--mode=&lt;Tab&gt;</code>) — all derived from the schema, no extra code. Values containing <code>:</code> (<code>Expenses:Food</code>) complete as whole words in every shell, including bash, where the shim undoes readline's splitting at <code>=</code> and <code>:</code>.</p>
 <h3><a id="dynamic-completions" class="anchor" href="#dynamic-completions">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -770,9 +812,11 @@ allOf:
 <li>Schemas with <code>$id</code> (no <code>name</code>) are mixins - not registered as subcommands</li>
 <li><code>$ref</code> in <code>allOf</code> resolves to mixins defined in the same file</li>
 <li>Properties are merged; <code>type: object</code> is inferred if missing</li>
+<li><code>required</code> lists are unioned across every mixin and the subcommand itself</li>
 <li>Subcommands explicitly opt-in via <code>allOf</code></li>
 </ul>
 <p>This approach uses standard JSON Schema keywords while keeping mixin definitions alongside subcommands in a single file.</p>
+<p>Note that Jargon <em>flattens</em> <code>allOf</code> rather than evaluating it as a true conjunction: if the same property is defined in more than one subschema, the last definition wins. Strict JSON Schema would intersect the constraints instead. This rarely matters for CLI schemas, but it is a deliberate approximation.</p>
 <h3><a id="json-from-stdin" class="anchor" href="#json-from-stdin">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -817,6 +861,9 @@ myapp --debug  # api-key and host from env, debug from CLI</code></pre>
 <li>Config file defaults</li>
 <li>Schema defaults</li>
 </ol>
+<p>Nested objects merge key by key, so <code>--server.port 1</code> overrides only that key
+and keeps a <code>server.host</code> from the config file. Parsing never modifies the
+<code>defaults:</code> you pass in.</p>
 <h2><a id="config-files" class="anchor" href="#config-files">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -828,20 +875,36 @@ config <span class="o">=</span> cli.load_config  <span class="c"># Returns JSON:
 cli.run(defaults: config) <span class="k">do</span> <span class="o">|</span>result<span class="o">|</span>
   <span class="c"># ...</span>
 <span class="k">end</span></code></pre>
-<p>Paths searched (first found wins, or merged if <code>merge: true</code>):</p>
+<p>Paths searched (merged by default, or first found wins with <code>merge: false</code>):</p>
 <ol>
-<li><code>./.config/myapp.yaml</code> / <code>.yml</code> / <code>.json</code> (project local)</li>
-<li><code>./.config/myapp/config.yaml</code> / <code>.yml</code> / <code>.json</code> (project local, directory style)</li>
+<li><code>./.config/myapp.yaml</code> / <code>.yml</code> / <code>.json</code> (project local, <code>project: true</code> only)</li>
+<li><code>./.config/myapp/config.yaml</code> / <code>.yml</code> / <code>.json</code> (project local, directory style, <code>project: true</code> only)</li>
 <li><code>$XDG_CONFIG_HOME/myapp.yaml</code> / <code>.yml</code> / <code>.json</code> (user global, typically <code>~/.config</code>)</li>
 <li><code>$XDG_CONFIG_HOME/myapp/config.yaml</code> / <code>.yml</code> / <code>.json</code> (user global, directory style)</li>
 </ol>
-<p>YAML is preferred over JSON when both exist at the same location.</p>
-<p>By default, configs are deep-merged with project overriding user:</p>
+<p>YAML is preferred over JSON when both exist at the same location. An empty or
+relative <code>$XDG_CONFIG_HOME</code> is ignored in favor of <code>~/.config</code>, as the XDG spec
+requires.</p>
+<h3><a id="project-local-configs" class="anchor" href="#project-local-configs">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Project-Local Configs</h3>
+<p>By default only the user's own config is read. Project-local configs are opt-in:</p>
+<pre><code class="language-crystal">config <span class="o">=</span> cli.load_config(project: <span class="n">true</span>)</code></pre>
+<p>They are off by default because they are read from the <em>current directory</em>
+and take precedence over the user's config. Running your tool inside a
+directory someone else controls, such as a freshly cloned repository, would
+otherwise let that directory set any option your schema defines. Opt in when
+per-project settings are the point (a formatter's style rules, a build tool's
+targets), and think twice if an option can point the tool at a server, a
+credential, or a command to run.</p>
+<p>When enabled, configs are deep-merged with project overriding user:</p>
 <pre><code class="language-crystal"><span class="c"># Merge all found configs (default) - project wins over user</span>
-config <span class="o">=</span> cli.load_config
+config <span class="o">=</span> cli.load_config(project: <span class="n">true</span>)
 
 <span class="c"># Or first-found wins</span>
-config <span class="o">=</span> cli.load_config(merge: <span class="n">false</span>)</code></pre>
+config <span class="o">=</span> cli.load_config(merge: <span class="n">false</span>, project: <span class="n">true</span>)</code></pre>
 <h3><a id="deep-merge" class="anchor" href="#deep-merge">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -854,7 +917,7 @@ database:
   port: 5432
   user: default_user
 
-# Project config (.config/myapp.yaml)
+# Project config (.config/myapp.yaml, read with project: true)
 database:
   host: production.example.com
 
@@ -868,23 +931,26 @@ database:
     <use href="#octicon-link"/>
   </svg>
 </a>Config Warnings</h3>
-<p>Invalid config files emit warnings to STDERR by default. To suppress:</p>
+<p>Invalid config files (unparseable, or not a mapping at the top level) are
+skipped with a warning to STDERR by default; an empty file is simply ignored.
+To suppress the warnings:</p>
 <pre><code class="language-crystal"><span class="t">Jargon</span>.config_warnings <span class="o">=</span> <span class="n">false</span>
 config <span class="o">=</span> cli.load_config
 <span class="t">Jargon</span>.config_warnings <span class="o">=</span> <span class="n">true</span></code></pre>
-<p>Example project config (<code>.config/myapp.yaml</code>):</p>
+<p>Example config (<code>~/.config/myapp.yaml</code>):</p>
 <pre><code class="language-yaml">host: localhost
 port: 8080
 debug: true</code></pre>
-<p>Or JSON (<code>.config/myapp.json</code>):</p>
+<p>Or JSON (<code>~/.config/myapp.json</code>):</p>
 <pre><code class="language-json">{
   &quot;host&quot;: &quot;localhost&quot;,
   &quot;port&quot;: 8080,
   &quot;debug&quot;: true
 }</code></pre>
-<p>The <code>defaults:</code> parameter accepts any JSON-like data, so you can load config however you prefer:</p>
+<p>The <code>defaults:</code> parameter accepts a JSON object (<code>JSON::Any</code> or
+<code>Hash(String, JSON::Any)</code>), so you can load config however you prefer:</p>
 <pre><code class="language-crystal"><span class="c"># From YAML</span>
-config <span class="o">=</span> <span class="t">YAML</span>.parse(<span class="t">File</span>.read(<span class="s">&quot;config.yaml&quot;</span>))
+config <span class="o">=</span> <span class="t">JSON</span>.parse(<span class="t">YAML</span>.parse(<span class="t">File</span>.read(<span class="s">&quot;config.yaml&quot;</span>)).to_json)
 cli.run(defaults: config) { <span class="o">|</span>result<span class="o">|</span> ... }
 
 <span class="c"># From JSON</span>
@@ -986,9 +1052,10 @@ data <span class="o">=</span> cli.json(<span class="t">ARGV</span>)
 data <span class="o">=</span> cli.json(<span class="t">ARGV</span>, defaults: config)
 
 <span class="c"># Config file loading</span>
-config <span class="o">=</span> cli.load_config              <span class="c"># merge all found configs (project wins)</span>
-config <span class="o">=</span> cli.load_config(merge: <span class="n">false</span>) <span class="c"># first found wins</span>
-paths <span class="o">=</span> cli.config_paths              <span class="c"># list of paths searched</span>
+config <span class="o">=</span> cli.load_config                <span class="c"># merge user configs found</span>
+config <span class="o">=</span> cli.load_config(project: <span class="n">true</span>) <span class="c"># also ./.config/ (project wins)</span>
+config <span class="o">=</span> cli.load_config(merge: <span class="n">false</span>)  <span class="c"># first found wins</span>
+paths <span class="o">=</span> cli.config_paths                <span class="c"># list of paths searched (takes project: too)</span>
 
 <span class="c"># Result methods (from parse or run)</span>
 result.valid?      <span class="c"># =&gt; true/false</span>

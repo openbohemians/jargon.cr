@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.20.2">
+<meta name="generator" content="Crystal Docs 1.22.0">
 <meta name="crystal_docs.project_version" content="main-dev">
 <meta name="crystal_docs.project_name" content="jargon">
 
@@ -79,6 +79,11 @@
   
 </ul>
 
+      
+    </li>
+  
+  <li class=" " data-id="jargon/Jargon/Defaults" data-name="jargon::defaults">
+      <a href="../Jargon/Defaults.html">Defaults</a>
       
     </li>
   
@@ -254,6 +259,8 @@ CLI#handle_completion.</p>
       <li class="entry-summary">
         <a href="#bash%28command%3AString%29%3AString-instance-method" class="signature"><strong>#bash</strong>(command : String) : String</a>
         
+          <div class="summary"><p>Bash splits words at <code>=</code> and <code>:</code> (they are in COMP_WORDBREAKS), so <code>--mode=fa</code> arrives as <code>--mode</code>, <code>=</code>, <code>fa</code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
@@ -354,6 +361,15 @@ CLI#handle_completion.</p>
 
         <a class="method-permalink" href="#bash%28command%3AString%29%3AString-instance-method">#</a>
       </div>
+      
+        <div class="doc">
+          
+          <p>Bash splits words at <code>=</code> and <code>:</code> (they are in COMP_WORDBREAKS), so
+<code>--mode=fa</code> arrives as <code>--mode</code>, <code>=</code>, <code>fa</code>. The shim rejoins pieces that
+have no whitespace between them in COMP_LINE, so the program sees the
+same words zsh and fish report, then trims each candidate back to the
+part after the last break, which is all readline replaces.</p>
+        </div>
       
       <br/>
       <div>
