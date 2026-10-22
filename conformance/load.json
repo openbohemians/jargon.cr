@@ -24,7 +24,32 @@
         "op": "subcommand_file",
         "name": null,
         "ext": ".yaml",
-        "text": "---\n$id: dummy\nproperties:\n  x: {type: string}\n---\nname: fetch\nallOf:\n  - {$ref: nonexistent}\n  - properties:\n      url:\n        type: string"
+        "text": "---\n$id: dummy\nproperties:\n  x: {type: string}\n---\nname: fetch\nallOf:\n  - {$ref: nonexistent}\n  - properties:\n      url:\n        type: string",
+        "documents": [
+          {
+            "$id": "dummy",
+            "properties": {
+              "x": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "fetch",
+            "allOf": [
+              {
+                "$ref": "nonexistent"
+              },
+              {
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        ]
       }
     ],
     "expect": {
@@ -42,7 +67,26 @@
         "op": "subcommand_file",
         "name": null,
         "ext": ".yaml",
-        "text": "---\ntype: object\nproperties:\n  url:\n    type: string\n---\nname: save\ntype: object\nproperties:\n  file:\n    type: string"
+        "text": "---\ntype: object\nproperties:\n  url:\n    type: string\n---\nname: save\ntype: object\nproperties:\n  file:\n    type: string",
+        "documents": [
+          {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "save",
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string"
+              }
+            }
+          }
+        ]
       }
     ],
     "expect": {

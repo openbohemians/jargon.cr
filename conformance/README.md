@@ -1,7 +1,7 @@
 # Conformance cases
 
 Language-neutral test cases for other implementations of Jargon, such as
-[jargon.rs](../../jargon.rs). Each case is a public Jargon call made by the
+[jargon.rs](https://github.com/openbohemians/jargon.rs). Each case is a public Jargon call made by the
 spec suite, with its inputs and what this implementation returned, recorded
 by `recorder.cr` during a spec run:
 
@@ -32,6 +32,11 @@ A case's `cli` lists the calls that build its CLI, in order:
 - `subcommand_file`: one from a file's `ext` and `text`; `name` is null for a multi-document file of named subcommands
 - `subcommand_cli`: a nested CLI, whose own calls are in `cli`
 - `default_subcommand` (`name`), `subcommand_key` (`key`), `bare_assignment` (`value`)
+
+A YAML source (`from_yaml`, `subcommand_yaml`, or a file whose `ext` is
+`.yaml` or `.yml`) also has `documents`: each YAML document as this
+implementation read it, in JSON, for an implementation without YAML to
+replay the case from. It is null when the YAML doesn't parse.
 
 `expect` is the result: for a parse, `data`, `errors`, `subcommand`, `help`,
 `help_subcommand` and `completion_shell`; `{"raises": message}` when the

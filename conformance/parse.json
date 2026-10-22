@@ -3810,7 +3810,17 @@
         "op": "subcommand_file",
         "name": "fetch",
         "ext": ".yaml",
-        "text": "type: object\nproperties:\n  url:\n    type: string"
+        "text": "type: object\nproperties:\n  url:\n    type: string",
+        "documents": [
+          {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string"
+              }
+            }
+          }
+        ]
       }
     ],
     "args": [
@@ -3840,7 +3850,27 @@
         "op": "subcommand_file",
         "name": null,
         "ext": ".yaml",
-        "text": "---\nname: fetch\ntype: object\nproperties:\n  url:\n    type: string\n---\nname: save\ntype: object\nproperties:\n  file:\n    type: string"
+        "text": "---\nname: fetch\ntype: object\nproperties:\n  url:\n    type: string\n---\nname: save\ntype: object\nproperties:\n  file:\n    type: string",
+        "documents": [
+          {
+            "name": "fetch",
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "save",
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string"
+              }
+            }
+          }
+        ]
       }
     ],
     "args": [
@@ -3870,7 +3900,27 @@
         "op": "subcommand_file",
         "name": null,
         "ext": ".yaml",
-        "text": "---\nname: fetch\ntype: object\nproperties:\n  url:\n    type: string\n---\nname: save\ntype: object\nproperties:\n  file:\n    type: string"
+        "text": "---\nname: fetch\ntype: object\nproperties:\n  url:\n    type: string\n---\nname: save\ntype: object\nproperties:\n  file:\n    type: string",
+        "documents": [
+          {
+            "name": "fetch",
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "save",
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string"
+              }
+            }
+          }
+        ]
       }
     ],
     "args": [
@@ -3956,7 +4006,27 @@
         "op": "from_file",
         "program": "myapp",
         "ext": ".yaml",
-        "text": "---\nname: run\ntype: object\nproperties:\n  verbose:\n    type: boolean\n---\nname: build\ntype: object\nproperties:\n  output:\n    type: string"
+        "text": "---\nname: run\ntype: object\nproperties:\n  verbose:\n    type: boolean\n---\nname: build\ntype: object\nproperties:\n  output:\n    type: string",
+        "documents": [
+          {
+            "name": "run",
+            "type": "object",
+            "properties": {
+              "verbose": {
+                "type": "boolean"
+              }
+            }
+          },
+          {
+            "name": "build",
+            "type": "object",
+            "properties": {
+              "output": {
+                "type": "string"
+              }
+            }
+          }
+        ]
       }
     ],
     "args": [
@@ -3981,7 +4051,27 @@
         "op": "from_file",
         "program": "myapp",
         "ext": ".yaml",
-        "text": "---\nname: run\ntype: object\nproperties:\n  verbose:\n    type: boolean\n---\nname: build\ntype: object\nproperties:\n  output:\n    type: string"
+        "text": "---\nname: run\ntype: object\nproperties:\n  verbose:\n    type: boolean\n---\nname: build\ntype: object\nproperties:\n  output:\n    type: string",
+        "documents": [
+          {
+            "name": "run",
+            "type": "object",
+            "properties": {
+              "verbose": {
+                "type": "boolean"
+              }
+            }
+          },
+          {
+            "name": "build",
+            "type": "object",
+            "properties": {
+              "output": {
+                "type": "string"
+              }
+            }
+          }
+        ]
       }
     ],
     "args": [
@@ -4056,7 +4146,27 @@
       {
         "op": "from_yaml",
         "program": "myapp",
-        "text": "---\nname: start\ntype: object\nproperties:\n  port:\n    type: integer\n---\nname: stop\ntype: object\nproperties:\n  force:\n    type: boolean"
+        "text": "---\nname: start\ntype: object\nproperties:\n  port:\n    type: integer\n---\nname: stop\ntype: object\nproperties:\n  force:\n    type: boolean",
+        "documents": [
+          {
+            "name": "start",
+            "type": "object",
+            "properties": {
+              "port": {
+                "type": "integer"
+              }
+            }
+          },
+          {
+            "name": "stop",
+            "type": "object",
+            "properties": {
+              "force": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
       }
     ],
     "args": [
@@ -4081,7 +4191,27 @@
       {
         "op": "from_yaml",
         "program": "myapp",
-        "text": "---\nname: start\ntype: object\nproperties:\n  port:\n    type: integer\n---\nname: stop\ntype: object\nproperties:\n  force:\n    type: boolean"
+        "text": "---\nname: start\ntype: object\nproperties:\n  port:\n    type: integer\n---\nname: stop\ntype: object\nproperties:\n  force:\n    type: boolean",
+        "documents": [
+          {
+            "name": "start",
+            "type": "object",
+            "properties": {
+              "port": {
+                "type": "integer"
+              }
+            }
+          },
+          {
+            "name": "stop",
+            "type": "object",
+            "properties": {
+              "force": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
       }
     ],
     "args": [
@@ -4105,7 +4235,36 @@
       {
         "op": "from_yaml",
         "program": "myapp",
-        "text": "---\nname: fmt\ndescription: Format files\npositional: [file]\nproperties:\n  file:\n    type: string\n  output:\n    type: string\n    short: o\n    description: Output path\n---\nname: check\ndescription: Check files\nproperties:\n  group:\n    type: string\n    short: g"
+        "text": "---\nname: fmt\ndescription: Format files\npositional: [file]\nproperties:\n  file:\n    type: string\n  output:\n    type: string\n    short: o\n    description: Output path\n---\nname: check\ndescription: Check files\nproperties:\n  group:\n    type: string\n    short: g",
+        "documents": [
+          {
+            "name": "fmt",
+            "description": "Format files",
+            "positional": [
+              "file"
+            ],
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "output": {
+                "type": "string",
+                "short": "o",
+                "description": "Output path"
+              }
+            }
+          },
+          {
+            "name": "check",
+            "description": "Check files",
+            "properties": {
+              "group": {
+                "type": "string",
+                "short": "g"
+              }
+            }
+          }
+        ]
       }
     ],
     "args": [
@@ -4132,7 +4291,36 @@
       {
         "op": "from_yaml",
         "program": "myapp",
-        "text": "---\nname: fmt\ndescription: Format files\npositional: [file]\nproperties:\n  file:\n    type: string\n  output:\n    type: string\n    short: o\n    description: Output path\n---\nname: check\ndescription: Check files\nproperties:\n  group:\n    type: string\n    short: g"
+        "text": "---\nname: fmt\ndescription: Format files\npositional: [file]\nproperties:\n  file:\n    type: string\n  output:\n    type: string\n    short: o\n    description: Output path\n---\nname: check\ndescription: Check files\nproperties:\n  group:\n    type: string\n    short: g",
+        "documents": [
+          {
+            "name": "fmt",
+            "description": "Format files",
+            "positional": [
+              "file"
+            ],
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "output": {
+                "type": "string",
+                "short": "o",
+                "description": "Output path"
+              }
+            }
+          },
+          {
+            "name": "check",
+            "description": "Check files",
+            "properties": {
+              "group": {
+                "type": "string",
+                "short": "g"
+              }
+            }
+          }
+        ]
       }
     ],
     "args": [
@@ -4159,7 +4347,36 @@
       {
         "op": "from_yaml",
         "program": "myapp",
-        "text": "---\nname: fmt\ndescription: Format files\npositional: [file]\nproperties:\n  file:\n    type: string\n  output:\n    type: string\n    short: o\n    description: Output path\n---\nname: check\ndescription: Check files\nproperties:\n  group:\n    type: string\n    short: g"
+        "text": "---\nname: fmt\ndescription: Format files\npositional: [file]\nproperties:\n  file:\n    type: string\n  output:\n    type: string\n    short: o\n    description: Output path\n---\nname: check\ndescription: Check files\nproperties:\n  group:\n    type: string\n    short: g",
+        "documents": [
+          {
+            "name": "fmt",
+            "description": "Format files",
+            "positional": [
+              "file"
+            ],
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "output": {
+                "type": "string",
+                "short": "o",
+                "description": "Output path"
+              }
+            }
+          },
+          {
+            "name": "check",
+            "description": "Check files",
+            "properties": {
+              "group": {
+                "type": "string",
+                "short": "g"
+              }
+            }
+          }
+        ]
       }
     ],
     "args": [
@@ -4189,7 +4406,30 @@
         "op": "subcommand_file",
         "name": "config",
         "ext": ".yaml",
-        "text": "---\nname: get\ntype: object\nproperties:\n  key:\n    type: string\n---\nname: set\ntype: object\nproperties:\n  key:\n    type: string\n  value:\n    type: string"
+        "text": "---\nname: get\ntype: object\nproperties:\n  key:\n    type: string\n---\nname: set\ntype: object\nproperties:\n  key:\n    type: string\n  value:\n    type: string",
+        "documents": [
+          {
+            "name": "get",
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "set",
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            }
+          }
+        ]
       }
     ],
     "args": [
@@ -4220,7 +4460,30 @@
         "op": "subcommand_file",
         "name": "config",
         "ext": ".yaml",
-        "text": "---\nname: get\ntype: object\nproperties:\n  key:\n    type: string\n---\nname: set\ntype: object\nproperties:\n  key:\n    type: string\n  value:\n    type: string"
+        "text": "---\nname: get\ntype: object\nproperties:\n  key:\n    type: string\n---\nname: set\ntype: object\nproperties:\n  key:\n    type: string\n  value:\n    type: string",
+        "documents": [
+          {
+            "name": "get",
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "set",
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            }
+          }
+        ]
       }
     ],
     "args": [
@@ -4249,7 +4512,57 @@
       {
         "op": "from_yaml",
         "program": "myapp",
-        "text": "---\n$id: output\nproperties:\n  format: {type: string}\nrequired: [format]\n---\n$id: auth\nproperties:\n  token: {type: string}\nrequired: [token]\n---\nname: first\nallOf:\n  - {$ref: output}\n  - properties:\n      only_first: {type: string}\n---\nname: second\nallOf:\n  - {$ref: output}\n  - {$ref: auth}"
+        "text": "---\n$id: output\nproperties:\n  format: {type: string}\nrequired: [format]\n---\n$id: auth\nproperties:\n  token: {type: string}\nrequired: [token]\n---\nname: first\nallOf:\n  - {$ref: output}\n  - properties:\n      only_first: {type: string}\n---\nname: second\nallOf:\n  - {$ref: output}\n  - {$ref: auth}",
+        "documents": [
+          {
+            "$id": "output",
+            "properties": {
+              "format": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "format"
+            ]
+          },
+          {
+            "$id": "auth",
+            "properties": {
+              "token": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "token"
+            ]
+          },
+          {
+            "name": "first",
+            "allOf": [
+              {
+                "$ref": "output"
+              },
+              {
+                "properties": {
+                  "only_first": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "second",
+            "allOf": [
+              {
+                "$ref": "output"
+              },
+              {
+                "$ref": "auth"
+              }
+            ]
+          }
+        ]
       }
     ],
     "args": [
@@ -4277,7 +4590,36 @@
       {
         "op": "from_yaml",
         "program": "myapp",
-        "text": "---\n$id: output\nproperties:\n  format: {type: string}\nrequired: [format]\n---\nname: report\nallOf:\n  - {$ref: output}\nproperties:\n  title: {type: string}\nrequired: [title]"
+        "text": "---\n$id: output\nproperties:\n  format: {type: string}\nrequired: [format]\n---\nname: report\nallOf:\n  - {$ref: output}\nproperties:\n  title: {type: string}\nrequired: [title]",
+        "documents": [
+          {
+            "$id": "output",
+            "properties": {
+              "format": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "format"
+            ]
+          },
+          {
+            "name": "report",
+            "allOf": [
+              {
+                "$ref": "output"
+              }
+            ],
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ]
+          }
+        ]
       }
     ],
     "args": [
@@ -4304,7 +4646,36 @@
       {
         "op": "from_yaml",
         "program": "myapp",
-        "text": "---\n$id: output\nproperties:\n  format: {type: string}\nrequired: [format]\n---\nname: report\nallOf:\n  - {$ref: output}\nproperties:\n  title: {type: string}\nrequired: [title]"
+        "text": "---\n$id: output\nproperties:\n  format: {type: string}\nrequired: [format]\n---\nname: report\nallOf:\n  - {$ref: output}\nproperties:\n  title: {type: string}\nrequired: [title]",
+        "documents": [
+          {
+            "$id": "output",
+            "properties": {
+              "format": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "format"
+            ]
+          },
+          {
+            "name": "report",
+            "allOf": [
+              {
+                "$ref": "output"
+              }
+            ],
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ]
+          }
+        ]
       }
     ],
     "args": [
@@ -4337,7 +4708,53 @@
         "op": "subcommand_file",
         "name": null,
         "ext": ".yaml",
-        "text": "---\n$id: global\ntype: object\nproperties:\n  verbose:\n    type: boolean\n    short: v\n  config:\n    type: string\n    short: c\n---\nname: fetch\nallOf:\n  - {$ref: global}\n  - properties:\n      url:\n        type: string\n---\nname: save\nallOf:\n  - {$ref: global}\n  - properties:\n      file:\n        type: string"
+        "text": "---\n$id: global\ntype: object\nproperties:\n  verbose:\n    type: boolean\n    short: v\n  config:\n    type: string\n    short: c\n---\nname: fetch\nallOf:\n  - {$ref: global}\n  - properties:\n      url:\n        type: string\n---\nname: save\nallOf:\n  - {$ref: global}\n  - properties:\n      file:\n        type: string",
+        "documents": [
+          {
+            "$id": "global",
+            "type": "object",
+            "properties": {
+              "verbose": {
+                "type": "boolean",
+                "short": "v"
+              },
+              "config": {
+                "type": "string",
+                "short": "c"
+              }
+            }
+          },
+          {
+            "name": "fetch",
+            "allOf": [
+              {
+                "$ref": "global"
+              },
+              {
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "save",
+            "allOf": [
+              {
+                "$ref": "global"
+              },
+              {
+                "properties": {
+                  "file": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        ]
       }
     ],
     "args": [
@@ -4372,7 +4789,53 @@
         "op": "subcommand_file",
         "name": null,
         "ext": ".yaml",
-        "text": "---\n$id: global\ntype: object\nproperties:\n  verbose:\n    type: boolean\n    short: v\n  config:\n    type: string\n    short: c\n---\nname: fetch\nallOf:\n  - {$ref: global}\n  - properties:\n      url:\n        type: string\n---\nname: save\nallOf:\n  - {$ref: global}\n  - properties:\n      file:\n        type: string"
+        "text": "---\n$id: global\ntype: object\nproperties:\n  verbose:\n    type: boolean\n    short: v\n  config:\n    type: string\n    short: c\n---\nname: fetch\nallOf:\n  - {$ref: global}\n  - properties:\n      url:\n        type: string\n---\nname: save\nallOf:\n  - {$ref: global}\n  - properties:\n      file:\n        type: string",
+        "documents": [
+          {
+            "$id": "global",
+            "type": "object",
+            "properties": {
+              "verbose": {
+                "type": "boolean",
+                "short": "v"
+              },
+              "config": {
+                "type": "string",
+                "short": "c"
+              }
+            }
+          },
+          {
+            "name": "fetch",
+            "allOf": [
+              {
+                "$ref": "global"
+              },
+              {
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "save",
+            "allOf": [
+              {
+                "$ref": "global"
+              },
+              {
+                "properties": {
+                  "file": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        ]
       }
     ],
     "args": [
@@ -4407,7 +4870,49 @@
         "op": "subcommand_file",
         "name": null,
         "ext": ".yaml",
-        "text": "---\n$id: global\nproperties:\n  verbose:\n    type: boolean\n    short: v\n---\n$id: output\nproperties:\n  format:\n    type: string\n    enum: [json, yaml, csv]\n---\nname: export\nallOf:\n  - {$ref: global}\n  - {$ref: output}\n  - properties:\n      file:\n        type: string"
+        "text": "---\n$id: global\nproperties:\n  verbose:\n    type: boolean\n    short: v\n---\n$id: output\nproperties:\n  format:\n    type: string\n    enum: [json, yaml, csv]\n---\nname: export\nallOf:\n  - {$ref: global}\n  - {$ref: output}\n  - properties:\n      file:\n        type: string",
+        "documents": [
+          {
+            "$id": "global",
+            "properties": {
+              "verbose": {
+                "type": "boolean",
+                "short": "v"
+              }
+            }
+          },
+          {
+            "$id": "output",
+            "properties": {
+              "format": {
+                "type": "string",
+                "enum": [
+                  "json",
+                  "yaml",
+                  "csv"
+                ]
+              }
+            }
+          },
+          {
+            "name": "export",
+            "allOf": [
+              {
+                "$ref": "global"
+              },
+              {
+                "$ref": "output"
+              },
+              {
+                "properties": {
+                  "file": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        ]
       }
     ],
     "args": [
@@ -4437,7 +4942,31 @@
       {
         "op": "from_yaml",
         "program": "transfs",
-        "text": "---\nname: forget\nx-ui:\n  destructive: true\nproperties:\n  query:\n    type: string\n    x-ui:\n      control: typeahead\n---\nname: add\nproperties:\n  file:\n    type: string"
+        "text": "---\nname: forget\nx-ui:\n  destructive: true\nproperties:\n  query:\n    type: string\n    x-ui:\n      control: typeahead\n---\nname: add\nproperties:\n  file:\n    type: string",
+        "documents": [
+          {
+            "name": "forget",
+            "x-ui": {
+              "destructive": true
+            },
+            "properties": {
+              "query": {
+                "type": "string",
+                "x-ui": {
+                  "control": "typeahead"
+                }
+              }
+            }
+          },
+          {
+            "name": "add",
+            "properties": {
+              "file": {
+                "type": "string"
+              }
+            }
+          }
+        ]
       }
     ],
     "args": [

@@ -9,6 +9,7 @@
 # regenerated, never edited by hand. A case's `cli` is the list of calls that
 # rebuilt its CLI, replayable in order.
 require "json"
+require "yaml"
 
 module Jargon
   module Conformance
@@ -32,6 +33,27 @@ module Jargon
 
     def self.op(**fields) : Op
       Op.new(any(fields).as_h)
+    end
+
+    # The op for a YAML source, which also carries its documents as JSON,
+    # so an implementation without YAML (jargon.rs) can replay it. They
+    # are null when the YAML doesn't parse.
+    def self.yaml_op(**fields) : Op
+      op = op(**fields)
+      op.fields["documents"] = any(yaml_documents(op.fields["text"].as_s))
+      op
+    end
+
+    # The op for a schema file, from its extension and content.
+    def self.file_op(path : String, **fields) : Op
+      fields = fields.merge(ext: File.extname(path), text: File.read(path))
+      path.ends_with?(".yaml") || path.ends_with?(".yml") ? yaml_op(**fields) : op(**fields)
+    end
+
+    def self.yaml_documents(text : String) : Array(JSON::Any)?
+      YAML.parse_all(text).map { |doc| JSON.parse(doc.to_json) }
+    rescue YAML::ParseException
+      nil
     end
 
     def self.recipe(ops : Array(Op)) : JSON::Any
@@ -200,14 +222,14 @@ module Jargon
     end
 
     def self.from_yaml(yaml : String, program_name : String = "cli") : CLI
-      ops = [Conformance.op(op: "from_yaml", program: program_name, text: yaml)]
+      ops = [Conformance.yaml_op(op: "from_yaml", program: program_name, text: yaml)]
       cli = Conformance.call("load", {"cli" => Conformance.recipe(ops)}, successes: false) { previous_def }
       cli.conformance_ops = ops
       cli
     end
 
     def self.from_file(path : String, program_name : String = "cli") : CLI
-      ops = [Conformance.op(op: "from_file", program: program_name, ext: File.extname(path), text: File.read(path))]
+      ops = [Conformance.file_op(path, op: "from_file", program: program_name)]
       cli = Conformance.call("load", {"cli" => Conformance.recipe(ops)}, successes: false) { previous_def }
       cli.conformance_ops = ops
       cli
@@ -228,15 +250,15 @@ module Jargon
     end
 
     def subcommand(name : String, *, yaml : String)
-      add_subcommand_op(Conformance.op(op: "subcommand_yaml", name: name, text: yaml)) { previous_def }
+      add_subcommand_op(Conformance.yaml_op(op: "subcommand_yaml", name: name, text: yaml)) { previous_def }
     end
 
     def subcommand(name : String, *, file : String)
-      add_subcommand_op(Conformance.op(op: "subcommand_file", name: name, ext: File.extname(file), text: File.read(file))) { previous_def }
+      add_subcommand_op(Conformance.file_op(file, op: "subcommand_file", name: name)) { previous_def }
     end
 
     def subcommand(*, file : String)
-      add_subcommand_op(Conformance.op(op: "subcommand_file", name: nil, ext: File.extname(file), text: File.read(file))) { previous_def }
+      add_subcommand_op(Conformance.file_op(file, op: "subcommand_file", name: nil)) { previous_def }
     end
 
     private def add_subcommand_op(op : Conformance::Op, &) : Nil

@@ -17,7 +17,36 @@
       {
         "op": "from_yaml",
         "program": "myapp",
-        "text": "---\nname: fmt\ndescription: Format files\npositional: [file]\nproperties:\n  file:\n    type: string\n  output:\n    type: string\n    short: o\n    description: Output path\n---\nname: check\ndescription: Check files\nproperties:\n  group:\n    type: string\n    short: g"
+        "text": "---\nname: fmt\ndescription: Format files\npositional: [file]\nproperties:\n  file:\n    type: string\n  output:\n    type: string\n    short: o\n    description: Output path\n---\nname: check\ndescription: Check files\nproperties:\n  group:\n    type: string\n    short: g",
+        "documents": [
+          {
+            "name": "fmt",
+            "description": "Format files",
+            "positional": [
+              "file"
+            ],
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "output": {
+                "type": "string",
+                "short": "o",
+                "description": "Output path"
+              }
+            }
+          },
+          {
+            "name": "check",
+            "description": "Check files",
+            "properties": {
+              "group": {
+                "type": "string",
+                "short": "g"
+              }
+            }
+          }
+        ]
       }
     ],
     "subcommand": "fmt",
