@@ -139,10 +139,26 @@ Raised 2026-10-22, when v0.21.0 made project-local configs opt-in
   - *Finer still, per option:* mark individual options as user-config-only, so a project file can set `style` but never `server`. More precise trust, but a new schema keyword.
 - **Config keys cross subcommands (related, confirmed).** A config file is one flat hash handed to whichever subcommand runs, and `defaults:` copies *every* key into the result. So a key meant for `fetch` (`url`) appears in `fmt`'s data, and fails validation there if `fmt` has `additionalProperties: false`. Options: drop default keys the dispatched schema doesn't define, and/or support per-subcommand sections in the file (`fetch: {url: ...}`). Either is worth settling together with the item above, since both decide how config maps onto subcommands.
 
+### Bugs Found by the Rust Port
+
+Found 2026-10-22 while porting to Rust (`~/Projects/jargon.rs`), where these behave correctly. Fixing one here changes its conformance cases; re-record with `just conformance` and resync jargon.rs.
+
+- **Help prints non-string defaults in Crystal's inspect form.** `[default: #{prop.default}]` uses `JSON::Any#to_s`, so an array default shows as `[JSON::Any(1)]`, an object as `{"a" => JSON::Any(1)}`, and a null default as `[default: ]`. Fix: `prop.default.as_s? || prop.default.to_json`, as the validation messages already do.
+- **`nan` and `inf` are accepted as numbers.** `String#to_f64?` reads `nan`, `inf` and `Infinity`, so `--ratio nan` parses, but the value can't be written as JSON (`to_json` raises). Fix: reject non-finite values in `coerce_scalar`.
+- **A large whole-number bound crashes validation.** `Validator.format_num` calls `n.to_i`, which is Int32, so a bound such as `maximum: 3e9` raises OverflowError when a value violates it. Fix: `to_i64` with a range check.
+- **Built-in formats accept a trailing newline.** PCRE's `$` also matches before a final `\n`, so `"a@b.co\n"` is a valid email, and likewise for uuid, date, time and the others. Fix: `\z` instead of `$`. User `pattern`s have the same `$`, where JSON Schema (ECMA-262) means end of input only; the DOLLAR_ENDONLY option would fix those.
+- **A nested subcommand's help names only the nested CLI.** `help("remote add")` prints `Usage: remote add <name> [options]`, using the nested CLI's own program name, instead of `Usage: git remote add ...`. Fix: pass the parent's path down to the nested help.
+- **YAML dates become timestamps.** Crystal's YAML types a plain `2026-10-22` as a time, so it reaches Jargon as `"2026-10-22T00:00:00Z"`, and a `format: date` field then fails on its own YAML default or config value. Reported to @oyl, asking whether oyl.cr could read YAML to JSON with dates kept as strings.
+- **To consider: type errors name Crystal classes.** "Invalid type for x: expected Integer, got Hash(String, JSON::Any)" shows an end user Crystal's internals. JSON names ("got object", "got integer") would read better, and other implementations wouldn't have to imitate Crystal's class names (jargon.rs does for now).
+
 ### Other Ideas
 
 - Man page generation
 - Config file generation from schema
 - Shell completion for enum values with descriptions
 - Strict `allOf` property intersection — `merge_allof` flattens with last-wins when the same property appears in multiple subschemas; true JSON Schema semantics would intersect the constraints (e.g. both `enum` lists must hold). Low priority, but noted in the README.
-- Promo graphic for the docs site — a 2048×2048 "ad" image (green/orange circuit-board style, schema → generated CLI, feature icons) was generated Jun 2026 and moved to the asset store pending fixes: the schema snippet shows a bogus `"type": "user"`, and the terminal example (`--user 'Alex' --log`) should reflect real usage. Once corrected, downsize/compress (6.5 MB → well under 500 KB) and add it to `docs/` as a hero or `og:image`.
+- Promo graphic for the docs site: `docs/assets/ad.webp` is a 2048×2048 "ad" image (green/orange circuit-board style, schema → generated CLI, feature icons), generated Jun 2026. It was a 6.5 MB PNG and is now a 266 KB WebP. Nothing references it yet; it could serve as a hero image or `og:image`. Known content flaws:
+  - The schema snippet shows a bogus `"type": "user"`.
+  - The terminal example (`--user 'Alex' --log`) doesn't reflect real usage.
+  - Shell completions lists only bash and zsh, not fish.
+  - The help label reads `–help` (en dash) instead of `--help`.
