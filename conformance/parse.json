@@ -191,6 +191,193 @@
     }
   },
   {
+    "spec": "type coercion > reports a value that doesn't convert once, not again in validation",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\"},\n          \"level\": {\"type\": \"integer\", \"enum\": [1, 2, 3]},\n          \"ids\": {\"type\": \"array\", \"items\": {\"type\": \"integer\"}},\n          \"server\": {\"type\": \"object\", \"properties\": {\"port\": {\"type\": \"integer\", \"minimum\": 1}}},\n          \"debug\": {\"type\": \"boolean\", \"env\": \"JARGON_SPEC_DEBUG\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "--count",
+      "two"
+    ],
+    "expect": {
+      "data": {
+        "count": "two"
+      },
+      "errors": [
+        "Invalid integer value 'two' for count"
+      ],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > reports a value that doesn't convert once, not again in validation",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\"},\n          \"level\": {\"type\": \"integer\", \"enum\": [1, 2, 3]},\n          \"ids\": {\"type\": \"array\", \"items\": {\"type\": \"integer\"}},\n          \"server\": {\"type\": \"object\", \"properties\": {\"port\": {\"type\": \"integer\", \"minimum\": 1}}},\n          \"debug\": {\"type\": \"boolean\", \"env\": \"JARGON_SPEC_DEBUG\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "--level",
+      "two"
+    ],
+    "expect": {
+      "data": {
+        "level": "two"
+      },
+      "errors": [
+        "Invalid integer value 'two' for level"
+      ],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > reports a value that doesn't convert once, not again in validation",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\"},\n          \"level\": {\"type\": \"integer\", \"enum\": [1, 2, 3]},\n          \"ids\": {\"type\": \"array\", \"items\": {\"type\": \"integer\"}},\n          \"server\": {\"type\": \"object\", \"properties\": {\"port\": {\"type\": \"integer\", \"minimum\": 1}}},\n          \"debug\": {\"type\": \"boolean\", \"env\": \"JARGON_SPEC_DEBUG\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "--ids",
+      "1,x"
+    ],
+    "expect": {
+      "data": {
+        "ids": [
+          1,
+          "x"
+        ]
+      },
+      "errors": [
+        "Invalid integer value 'x' for ids"
+      ],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > reports a value that doesn't convert once, not again in validation",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\"},\n          \"level\": {\"type\": \"integer\", \"enum\": [1, 2, 3]},\n          \"ids\": {\"type\": \"array\", \"items\": {\"type\": \"integer\"}},\n          \"server\": {\"type\": \"object\", \"properties\": {\"port\": {\"type\": \"integer\", \"minimum\": 1}}},\n          \"debug\": {\"type\": \"boolean\", \"env\": \"JARGON_SPEC_DEBUG\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "--server.port",
+      "http"
+    ],
+    "expect": {
+      "data": {
+        "server": {
+          "port": "http"
+        }
+      },
+      "errors": [
+        "Invalid integer value 'http' for server.port"
+      ],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > reports a value that doesn't convert once, not again in validation",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\"},\n          \"level\": {\"type\": \"integer\", \"enum\": [1, 2, 3]},\n          \"ids\": {\"type\": \"array\", \"items\": {\"type\": \"integer\"}},\n          \"server\": {\"type\": \"object\", \"properties\": {\"port\": {\"type\": \"integer\", \"minimum\": 1}}},\n          \"debug\": {\"type\": \"boolean\", \"env\": \"JARGON_SPEC_DEBUG\"}\n        }\n      }"
+      }
+    ],
+    "args": [],
+    "env": {
+      "JARGON_SPEC_DEBUG": "maybe"
+    },
+    "expect": {
+      "data": {
+        "debug": "maybe"
+      },
+      "errors": [
+        "Invalid boolean value 'maybe' for debug. Use: true/false, yes/no, on/off, 1/0"
+      ],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > reports a value that doesn't convert once, not again in validation",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\"},\n          \"level\": {\"type\": \"integer\", \"enum\": [1, 2, 3]},\n          \"ids\": {\"type\": \"array\", \"items\": {\"type\": \"integer\"}},\n          \"server\": {\"type\": \"object\", \"properties\": {\"port\": {\"type\": \"integer\", \"minimum\": 1}}},\n          \"debug\": {\"type\": \"boolean\", \"env\": \"JARGON_SPEC_DEBUG\"}\n        }\n      }"
+      }
+    ],
+    "args": [],
+    "defaults": {
+      "count": "two"
+    },
+    "expect": {
+      "data": {
+        "count": "two"
+      },
+      "errors": [
+        "Invalid type for count: expected integer, got string"
+      ],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > reports a value that doesn't convert once, not again in validation",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\"},\n          \"level\": {\"type\": \"integer\", \"enum\": [1, 2, 3]},\n          \"ids\": {\"type\": \"array\", \"items\": {\"type\": \"integer\"}},\n          \"server\": {\"type\": \"object\", \"properties\": {\"port\": {\"type\": \"integer\", \"minimum\": 1}}},\n          \"debug\": {\"type\": \"boolean\", \"env\": \"JARGON_SPEC_DEBUG\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "--level",
+      "5"
+    ],
+    "expect": {
+      "data": {
+        "level": 5
+      },
+      "errors": [
+        "Invalid value for level: must be one of 1, 2, 3"
+      ],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
     "spec": "type coercion > rejects infinities and NaN as numbers, which JSON can't hold",
     "cli": [
       {
@@ -207,8 +394,7 @@
         "rate": "nan"
       },
       "errors": [
-        "Invalid number value 'nan' for rate",
-        "Invalid type for rate: expected number, got string"
+        "Invalid number value 'nan' for rate"
       ],
       "subcommand": null,
       "help": false,
@@ -233,8 +419,7 @@
         "rate": "NaN"
       },
       "errors": [
-        "Invalid number value 'NaN' for rate",
-        "Invalid type for rate: expected number, got string"
+        "Invalid number value 'NaN' for rate"
       ],
       "subcommand": null,
       "help": false,
@@ -259,8 +444,7 @@
         "rate": "inf"
       },
       "errors": [
-        "Invalid number value 'inf' for rate",
-        "Invalid type for rate: expected number, got string"
+        "Invalid number value 'inf' for rate"
       ],
       "subcommand": null,
       "help": false,
@@ -285,8 +469,7 @@
         "rate": "-inf"
       },
       "errors": [
-        "Invalid number value '-inf' for rate",
-        "Invalid type for rate: expected number, got string"
+        "Invalid number value '-inf' for rate"
       ],
       "subcommand": null,
       "help": false,
@@ -311,8 +494,7 @@
         "rate": "Infinity"
       },
       "errors": [
-        "Invalid number value 'Infinity' for rate",
-        "Invalid type for rate: expected number, got string"
+        "Invalid number value 'Infinity' for rate"
       ],
       "subcommand": null,
       "help": false,
@@ -337,8 +519,7 @@
         "rate": "1e400"
       },
       "errors": [
-        "Invalid number value '1e400' for rate",
-        "Invalid type for rate: expected number, got string"
+        "Invalid number value '1e400' for rate"
       ],
       "subcommand": null,
       "help": false,
@@ -921,8 +1102,7 @@
         "verbose": "treu"
       },
       "errors": [
-        "Invalid boolean value 'treu' for verbose. Use: true/false, yes/no, on/off, 1/0",
-        "Invalid type for verbose: expected boolean, got string"
+        "Invalid boolean value 'treu' for verbose. Use: true/false, yes/no, on/off, 1/0"
       ],
       "subcommand": null,
       "help": false,
@@ -1006,8 +1186,7 @@
         ]
       },
       "errors": [
-        "Invalid integer value 'x' for nums",
-        "Invalid type for nums[1]: expected integer, got string"
+        "Invalid integer value 'x' for nums"
       ],
       "subcommand": null,
       "help": false,
@@ -3027,8 +3206,7 @@
         ]
       },
       "errors": [
-        "Invalid integer value 'oops' for vals",
-        "Invalid type for vals[1]: expected integer, got string"
+        "Invalid integer value 'oops' for vals"
       ],
       "subcommand": null,
       "help": false,
@@ -6895,8 +7073,7 @@
         "count": "abc"
       },
       "errors": [
-        "Invalid integer value 'abc' for count",
-        "Invalid type for count: expected integer, got string"
+        "Invalid integer value 'abc' for count"
       ],
       "subcommand": null,
       "help": false,
@@ -6922,8 +7099,7 @@
         "rate": "not-a-number"
       },
       "errors": [
-        "Invalid number value 'not-a-number' for rate",
-        "Invalid type for rate: expected number, got string"
+        "Invalid number value 'not-a-number' for rate"
       ],
       "subcommand": null,
       "help": false,
@@ -6949,8 +7125,7 @@
         "count": "10x"
       },
       "errors": [
-        "Invalid integer value '10x' for count",
-        "Invalid type for count: expected integer, got string"
+        "Invalid integer value '10x' for count"
       ],
       "subcommand": null,
       "help": false,
@@ -6976,8 +7151,7 @@
         "rate": "3.14abc"
       },
       "errors": [
-        "Invalid number value '3.14abc' for rate",
-        "Invalid type for rate: expected number, got string"
+        "Invalid number value '3.14abc' for rate"
       ],
       "subcommand": null,
       "help": false,

@@ -581,12 +581,14 @@ module Jargon
 
       # Apply environment variables - CLI args take precedence
       apply_env_vars(data, errors, schema)
+      # Before defaults fill anything in, every value came from a token.
+      unconverted = unconverted_fields(data, resolve_property(schema.root, schema), schema)
 
       # Apply user-provided defaults (e.g., from config file) - CLI and env vars take precedence
       apply_user_defaults(data, defaults)
 
       apply_defaults(data, schema)
-      errors.concat(Validator.validate(data, schema))
+      errors.concat(Validator.validate(data, schema, unconverted))
 
       Result.new(data, errors)
     end
@@ -964,6 +966,32 @@ module Jargon
       else
         prop
       end
+    end
+
+    # The fields whose value didn't convert to the field's type. A token is a
+    # string, and converting one leaves a string in a number or boolean field
+    # only when it fails, which it reports; validating the value as well
+    # would report the same mistake again. So this runs on values that came
+    # from tokens alone, before defaults are filled in.
+    private def unconverted_fields(data : Hash(String, JSON::Any), parent : Property, schema : Schema, prefix : String = "", fields : Set(String) = Set(String).new) : Set(String)
+      return fields unless props = parent.properties
+      data.each do |name, value|
+        next unless prop = props[name]?
+        prop = resolve_property(prop, schema)
+        path = prefix.empty? ? name : "#{prefix}.#{name}"
+        if converted_type?(prop.type) && value.as_s?
+          fields << path
+        elsif prop.type.array? && (items = prop.items) && converted_type?(resolve_property(items, schema).type) && value.as_a?.try(&.any?(&.as_s?))
+          fields << path
+        elsif nested = value.as_h?
+          unconverted_fields(nested, prop, schema, path, fields)
+        end
+      end
+      fields
+    end
+
+    private def converted_type?(type : Property::Type) : Bool
+      type.integer? || type.number? || type.boolean?
     end
 
     private def coerce_value(key : String, value : String, schema : Schema) : {JSON::Any, String?}

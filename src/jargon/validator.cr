@@ -8,6 +8,15 @@ module Jargon
   module Validator
     # Validate data against a schema. Returns an array of error strings (empty if valid).
     def self.validate(data : Hash(String, JSON::Any), schema : Schema) : Array(String)
+      validate(data, schema, Set(String).new)
+    end
+
+    # :nodoc:
+    #
+    # Validates all but the fields in `skip` (paths such as `server.port`):
+    # those whose argument didn't convert to their type, which the parser has
+    # already reported.
+    def self.validate(data : Hash(String, JSON::Any), schema : Schema, skip : Set(String)) : Array(String)
       errors = [] of String
       root = resolve_property(schema.root, schema)
       return errors unless props = root.properties
@@ -16,14 +25,15 @@ module Jargon
       check_additional_properties(data, root, errors, "", props)
 
       props.each do |name, prop|
-        validate_property(data, name, resolve_property(prop, schema), errors, "", schema)
+        validate_property(data, name, resolve_property(prop, schema), errors, "", schema, skip)
       end
 
       errors
     end
 
-    private def self.validate_property(data : Hash(String, JSON::Any), name : String, prop : Property, errors : Array(String), prefix : String, schema : Schema)
+    private def self.validate_property(data : Hash(String, JSON::Any), name : String, prop : Property, errors : Array(String), prefix : String, schema : Schema, skip : Set(String))
       full_name = prefix.empty? ? name : "#{prefix}.#{name}"
+      return if skip.includes?(full_name)
       value = data[name]?
 
       if prop.required? && value.nil?
@@ -39,7 +49,7 @@ module Jargon
       validate_numeric(value, prop, errors, full_name)
       validate_string(value, prop, errors, full_name)
       validate_array(value, prop, errors, full_name, schema)
-      validate_object(value, prop, errors, full_name, schema)
+      validate_object(value, prop, errors, full_name, schema, skip)
     end
 
     private def self.validate_array_item(value : JSON::Any, prop : Property, errors : Array(String), item_name : String)
@@ -103,13 +113,13 @@ module Jargon
       end
     end
 
-    private def self.validate_object(value : JSON::Any, prop : Property, errors : Array(String), label : String, schema : Schema)
+    private def self.validate_object(value : JSON::Any, prop : Property, errors : Array(String), label : String, schema : Schema, skip : Set(String))
       return unless prop.type.object? && (nested_props = prop.properties)
       return unless nested_data = value.as_h?
 
       check_additional_properties(nested_data, prop, errors, label, nested_props)
       nested_props.each do |nested_name, nested_prop|
-        validate_property(nested_data, nested_name, resolve_property(nested_prop, schema), errors, label, schema)
+        validate_property(nested_data, nested_name, resolve_property(nested_prop, schema), errors, label, schema, skip)
       end
     end
 

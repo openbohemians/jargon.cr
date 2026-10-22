@@ -130,6 +130,35 @@ describe Jargon do
   end
 
   describe "type coercion" do
+    it "reports a value that doesn't convert once, not again in validation" do
+      cli = Jargon.cli("cli", json: %({
+        "type": "object",
+        "properties": {
+          "count": {"type": "integer"},
+          "level": {"type": "integer", "enum": [1, 2, 3]},
+          "ids": {"type": "array", "items": {"type": "integer"}},
+          "server": {"type": "object", "properties": {"port": {"type": "integer", "minimum": 1}}},
+          "debug": {"type": "boolean", "env": "JARGON_SPEC_DEBUG"}
+        }
+      }))
+
+      cli.parse(["--count", "two"]).errors.should eq(["Invalid integer value 'two' for count"])
+      cli.parse(["--level", "two"]).errors.should eq(["Invalid integer value 'two' for level"])
+      cli.parse(["--ids", "1,x"]).errors.should eq(["Invalid integer value 'x' for ids"])
+      cli.parse(["--server.port", "http"]).errors.should eq(["Invalid integer value 'http' for server.port"])
+      begin
+        ENV["JARGON_SPEC_DEBUG"] = "maybe"
+        cli.parse([] of String).errors.should eq(["Invalid boolean value 'maybe' for debug. Use: true/false, yes/no, on/off, 1/0"])
+      ensure
+        ENV.delete("JARGON_SPEC_DEBUG")
+      end
+
+      # Values that weren't arguments are still validated.
+      defaults = {"count" => JSON::Any.new("two")}
+      cli.parse([] of String, defaults: defaults).errors.should eq(["Invalid type for count: expected integer, got string"])
+      cli.parse(["--level", "5"]).errors.should eq(["Invalid value for level: must be one of 1, 2, 3"])
+    end
+
     it "rejects infinities and NaN as numbers, which JSON can't hold" do
       cli = Jargon.cli("cli", json: %({"type": "object", "properties": {"rate": {"type": "number"}}}))
 
