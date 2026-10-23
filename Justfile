@@ -48,11 +48,11 @@ conformance:
 doc: doc-api
 
 doc-api:
-  crystal docs -o docs/api
+  rm -rf docs && crystal docs -o docs
 
 # Open docs in browser
 doc-open: doc
-  xdg-open docs/api/index.html 2>/dev/null || open docs/api/index.html
+  xdg-open docs/index.html 2>/dev/null || open docs/index.html
 
 # Format code
 fmt:
@@ -72,7 +72,7 @@ lint:
 
 # Clean build artifacts
 clean:
-  rm -rf docs/api lib .crystal .shards bin/jargon
+  rm -rf docs lib .crystal .shards bin/jargon
 
 # Full rebuild
 rebuild: clean install check

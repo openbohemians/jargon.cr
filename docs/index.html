@@ -1,387 +1,1156 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Jargon - Schema-first CLI parsing for Crystal</title>
-    <meta
-      name="description"
-      content="Jargon is a Crystal library that turns JSON Schema into a precise, friendly CLI with validation, defaults, subcommands, and completions."
-    />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="bg-shape bg-shape-a"></div>
-    <div class="bg-shape bg-shape-b"></div>
-    <div class="grain"></div>
+<head>
+  <meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Crystal Docs 1.22.0">
+<meta name="crystal_docs.project_version" content="main-dev">
+<meta name="crystal_docs.project_name" content="jargon">
 
-    <nav class="nav">
-      <div class="nav-inner">
-        <div class="logo">Jargon</div>
-        <div class="nav-links">
-          <a href="#demo">See It</a>
-          <span class="nav-separator">→</span>
-          <a href="#features">Get It</a>
-          <span class="nav-separator">→</span>
-          <a href="#get-started">Do it!</a>
-        </div>
-        <a class="btn small github-link" href="https://github.com/openbohemians/jargon.cr" aria-label="GitHub">
-          <img src="assets/github.svg" alt="" class="github-icon" />
+
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="js/doc.js"></script>
+
+  <meta name="repository-name" content="jargon">
+  <title>jargon main-dev</title>
+  <script type="text/javascript">
+  CrystalDocs.base_path = "";
+  </script>
+</head>
+<body>
+
+<svg class="hidden">
+  <symbol id="octicon-link" viewBox="0 0 16 16">
+    <path fill="currentColor" fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+  </symbol>
+</svg>
+<input type="checkbox" id="sidebar-btn">
+<label for="sidebar-btn" id="sidebar-btn-label">
+  <svg class="open" xmlns="http://www.w3.org/2000/svg" height="2em" width="2em" viewBox="0 0 512 512"><title>Open Sidebar</title><path fill="currentColor" d="M80 96v64h352V96H80zm0 112v64h352v-64H80zm0 112v64h352v-64H80z"></path></svg>
+  <svg class="close" xmlns="http://www.w3.org/2000/svg" width="2em" height="2em" viewBox="0 0 512 512"><title>Close Sidebar</title><path fill="currentColor" d="m118.6 73.4-45.2 45.2L210.7 256 73.4 393.4l45.2 45.2L256 301.3l137.4 137.3 45.2-45.2L301.3 256l137.3-137.4-45.2-45.2L256 210.7Z"></path></svg>
+</label>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="search-box">
+      <input type="search" class="search-input" placeholder="Search..." spellcheck="false" aria-label="Search">
+    </div>
+
+    <div class="project-summary">
+      <h1 class="project-name">
+        <a href="index.html">
+          jargon
         </a>
-      </div>
-    </nav>
+      </h1>
 
-    <header class="hero">
-      <div class="hero-content reveal" style="--delay: 0.05s">
-        <div class="eyebrow">Crystal library - JSON Schema in, CLI out</div>
-        <h1>Your CLI is an API.<br /><span class="hero-break">Why not treat it as one?</span></h1>
-        <p class="lead">
-          Jargon turns JSON Schema into a precise, user-friendly CLI. You get
-          validation, defaults, subcommands, and completions with a single
-          definition, delivered as clean JSON.
-        </p>
-        <div class="cta-row">
-          <a class="btn primary" href="#get-started">Get started</a>
-          <a class="btn ghost" href="#demo">See it run</a>
-        </div>
-        <div class="meta-row">
-          <div class="meta-chip">MIT license</div>
-          <div class="meta-chip">stdin JSON</div>
-          <div class="meta-chip">$ref support</div>
-          <div class="meta-chip">XDG friendly</div>
-          <div class="meta-chip">ENV overrides</div>
-          <div class="meta-chip">Schema defaults</div>
-          <div class="meta-chip">Nested objects</div>
-          <div class="meta-chip">Subcommands</div>
-          <div class="meta-chip">Auto help</div>
-          <div class="meta-chip">Shell completions</div>
-          <div class="meta-chip">Typed parsing</div>
-          <div class="meta-chip">Config loading</div>
-        </div>
-      </div>
+      <span class="project-version">
+        main-dev
+      </span>
+    </div>
+  </div>
 
-      <div class="hero-card reveal" style="--delay: 0.15s" data-tabs>
-        <div class="card-header">
-          <img src="assets/json-schema.svg" alt="JSON Schema" class="schema-logo" />
-          <div class="tab-bar">
-            <button class="tab-button active" data-tab="json">JSON</button>
-            <button class="tab-button" data-tab="yaml">YAML</button>
-          </div>
-        </div>
-        <div class="tabbed">
-          <div class="code-block wrap" data-tab-content="json">
-            <button class="copy">Copy</button>
-            <pre><code>{
-  "type": "object",
-  "properties": {
-    "name": {
-      "type": "string",
-      "description": "User name"
-    },
-    "age": {
-      "type": "integer",
-      "description": "User age",
-      "default": 0
-    },
-    "verbose": {
-      "type": "boolean",
-      "short": "v"
-    }
+  <div class="search-results hidden">
+    <ul class="search-list"></ul>
+  </div>
+
+  <div class="types-list">
+    <ul>
+  
+  <li class="parent " data-id="jargon/Jargon" data-name="jargon">
+      <a href="Jargon.html">Jargon</a>
+      
+        <ul>
+  
+  <li class=" " data-id="jargon/Jargon/CLI" data-name="jargon::cli">
+      <a href="Jargon/CLI.html">CLI</a>
+      
+    </li>
+  
+  <li class="parent " data-id="jargon/Jargon/Completion" data-name="jargon::completion">
+      <a href="Jargon/Completion.html">Completion</a>
+      
+        <ul>
+  
+  <li class=" " data-id="jargon/Jargon/Completion/Context" data-name="jargon::completion::context">
+      <a href="Jargon/Completion/Context.html">Context</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="jargon/Jargon/Defaults" data-name="jargon::defaults">
+      <a href="Jargon/Defaults.html">Defaults</a>
+      
+    </li>
+  
+  <li class=" " data-id="jargon/Jargon/ParseError" data-name="jargon::parseerror">
+      <a href="Jargon/ParseError.html">ParseError</a>
+      
+    </li>
+  
+  <li class="parent " data-id="jargon/Jargon/Property" data-name="jargon::property">
+      <a href="Jargon/Property.html">Property</a>
+      
+        <ul>
+  
+  <li class=" " data-id="jargon/Jargon/Property/Type" data-name="jargon::property::type">
+      <a href="Jargon/Property/Type.html">Type</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="jargon/Jargon/Result" data-name="jargon::result">
+      <a href="Jargon/Result.html">Result</a>
+      
+    </li>
+  
+  <li class=" " data-id="jargon/Jargon/Schema" data-name="jargon::schema">
+      <a href="Jargon/Schema.html">Schema</a>
+      
+    </li>
+  
+  <li class=" " data-id="jargon/Jargon/Validator" data-name="jargon::validator">
+      <a href="Jargon/Validator.html">Validator</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+</ul>
+
+  </div>
+</div>
+
+
+<div class="main-content">
+<h1><a id="jargon" class="anchor" href="#jargon">  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Jargon</h1>
+<p><em>Define your CLI jargon with JSON Schema.</em></p>
+<p>A Crystal library that generates CLI interfaces from JSON Schema definitions. Define your data structure once in JSON Schema, get a CLI parser with validation for free.</p>
+<p>Jargon is also available for Rust, as <a href="https://github.com/openbohemians/jargon.rs">jargon.rs</a>. The project's site is <a href="https://jargon.openbohemians.org">jargon.openbohemians.org</a>, and the API docs are at <a href="https://openbohemians.org/jargon.cr/">openbohemians.org/jargon.cr</a>.</p>
+<h2><a id="features" class="anchor" href="#features">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Features</h2>
+<ul>
+<li><strong>Validation</strong>: Required fields, enum values, strict type checking, <code>additionalProperties</code></li>
+<li><strong>Standalone validator</strong>: Use <code><a href="Jargon/Validator.html">Jargon::Validator</a></code> to validate data without the CLI parser</li>
+<li><strong>Defaults</strong>: Schema defaults, config file defaults, environment variables</li>
+<li><strong>Config files</strong>: Load from <code>~/.config/</code> (XDG spec), optionally project <code>.config/</code>, with deep merge support</li>
+<li><strong>Help text</strong>: Generated from schema descriptions</li>
+<li><strong>Auto help flags</strong>: <code>--help</code> and <code>-h</code> detected automatically</li>
+<li><strong>Shell completions</strong>: Generate completion shims for bash, zsh, and fish, with optional app-driven dynamic completers for live data</li>
+<li><strong>Positional args</strong>: Non-flag arguments assigned by position and variadic support.</li>
+<li><strong>Short flags</strong>: Single-character flag aliases (<code>-v</code>, <code>-n 5</code>)</li>
+<li><strong>Boolean flags</strong>: Support both <code>--verbose</code> and <code>--verbose false</code> styles</li>
+<li><strong>Subcommands</strong>: Named sub-parsers with independent schemas (supports abbreviated invocations)</li>
+<li><strong>Default subcommand</strong>: Fall back to a subcommand when none specified</li>
+<li><strong>Stdin JSON</strong>: Read arguments as JSON from stdin with <code>-</code></li>
+<li><strong>Typo suggestions</strong>: &quot;Did you mean?&quot; for mistyped options</li>
+<li><strong>$ref support</strong>: Reuse definitions with <code>$ref: &quot;#/$defs/typename&quot;</code></li>
+<li><strong>Extension annotations</strong>: <code>x-*</code> keys pass through untouched for GUI/tooling consumers</li>
+</ul>
+<h2><a id="installation" class="anchor" href="#installation">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Installation</h2>
+<p>Add the dependency to your <code>shard.yml</code>:</p>
+<pre><code class="language-yaml">dependencies:
+  jargon:
+    github: openbohemians/jargon.cr</code></pre>
+<p>Then run <code>shards install</code>.</p>
+<h2><a id="usage" class="anchor" href="#usage">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Usage</h2>
+<pre><code class="language-crystal"><span class="k">require</span> <span class="s">&quot;jargon&quot;</span>
+
+<span class="c"># Define your schema</span>
+schema <span class="o">=</span> <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;name&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;User name&quot;},
+    &quot;age&quot;: {&quot;type&quot;: &quot;integer&quot;},
+    &quot;verbose&quot;: {&quot;type&quot;: &quot;boolean&quot;}
   },
-  "required": ["name"]
-}</code></pre>
-          </div>
-          <div class="code-block wrap hidden" data-tab-content="yaml">
-            <button class="copy">Copy</button>
-            <pre><code>type: object
+  &quot;required&quot;: [&quot;name&quot;]
+})</span>
+
+<span class="c"># Create CLI and run</span>
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;myapp&quot;</span>, json: schema)
+cli.run <span class="k">do</span> <span class="o">|</span>result<span class="o">|</span>
+  puts result.to_pretty_json
+<span class="k">end</span></code></pre>
+<p>The <code>run</code> method automatically handles:</p>
+<ul>
+<li><code>--help</code> / <code>-h</code>: prints help and exits</li>
+<li><code>--completions &lt;shell&gt;</code>: prints shell completion script and exits</li>
+<li>Validation errors: prints errors to STDERR and exits with code 1</li>
+</ul>
+<h2><a id="yaml-schemas" class="anchor" href="#yaml-schemas">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>YAML Schemas</h2>
+<p>YAML schemas are supported directly:</p>
+<pre><code class="language-yaml"># schema.yaml
+type: object
 properties:
   name:
     type: string
     description: User name
-  age:
-    type: integer
-    description: User age
-    default: 0
   verbose:
     type: boolean
     short: v
 required:
   - name</code></pre>
-          </div>
-        </div>
-        <div class="mini-note"><span class="schema-label" data-schema-label>schema.json</span></div>
-      </div>
-    </header>
+<pre><code class="language-crystal">schema <span class="o">=</span> <span class="t">File</span>.read(<span class="s">&quot;schema.yaml&quot;</span>)
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;myapp&quot;</span>, yaml: schema)</code></pre>
+<p>YAML (schemas and config files alike) is read by the YAML 1.1 core schema, as <code>YAML.parse</code> reads it (<code>yes</code> is true, <code>0x1F</code> is 31), except that a date or time stays the string it was written as: <code>default: 2026-10-22</code> is <code>&quot;2026-10-22&quot;</code>.</p>
+<h2><a id="argument-styles" class="anchor" href="#argument-styles">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Argument Styles</h2>
+<p>Two styles are supported interchangeably:</p>
+<pre><code class="language-sh"># Equals style (minimal)
+myapp name=John age=30 verbose=true
 
-    <section class="section steps">
-      <div class="section-head reveal" style="--delay: 0.05s">
-        <h2>The schema becomes the interface</h2>
-        <p>Define the data shape once and reuse it everywhere.</p>
-      </div>
-      <div class="steps-grid">
-        <div class="step-card reveal" style="--delay: 0.1s">
-          <div class="step-number">01</div>
-          <h3>Define your schema</h3>
-          <p>Describe data types, defaults, env overrides, and descriptions.</p>
-        </div>
-        <div class="step-card reveal" style="--delay: 0.15s">
-          <div class="step-number">02</div>
-          <h3>Parse with confidence</h3>
-          <p>Jargon validates inputs and produces consistent JSON output.</p>
-        </div>
-        <div class="step-card reveal" style="--delay: 0.2s">
-          <div class="step-number">03</div>
-          <h3>Ship with polish</h3>
-          <p>Automatic help, completions, and subcommands come built in.</p>
-        </div>
-      </div>
-    </section>
+# Traditional style
+myapp --name John --age 30 --verbose</code></pre>
+<p>Mix and match as you like:</p>
+<pre><code class="language-sh">myapp name=John --age 30 verbose=true</code></pre>
+<p>Only <code>=</code> separates a key from its value. A colon has no special meaning, so
+operands like <code>host:8080</code>, <code>12:30</code>, <code>Expenses:Food</code>, or JSON such as
+<code>{&quot;id&quot;:1}</code> are always ordinary tokens.</p>
+<p>The bare <code>key=value</code> style (no leading dashes) is an <em>implicit assignment</em>
+convenience. If your operands legitimately contain <code>=</code> — say, <code>name=value</code>
+pairs passed through to another tool — you can turn the implicit assignment
+off so those tokens are always taken literally:</p>
+<pre><code class="language-crystal">cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;myapp&quot;</span>, json: schema)
+cli.bare_assignment(<span class="n">false</span>)   <span class="c"># only --flag / --flag=value set properties now</span></code></pre>
+<p>With it off, a bare <code>key=value</code> token is never read as an assignment: it falls
+to positional capture if a slot is open, otherwise it's an unexpected argument.
+The <code>--flag=value</code> long-option form is unaffected and always honored. (Note that
+an open positional slot already captures <code>=</code>-bearing operands literally, so
+this switch only governs the implicit-assignment fallback.)</p>
+<h2><a id="nested-objects" class="anchor" href="#nested-objects">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Nested Objects</h2>
+<p>Use dot notation for nested properties:</p>
+<pre><code class="language-crystal">schema <span class="o">=</span> <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;user&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;name&quot;: {&quot;type&quot;: &quot;string&quot;},
+        &quot;email&quot;: {&quot;type&quot;: &quot;string&quot;}
+      }
+    }
+  }
+})</span>
 
-    <section id="demo" class="section">
-      <div class="section-head reveal" style="--delay: 0.05s">
-        <h2>Seeing is believing</h2>
-        <p>A tiny demo script that shows parsing, nesting, and validation.</p>
-      </div>
-      <div
-        class="terminal-card reveal"
-        style="--delay: 0.1s"
-        data-terminal
-        data-default-script="schema"
-      >
-        <div class="terminal-header">
-          <div class="terminal-dots">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-          <div class="terminal-title">jargon-demo</div>
-          <div class="terminal-pill">live</div>
-        </div>
-        <div class="terminal-body">
-          <div class="terminal-output"></div>
-        </div>
-      </div>
-      <div class="terminal-controls reveal" style="--delay: 0.15s">
-        <button class="pill-button active" data-terminal-script="schema">
-          Define Schema
-        </button>
-        <button class="pill-button" data-terminal-script="crystal">
-          Crystallize
-        </button>
-        <button class="pill-button" data-terminal-script="run">
-          Execute
-        </button>
-        <button class="pill-button" data-terminal-script="help">
-          Show Help
-        </button>
-        <button class="pill-button" data-terminal-script="validation">
-          Validate
-        </button>
-        <button class="pill-button" data-terminal-script="arguments">
-          Argument Styles
-        </button>
-      </div>
-    </section>
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;myapp&quot;</span>, json: schema)
+result <span class="o">=</span> cli.parse([<span class="s">&quot;user.name=John&quot;</span>, <span class="s">&quot;user.email=john@example.com&quot;</span>])
+<span class="c"># =&gt; {&quot;user&quot;: {&quot;name&quot;: &quot;John&quot;, &quot;email&quot;: &quot;john@example.com&quot;}}</span></code></pre>
+<h2><a id="supported-types" class="anchor" href="#supported-types">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Supported Types</h2>
+<p>| JSON Schema Type | CLI Example | Notes |
+|------------------|-------------|-------|
+| <code>string</code> | <code>name=John</code> | Default type |
+| <code>integer</code> | <code>count=42</code> | Parsed as Int64, strict validation |
+| <code>number</code> | <code>rate=3.14</code> | Parsed as Float64, strict validation |
+| <code>boolean</code> | <code>verbose=true</code> or <code>--verbose</code> | Flag style supported |
+| <code>array</code> | <code>tags=a,b,c</code> | Comma-separated; variadic positionals coerce items to the <code>items</code> type |
+| <code>object</code> | <code>user.name=John</code> | Dot notation |</p>
+<h3><a id="validation-constraints" class="anchor" href="#validation-constraints">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Validation Constraints</h3>
+<p>Standard JSON Schema validation keywords are supported:</p>
+<pre><code class="language-json">{
+  &quot;properties&quot;: {
+    &quot;port&quot;: {&quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 1, &quot;maximum&quot;: 65535},
+    &quot;ratio&quot;: {&quot;type&quot;: &quot;number&quot;, &quot;exclusiveMinimum&quot;: 0, &quot;exclusiveMaximum&quot;: 1},
+    &quot;password&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 8, &quot;maxLength&quot;: 64},
+    &quot;email&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;email&quot;},
+    &quot;website&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;uri&quot;},
+    &quot;config&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;path&quot;},
+    &quot;level&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;debug&quot;, &quot;info&quot;, &quot;warn&quot;, &quot;error&quot;]},
+    &quot;files&quot;: {&quot;type&quot;: &quot;array&quot;, &quot;minItems&quot;: 1, &quot;maxItems&quot;: 10, &quot;uniqueItems&quot;: true},
+    &quot;apiVersion&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;const&quot;: &quot;v1&quot;},
+    &quot;tags&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;alpha&quot;, &quot;beta&quot;, &quot;stable&quot;]}
+    }
+  }
+}</code></pre>
+<ul>
+<li><code>minimum</code>/<code>maximum</code>: numeric range (inclusive)</li>
+<li><code>exclusiveMinimum</code>/<code>exclusiveMaximum</code>: numeric range (exclusive)</li>
+<li><code>multipleOf</code>: value must be divisible by this number</li>
+<li><code>minLength</code>/<code>maxLength</code>: string length</li>
+<li><code>minItems</code>/<code>maxItems</code>: array length</li>
+<li><code>uniqueItems</code>: no duplicate values in array</li>
+<li><code>pattern</code>: regex validation for strings. As in JSON Schema, <code>$</code> matches only at the end of the value, not before a final newline</li>
+<li><code>format</code>: semantic formats (<code>email</code>, <code>uri</code>, <code>uuid</code>, <code>date</code>, <code>time</code>, <code>date-time</code>, <code>ipv4</code>, <code>ipv6</code>, <code>hostname</code>, <code>path</code>). The <code>path</code> format expands <code>~</code> to the user's home directory</li>
+<li><code>enum</code>: allowed values (works for array items too)</li>
+<li><code>const</code>: exact value match</li>
+<li><code>additionalProperties</code>: when <code>false</code>, rejects unknown keys in objects</li>
+<li><code>service</code>: when <code>true</code>, marks the command as a long-running service (UI hint for consumers)</li>
+<li><code>x-*</code>: any key starting with <code>x-</code> is preserved verbatim as an extension annotation (see <a href="#extension-annotations-x-">Extension Annotations</a>)</li>
+</ul>
+<h3><a id="boolean-flags" class="anchor" href="#boolean-flags">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Boolean Flags</h3>
+<p>Boolean flags support multiple styles:</p>
+<pre><code class="language-sh"># Flag style (sets to true)
+myapp --verbose
 
-    <section id="features" class="section">
-      <div class="section-head reveal" style="--delay: 0.05s">
-        <h2>Built for real-world CLIs</h2>
-        <p>
-          Jargon keeps the CLI surface area predictable, while still letting you
-          express complex data shapes with nested objects and refs.
-        </p>
-      </div>
-      <div class="feature-grid">
-        <article class="card reveal" style="--delay: 0.1s">
-          <h3>Schema-first validation</h3>
-          <p>
-            Required fields, enum constraints, and strict type checks are all
-            derived from your JSON Schema.
-          </p>
-        </article>
-        <article class="card reveal" style="--delay: 0.15s">
-          <h3>XDG config aware</h3>
-          <p>Loads config from standard XDG paths with project overrides.</p>
-        </article>
-        <article class="card reveal" style="--delay: 0.2s">
-          <h3>Defaults &amp; precedence</h3>
-          <p>Schema defaults, config files, and env vars layer predictably.</p>
-        </article>
-        <article class="card reveal" style="--delay: 0.25s">
-          <h3>Environment bindings</h3>
-          <p>Map options to env vars and coerce types automatically.</p>
-        </article>
-        <article class="card reveal" style="--delay: 0.3s">
-          <h3>Subcommands without ceremony</h3>
-          <p>Compose nested sub-parsers, with a default command fallback.</p>
-        </article>
-        <article class="card reveal" style="--delay: 0.4s">
-          <h3>Positional + variadic</h3>
-          <p>Mix ordered arguments with a variadic tail for lists.</p>
-        </article>
-        <article class="card reveal" style="--delay: 0.45s">
-          <h3>Flexible input styles</h3>
-          <p>Accept --flags or bare key=value without extra parsing.</p>
-        </article>
-        <article class="card reveal" style="--delay: 0.5s">
-          <h3>Nested object paths</h3>
-          <p>Use dotted keys like user.name for deep objects.</p>
-        </article>
-        <article class="card reveal" style="--delay: 0.55s">
-          <h3>Stdin JSON mode</h3>
-          <p>Parse full JSON payloads via stdin with a single dash.</p>
-        </article>
-        <article class="card reveal" style="--delay: 0.6s">
-          <h3>Help &amp; hints</h3>
-          <p>Auto-generated help plus typo suggestions for options.</p>
-        </article>
-        <article class="card reveal" style="--delay: 0.65s">
-          <h3>Schema reuse</h3>
-          <p>Share definitions via $ref and keep specs DRY.</p>
-        </article>
-        <article class="card reveal" style="--delay: 0.7s">
-          <h3>Shell completions</h3>
-          <p>Generate bash, zsh, and fish scripts from the same schema.</p>
-        </article>
-      </div>
-    </section>
+# Explicit value
+myapp --verbose true
+myapp --verbose false
+myapp --enabled no
 
+# Equals style
+myapp verbose=true
+myapp --verbose=false</code></pre>
+<p>Recognized boolean values: <code>true</code>/<code>false</code>, <code>yes</code>/<code>no</code>, <code>on</code>/<code>off</code>, <code>1</code>/<code>0</code> (case-insensitive).</p>
+<p>When a boolean flag is followed by a non-boolean value, the value is not consumed:</p>
+<pre><code class="language-sh"># --verbose is true, output.txt is a positional arg
+myapp --verbose output.txt</code></pre>
+<h3><a id="strict-numeric-validation" class="anchor" href="#strict-numeric-validation">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Strict Numeric Validation</h3>
+<p>Invalid numeric values produce clear error messages:</p>
+<pre><code class="language-sh">$ myapp --count abc
+Error: Invalid integer value 'abc' for count
 
-    <section id="completions" class="section">
-      <div class="section-head reveal" style="--delay: 0.05s">
-        <h2>Completions that stay in sync</h2>
-        <p>Generate scripts for bash, zsh, and fish straight from your schema.</p>
-      </div>
-      <div class="split">
-        <div class="callout compact reveal" style="--delay: 0.1s">
-          <h3>One command per shell</h3>
-          <p>
-            Jargon can emit shell completion scripts without any extra tooling.
-            Hook them into your install process or generate on demand.
-          </p>
-          <div class="tag-row">
-            <span>bash</span>
-            <span>zsh</span>
-            <span>fish</span>
-          </div>
-        </div>
-        <div class="code-block reveal" style="--delay: 0.15s">
-          <button class="copy">Copy</button>
-          <pre><code>cli = Jargon.cli("mycmd", json: schema)
-puts cli.bash_completion
-puts cli.zsh_completion
-puts cli.fish_completion</code></pre>
-        </div>
-      </div>
-    </section>
+$ myapp --count 10x
+Error: Invalid integer value '10x' for count</code></pre>
+<h3><a id="typo-suggestions" class="anchor" href="#typo-suggestions">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Typo Suggestions</h3>
+<p>Mistyped options get helpful &quot;did you mean?&quot; suggestions:</p>
+<pre><code class="language-sh">$ myapp --verbos
+Error: Unknown option '--verbos'. Did you mean '--verbose'?
 
-    <section class="section">
-      <div class="section-head reveal" style="--delay: 0.05s">
-        <h2>Designed for clarity</h2>
-        <p>Help output reads like docs because descriptions come from the schema.</p>
-      </div>
-      <div class="split">
-        <div class="callout reveal" style="--delay: 0.1s">
-          <h3>Succinct help, by design</h3>
-          <p>
-            Perfectly concise help messages that stay readable and focused.
-            Deep dives belong in <strong>man pages</strong>, not in the CLI overview.
-          </p>
-        </div>
-        <div class="code-block reveal" style="--delay: 0.15s">
-          <button class="copy">Copy</button>
-          <pre><code>Usage: mycmd [options]
+$ myapp --formt json
+Error: Unknown option '--formt'. Did you mean '--format'?</code></pre>
+<h2><a id="positional-arguments" class="anchor" href="#positional-arguments">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Positional Arguments</h2>
+<p>Define positional arguments with the <code>positional</code> array:</p>
+<pre><code class="language-crystal">schema <span class="o">=</span> <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;positional&quot;: [&quot;file&quot;, &quot;output&quot;],
+  &quot;properties&quot;: {
+    &quot;file&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Input file&quot;},
+    &quot;output&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Output file&quot;},
+    &quot;verbose&quot;: {&quot;type&quot;: &quot;boolean&quot;}
+  },
+  &quot;required&quot;: [&quot;file&quot;]
+})</span>
 
-Options:
-  -v, --verbose           [default: false]
-      Enable verbose logging
-  --count=&lt;integer&gt;       [default: 10]
-      Number of retries
-  --mode=&lt;string&gt;
-      Operation mode</code></pre>
-        </div>
-      </div>
-    </section>
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;myapp&quot;</span>, json: schema)
+result <span class="o">=</span> cli.parse([<span class="s">&quot;input.txt&quot;</span>, <span class="s">&quot;output.txt&quot;</span>, <span class="s">&quot;--verbose&quot;</span>])
+<span class="c"># =&gt; {&quot;file&quot;: &quot;input.txt&quot;, &quot;output&quot;: &quot;output.txt&quot;, &quot;verbose&quot;: true}</span></code></pre>
+<pre><code class="language-sh">myapp input.txt output.txt --verbose</code></pre>
+<h3><a id="variadic-positionals" class="anchor" href="#variadic-positionals">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Variadic Positionals</h3>
+<p>When the last positional has <code>type: array</code>, it collects all remaining arguments:</p>
+<pre><code class="language-crystal">schema <span class="o">=</span> <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;positional&quot;: [&quot;files&quot;],
+  &quot;properties&quot;: {
+    &quot;files&quot;: {&quot;type&quot;: &quot;array&quot;, &quot;description&quot;: &quot;Input files&quot;},
+    &quot;number&quot;: {&quot;type&quot;: &quot;boolean&quot;, &quot;short&quot;: &quot;n&quot;}
+  }
+})</span>
 
-    <section id="get-started" class="section">
-      <div class="section-head reveal" style="--delay: 0.05s">
-        <h2>Get started in minutes</h2>
-        <p>Install the shard, load a schema, and parse.</p>
-      </div>
-      <div class="split">
-        <div class="callout reveal" style="--delay: 0.15s">
-          <h3>From shard to CLI</h3>
-          <p>
-            Add Jargon to your shard dependencies, run <code>shards update</code>,
-            define your schema, wire it up in your code (easy peasy), and enjoy a friendly CLI.
-          </p>
-        </div>
-        <div class="code-block reveal" style="--delay: 0.1s">
-          <button class="copy">Copy</button>
-          <pre><code># shard.yml
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;cat&quot;</span>, json: schema)
+result <span class="o">=</span> cli.parse([<span class="s">&quot;-n&quot;</span>, <span class="s">&quot;a.txt&quot;</span>, <span class="s">&quot;b.txt&quot;</span>, <span class="s">&quot;c.txt&quot;</span>])
+<span class="c"># =&gt; {&quot;number&quot;: true, &quot;files&quot;: [&quot;a.txt&quot;, &quot;b.txt&quot;, &quot;c.txt&quot;]}</span></code></pre>
+<pre><code class="language-sh">cat -n a.txt b.txt c.txt</code></pre>
+<p>A variadic positional is <strong>greedy</strong>: it captures every remaining token
+literally, including ones that look like assignments (<code>k=v</code>) or negative
+numbers (<code>-50</code>). It stops only at a genuine
+flag, so put flags before the variadic:</p>
+<pre><code class="language-sh">cat -n a.txt b.txt c.txt      # ok: flag first
+cat a.txt -n b.txt            # -n stops collection; b.txt is then unexpected</code></pre>
+<p>When the array declares an <code>items</code> type, each collected token is coerced to it:</p>
+<pre><code class="language-crystal">schema <span class="o">=</span> <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;positional&quot;: [&quot;values&quot;],
+  &quot;properties&quot;: {
+    &quot;values&quot;: {&quot;type&quot;: &quot;array&quot;, &quot;items&quot;: {&quot;type&quot;: &quot;number&quot;}}
+  }
+})</span>
 
-dependencies:
-  jargon:
-    github: openbohemians/jargon.cr</code></pre>
-        </div>
-      </div>
-    </section>
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;stats&quot;</span>, json: schema)
+result <span class="o">=</span> cli.parse([<span class="s">&quot;1&quot;</span>, <span class="s">&quot;-50&quot;</span>, <span class="s">&quot;3.14&quot;</span>])
+<span class="c"># =&gt; {&quot;values&quot;: [1.0, -50.0, 3.14]}</span></code></pre>
+<h3><a id="negative-numbers" class="anchor" href="#negative-numbers">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Negative Numbers</h3>
+<p>A token like <code>-50</code> or <code>-3.14</code> is treated as a value, not a flag — so negative
+numbers work as flag values (<code>--offset -50</code>), as scalar positionals, and inside
+variadic positionals. Only <code>-&lt;letter&gt;</code> tokens are parsed as short flags, so a
+short flag is never confused with a negative number.</p>
+<h3><a id="end-of-options-" class="anchor" href="#end-of-options-">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>End of Options (<code>--</code>)</h3>
+<p>A bare <code>--</code> marks the end of options (POSIX convention). Everything after it is treated as a positional argument, even if it looks like a flag — useful for passing flags through to another program. The <code>--</code> marker itself is discarded, and a variadic positional captures the rest verbatim:</p>
+<pre><code class="language-crystal">schema <span class="o">=</span> <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;positional&quot;: [&quot;argv&quot;],
+  &quot;properties&quot;: {
+    &quot;verbose&quot;: {&quot;type&quot;: &quot;boolean&quot;, &quot;short&quot;: &quot;v&quot;},
+    &quot;argv&quot;: {&quot;type&quot;: &quot;array&quot;}
+  }
+})</span>
 
-    <section id="get-involved" class="section">
-      <div class="section-head reveal" style="--delay: 0.05s">
-        <h2>Get involved</h2>
-        <p>Contribute, explore the docs, or ship Jargon in your next CLI.</p>
-      </div>
-      <div class="split">
-        <div class="callout reveal" style="--delay: 0.1s">
-          <h3>Build with the community</h3>
-          <p>
-            Jargon is MIT-licensed and built to be hacked on. Open issues, send
-            PRs, or browse the API docs to dive deeper.
-          </p>
-          <div class="link-row">
-            <a class="btn primary" href="https://github.com/openbohemians/jargon.cr">
-              GitHub repo
-            </a>
-            <a
-              class="btn"
-              href="api/index.html"
-            >
-              API docs
-            </a>
-            <a
-              class="btn"
-              href="https://shards.info/github/trans/jargon/"
-            >
-              Shard stats
-            </a>
-          </div>
-        </div>
-        <div class="callout reveal" style="--delay: 0.15s">
-          <h3>Developer friendly</h3>
-          <p>
-            Schema-driven help, JSON output, and shell completions make it easy
-            to ship polished command lines quickly.
-          </p>
-          <div class="tag-row">
-            <a class="btn" href="https://opensource.org/license/mit">
-              MIT
-            </a>
-            <a class="btn" href="https://crystal-lang.org/">
-              Crystal
-            </a>
-            <a class="btn" href="https://json-schema.org/">
-              JSON Schema
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;run&quot;</span>, json: schema)
+result <span class="o">=</span> cli.parse([<span class="s">&quot;--verbose&quot;</span>, <span class="s">&quot;--&quot;</span>, <span class="s">&quot;ls&quot;</span>, <span class="s">&quot;-la&quot;</span>, <span class="s">&quot;--color&quot;</span>])
+<span class="c"># =&gt; {&quot;verbose&quot;: true, &quot;argv&quot;: [&quot;ls&quot;, &quot;-la&quot;, &quot;--color&quot;]}</span></code></pre>
+<p>Options before <code>--</code> parse normally; only the first <code>--</code> is special (a second one is a literal operand).</p>
+<h2><a id="short-flags" class="anchor" href="#short-flags">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Short Flags</h2>
+<p>Define short flag aliases with the <code>short</code> property:</p>
+<pre><code class="language-crystal">schema <span class="o">=</span> <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;verbose&quot;: {&quot;type&quot;: &quot;boolean&quot;, &quot;short&quot;: &quot;v&quot;},
+    &quot;count&quot;: {&quot;type&quot;: &quot;integer&quot;, &quot;short&quot;: &quot;n&quot;},
+    &quot;output&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;short&quot;: &quot;o&quot;}
+  }
+})</span>
 
-    <footer class="footer">
-      <div><strong>Jargon (c) 2026 Thomas Sawyer</strong></div>
-    </footer>
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;myapp&quot;</span>, json: schema)
+result <span class="o">=</span> cli.parse([<span class="s">&quot;-v&quot;</span>, <span class="s">&quot;-n&quot;</span>, <span class="s">&quot;5&quot;</span>, <span class="s">&quot;-o&quot;</span>, <span class="s">&quot;out.txt&quot;</span>])
+<span class="c"># =&gt; {&quot;verbose&quot;: true, &quot;count&quot;: 5, &quot;output&quot;: &quot;out.txt&quot;}</span></code></pre>
+<pre><code class="language-sh">myapp -v -n 5 -o out.txt
+myapp --verbose --count 5 --output out.txt  # equivalent</code></pre>
+<h2><a id="help-flags" class="anchor" href="#help-flags">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Help Flags</h2>
+<p>Jargon automatically detects <code>--help</code> and <code>-h</code> flags. When using <code>run</code>, help is printed and the program exits automatically:</p>
+<pre><code class="language-crystal">cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;myapp&quot;</span>, json: schema)
+cli.run <span class="k">do</span> <span class="o">|</span>result<span class="o">|</span>
+  <span class="c"># This block only runs if --help was NOT passed</span>
+  puts result.to_pretty_json
+<span class="k">end</span></code></pre>
+<pre><code class="language-sh">myapp --help           # top-level help
+myapp -h               # same
+myapp fetch --help     # subcommand help
+myapp config set -h    # nested subcommand help</code></pre>
+<p>If you need manual control, use <code>parse</code> instead:</p>
+<pre><code class="language-crystal">result <span class="o">=</span> cli.parse(<span class="t">ARGV</span>)
 
-    <script src="script.js"></script>
-  </body>
+<span class="k">if</span> result.help_requested?
+  <span class="k">if</span> subcmd <span class="o">=</span> result.help_subcommand
+    puts cli.help(subcmd)
+  <span class="k">else</span>
+    puts cli.help
+  <span class="k">end</span>
+  exit <span class="n">0</span>
+<span class="k">end</span></code></pre>
+<p>If you define a <code>help</code> property or use <code>-h</code> as a short flag for something else, Jargon won't intercept those flags:</p>
+<pre><code class="language-crystal"><span class="c"># User-defined help property takes precedence</span>
+schema <span class="o">=</span> <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;help&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Help topic&quot;},
+    &quot;host&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;short&quot;: &quot;h&quot;}
+  }
+})</span>
+
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;myapp&quot;</span>, json: schema)
+result <span class="o">=</span> cli.parse([<span class="s">&quot;--help&quot;</span>, <span class="s">&quot;topic&quot;</span>])
+result.help_requested?  <span class="c"># =&gt; false</span>
+result[<span class="s">&quot;help&quot;</span>].as_s     <span class="c"># =&gt; &quot;topic&quot;</span>
+
+result <span class="o">=</span> cli.parse([<span class="s">&quot;-h&quot;</span>, <span class="s">&quot;localhost&quot;</span>])
+result[<span class="s">&quot;host&quot;</span>].as_s     <span class="c"># =&gt; &quot;localhost&quot;</span></code></pre>
+<h2><a id="shell-completions" class="anchor" href="#shell-completions">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Shell Completions</h2>
+<p>Jargon can generate shell completion scripts for bash, zsh, and fish. When using <code>run</code>, the <code>--completions &lt;shell&gt;</code> flag is handled automatically.</p>
+<p>The generated scripts are small, fixed <strong>shims</strong>: on every Tab they forward the cursor position and typed words back to your program (a hidden <code>__complete</code> verb that <code>run</code> and <code>handle_completion</code> recognize), and the program computes the candidates from the schema. This means one code path serves both static completion (subcommand names, flags, enum values) and <a href="#dynamic-completions">dynamic completion</a> (live data only your app knows) — and the installed script never needs regenerating when your CLI changes.</p>
+<h3><a id="installing-completions" class="anchor" href="#installing-completions">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Installing Completions</h3>
+<p>Generate the completion shim once and save it to your shell's completions directory:</p>
+<pre><code class="language-sh"># Bash
+myapp --completions bash &gt; ~/.local/share/bash-completion/completions/myapp
+
+# Zsh (ensure ~/.zfunc is in your fpath)
+myapp --completions zsh &gt; ~/.zfunc/_myapp
+
+# Fish
+myapp --completions fish &gt; ~/.config/fish/completions/myapp.fish</code></pre>
+<p>Out of the box you get completion for subcommand names (including nested), long and short flags, and <code>enum</code> values (both <code>--mode &lt;Tab&gt;</code> and <code>--mode=&lt;Tab&gt;</code>) — all derived from the schema, no extra code. Values containing <code>:</code> (<code>Expenses:Food</code>) complete as whole words in every shell, including bash, where the shim undoes readline's splitting at <code>=</code> and <code>:</code>.</p>
+<h3><a id="dynamic-completions" class="anchor" href="#dynamic-completions">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Dynamic Completions</h3>
+<p>For values the schema can't know — a document name, a tag, a key in a live store — register a <strong>completer</strong> against a field. It runs inside your program at completion time and returns the candidates:</p>
+<pre><code class="language-crystal">cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;transfs&quot;</span>, yaml: schema)
+
+<span class="c"># Field path: the field name for a flat CLI, or `subcommand.field`</span>
+<span class="c"># (`a.b.field` when nested). Raises if the path isn&#39;t a real field.</span>
+cli.completer(<span class="s">&quot;forget.query&quot;</span>) <span class="k">do</span> <span class="o">|</span>ctx<span class="o">|</span>
+  store.search(ctx.partial).map(<span class="o">&amp;</span>.name)   <span class="c"># candidates (Array(String))</span>
+<span class="k">end</span>
+
+cli.run { <span class="o">|</span>result<span class="o">|</span> ... }   <span class="c"># `run` answers the __complete verb automatically</span></code></pre>
+<p>The block receives a <code>Completion::Context</code>:</p>
+<p>| Field | Description |
+|-------|-------------|
+| <code>ctx.partial</code> | the token being completed (use it to scope your query) |
+| <code>ctx.subcommand</code> | the resolved subcommand path, or <code>nil</code> at top level |
+| <code>ctx.arguments</code> | a lenient parse of what's already typed, for filtering |
+| <code>ctx.words</code> | the raw tokens, as an escape hatch |</p>
+<p>A registered field completes dynamically; everything else stays static. You never write the <code>__complete</code> verb yourself — the shim supplies it.</p>
+<h4><a id="answering-completion-from-a-separate-binary" class="anchor" href="#answering-completion-from-a-separate-binary">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Answering completion from a separate binary</h4>
+<p>Each Tab spawns whatever the shim calls. If your main program is heavy to start, point the shim at a small dedicated binary instead of paying full startup per keypress:</p>
+<pre><code class="language-crystal"><span class="c"># generate a shim that calls `transfs-complete` rather than `transfs`</span>
+<span class="t">File</span>.write(path, cli.bash_completion(command: <span class="s">&quot;transfs-complete&quot;</span>))</code></pre>
+<pre><code class="language-crystal"><span class="c"># transfs-complete.cr — a minimal helper that only answers completion</span>
+cli <span class="o">=</span> build_cli
+cli.completer(<span class="s">&quot;forget.query&quot;</span>) { <span class="o">|</span>ctx<span class="o">|</span> index.search(ctx.partial) }
+exit cli.handle_completion   <span class="c"># answers __complete and exits</span></code></pre>
+<p><code>handle_completion</code> returns immediately for a normal invocation, so you can also call it at the very top of your existing <code>main</code> to answer completion <em>before</em> heavy initialization runs, without a second binary. (The separate-binary win only materializes if your candidate source has a light access path — an on-disk index, a cache, a daemon — rather than requiring the full app to boot.)</p>
+<h3><a id="manual-completion-handling" class="anchor" href="#manual-completion-handling">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Manual Completion Handling</h3>
+<p>If you need manual control, use <code>parse</code>:</p>
+<pre><code class="language-crystal">cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;myapp&quot;</span>, json: schema)
+result <span class="o">=</span> cli.parse(<span class="t">ARGV</span>)
+
+<span class="k">if</span> result.completion_requested?
+  <span class="k">case</span> result.completion_shell
+  <span class="k">when</span> <span class="s">&quot;bash&quot;</span> <span class="k">then</span> puts cli.bash_completion
+  <span class="k">when</span> <span class="s">&quot;zsh&quot;</span>  <span class="k">then</span> puts cli.zsh_completion
+  <span class="k">when</span> <span class="s">&quot;fish&quot;</span> <span class="k">then</span> puts cli.fish_completion
+  <span class="k">end</span>
+  exit <span class="n">0</span>
+<span class="k">end</span></code></pre>
+<h2><a id="subcommands" class="anchor" href="#subcommands">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Subcommands</h2>
+<p>Create CLIs with subcommands, each with their own schema:</p>
+<pre><code class="language-crystal">cli <span class="o">=</span> <span class="t">Jargon</span>.new(<span class="s">&quot;myapp&quot;</span>)
+
+cli.subcommand(<span class="s">&quot;fetch&quot;</span>, json: <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;positional&quot;: [&quot;url&quot;],
+  &quot;properties&quot;: {
+    &quot;url&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Resource URL&quot;},
+    &quot;depth&quot;: {&quot;type&quot;: &quot;integer&quot;, &quot;short&quot;: &quot;d&quot;}
+  },
+  &quot;required&quot;: [&quot;url&quot;]
+})</span>)
+
+cli.subcommand(<span class="s">&quot;save&quot;</span>, json: <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;message&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;short&quot;: &quot;m&quot;},
+    &quot;all&quot;: {&quot;type&quot;: &quot;boolean&quot;, &quot;short&quot;: &quot;a&quot;}
+  },
+  &quot;required&quot;: [&quot;message&quot;]
+})</span>)
+
+cli.run <span class="k">do</span> <span class="o">|</span>result<span class="o">|</span>
+  <span class="k">case</span> result.subcommand
+  <span class="k">when</span> <span class="s">&quot;fetch&quot;</span>
+    url <span class="o">=</span> result[<span class="s">&quot;url&quot;</span>].as_s
+    depth <span class="o">=</span> result[<span class="s">&quot;depth&quot;</span>]?.try(<span class="o">&amp;</span>.as_i64)
+  <span class="k">when</span> <span class="s">&quot;save&quot;</span>
+    message <span class="o">=</span> result[<span class="s">&quot;message&quot;</span>].as_s
+    all <span class="o">=</span> result[<span class="s">&quot;all&quot;</span>]?.try(<span class="o">&amp;</span>.as_bool) <span class="o">||</span> <span class="n">false</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre>
+<pre><code class="language-sh">myapp fetch https://example.com/resource -d 1
+myapp save -m &quot;Updated config&quot; -a</code></pre>
+<h3><a id="nested-subcommands" class="anchor" href="#nested-subcommands">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Nested Subcommands</h3>
+<p>Create nested subcommands by passing a <code>CLI</code> instance as the subcommand:</p>
+<pre><code class="language-crystal">config <span class="o">=</span> <span class="t">Jargon</span>.new(<span class="s">&quot;config&quot;</span>)
+config.subcommand(<span class="s">&quot;set&quot;</span>, json: <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;positional&quot;: [&quot;key&quot;, &quot;value&quot;],
+  &quot;properties&quot;: {
+    &quot;key&quot;: {&quot;type&quot;: &quot;string&quot;},
+    &quot;value&quot;: {&quot;type&quot;: &quot;string&quot;}
+  },
+  &quot;required&quot;: [&quot;key&quot;, &quot;value&quot;]
+})</span>)
+config.subcommand(<span class="s">&quot;get&quot;</span>, json: <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;positional&quot;: [&quot;key&quot;],
+  &quot;properties&quot;: {
+    &quot;key&quot;: {&quot;type&quot;: &quot;string&quot;}
+  }
+})</span>)
+
+cli <span class="o">=</span> <span class="t">Jargon</span>.new(<span class="s">&quot;myapp&quot;</span>)
+cli.subcommand(<span class="s">&quot;config&quot;</span>, config)
+cli.subcommand(<span class="s">&quot;status&quot;</span>, json: <span class="s">%({&quot;type&quot;: &quot;object&quot;, &quot;properties&quot;: {}})</span>)
+
+cli.run <span class="k">do</span> <span class="o">|</span>result<span class="o">|</span>
+  <span class="k">case</span> result.subcommand
+  <span class="k">when</span> <span class="s">&quot;config set&quot;</span>
+    key <span class="o">=</span> result[<span class="s">&quot;key&quot;</span>].as_s
+    value <span class="o">=</span> result[<span class="s">&quot;value&quot;</span>].as_s
+  <span class="k">when</span> <span class="s">&quot;config get&quot;</span>
+    key <span class="o">=</span> result[<span class="s">&quot;key&quot;</span>].as_s
+  <span class="k">when</span> <span class="s">&quot;status&quot;</span>
+    <span class="c"># ...</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre>
+<pre><code class="language-sh">myapp config set api_url https://api.example.com
+myapp config get api_url
+myapp status</code></pre>
+<p>The <code>result.subcommand</code> returns the full path as a space-separated string (e.g., <code>&quot;config set&quot;</code>).</p>
+<h3><a id="default-subcommand" class="anchor" href="#default-subcommand">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Default Subcommand</h3>
+<p>Set a default subcommand to use when no subcommand name is given:</p>
+<pre><code class="language-crystal">cli <span class="o">=</span> <span class="t">Jargon</span>.new(<span class="s">&quot;xerp&quot;</span>)
+
+cli.subcommand(<span class="s">&quot;index&quot;</span>, json: <span class="s">%({...})</span>)
+cli.subcommand(<span class="s">&quot;query&quot;</span>, json: <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;positional&quot;: [&quot;query_text&quot;],
+  &quot;properties&quot;: {
+    &quot;query_text&quot;: {&quot;type&quot;: &quot;string&quot;},
+    &quot;top&quot;: {&quot;type&quot;: &quot;integer&quot;, &quot;default&quot;: 10, &quot;short&quot;: &quot;n&quot;}
+  }
+})</span>)
+
+cli.default_subcommand(<span class="s">&quot;query&quot;</span>)</code></pre>
+<pre><code class="language-sh"># These are equivalent:
+xerp query &quot;search term&quot; -n 5
+xerp &quot;search term&quot; -n 5</code></pre>
+<p>Note: If the first argument matches a subcommand name, it's treated as a subcommand, not as input to the default. Use the explicit form if you need to search for a term that matches a subcommand name.</p>
+<h3><a id="subcommand-abbreviations" class="anchor" href="#subcommand-abbreviations">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Subcommand Abbreviations</h3>
+<p>Subcommands can be abbreviated to any unique prefix (minimum 3 characters):</p>
+<pre><code class="language-sh">$ myapp checkout main   # full name
+$ myapp check main      # abbreviated (if unambiguous)
+$ myapp che main        # still works
+
+$ myapp ch main         # too short (&lt; 3 chars) - error
+$ myapp co main         # ambiguous (commit? config?) - error</code></pre>
+<h3><a id="global-options" class="anchor" href="#global-options">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Global Options</h3>
+<p>Use <code>Jargon.merge</code> to add common options to all subcommands:</p>
+<pre><code class="language-crystal">global <span class="o">=</span> <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;verbose&quot;: {&quot;type&quot;: &quot;boolean&quot;, &quot;short&quot;: &quot;v&quot;, &quot;description&quot;: &quot;Verbose output&quot;},
+    &quot;config&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;short&quot;: &quot;c&quot;, &quot;description&quot;: &quot;Config file path&quot;}
+  }
+})</span>
+
+cli <span class="o">=</span> <span class="t">Jargon</span>.new(<span class="s">&quot;myapp&quot;</span>)
+
+cli.subcommand(<span class="s">&quot;fetch&quot;</span>, json: <span class="t">Jargon</span>.merge(<span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;positional&quot;: [&quot;url&quot;],
+  &quot;properties&quot;: {
+    &quot;url&quot;: {&quot;type&quot;: &quot;string&quot;},
+    &quot;depth&quot;: {&quot;type&quot;: &quot;integer&quot;, &quot;short&quot;: &quot;d&quot;}
+  }
+})</span>, global))
+
+cli.subcommand(<span class="s">&quot;sync&quot;</span>, json: <span class="t">Jargon</span>.merge(<span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;force&quot;: {&quot;type&quot;: &quot;boolean&quot;, &quot;short&quot;: &quot;f&quot;}
+  }
+})</span>, global))</code></pre>
+<pre><code class="language-sh">myapp fetch https://example.com/data -v
+myapp sync --force --config myconfig.json</code></pre>
+<p>Subcommand properties take precedence if there's a conflict with global properties.</p>
+<h3><a id="file-based-subcommands" class="anchor" href="#file-based-subcommands">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>File-Based Subcommands</h3>
+<p>Load subcommands from external files for cleaner organization:</p>
+<pre><code class="language-crystal">cli <span class="o">=</span> <span class="t">Jargon</span>.new(<span class="s">&quot;myapp&quot;</span>)
+cli.subcommand(<span class="s">&quot;fetch&quot;</span>, file: <span class="s">&quot;schemas/fetch.yaml&quot;</span>)
+cli.subcommand(<span class="s">&quot;save&quot;</span>, file: <span class="s">&quot;schemas/save.json&quot;</span>)</code></pre>
+<p>Or define all subcommands in a single multi-document file:</p>
+<pre><code class="language-yaml"># commands.yaml
+---
+name: fetch
+type: object
+properties:
+  url: {type: string}
+---
+name: save
+type: object
+properties:
+  file: {type: string}</code></pre>
+<pre><code class="language-crystal"><span class="c"># Load as top-level subcommands</span>
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;myapp&quot;</span>, file: <span class="s">&quot;commands.yaml&quot;</span>)
+<span class="c"># or</span>
+cli <span class="o">=</span> <span class="t">Jargon</span>.new(<span class="s">&quot;myapp&quot;</span>)
+cli.subcommand(file: <span class="s">&quot;commands.yaml&quot;</span>)</code></pre>
+<p>Load multi-doc as nested subcommands by providing a parent name:</p>
+<pre><code class="language-crystal">cli <span class="o">=</span> <span class="t">Jargon</span>.new(<span class="s">&quot;myapp&quot;</span>)
+cli.subcommand(<span class="s">&quot;config&quot;</span>, file: <span class="s">&quot;config_commands.yaml&quot;</span>)  <span class="c"># config get, config set, etc.</span></code></pre>
+<p>Multi-document format is auto-detected for <code>json:</code>, <code>yaml:</code>, and <code>file:</code> parameters. Each document must have a <code>name</code> field.</p>
+<p>JSON uses relaxed JSONL (consecutive objects with whitespace):</p>
+<pre><code class="language-json">{
+  &quot;name&quot;: &quot;fetch&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {&quot;url&quot;: {&quot;type&quot;: &quot;string&quot;}}
+}
+{
+  &quot;name&quot;: &quot;save&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {&quot;file&quot;: {&quot;type&quot;: &quot;string&quot;}}
+}</code></pre>
+<h3><a id="schema-mixins" class="anchor" href="#schema-mixins">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Schema Mixins</h3>
+<p>Share properties across subcommands using standard JSON Schema <code>$id</code>, <code>$ref</code>, and <code>allOf</code>:</p>
+<pre><code class="language-yaml">---
+$id: global
+properties:
+  verbose: {type: boolean, short: v}
+  config: {type: string, short: c}
+---
+$id: output
+properties:
+  format: {type: string, enum: [json, yaml, csv]}
+---
+name: fetch
+allOf:
+  - {$ref: global}
+  - properties:
+      url: {type: string}
+---
+name: export
+allOf:
+  - {$ref: global}
+  - {$ref: output}
+  - properties:
+      file: {type: string}</code></pre>
+<ul>
+<li>Schemas with <code>$id</code> (no <code>name</code>) are mixins - not registered as subcommands</li>
+<li><code>$ref</code> in <code>allOf</code> resolves to mixins defined in the same file</li>
+<li>Properties are merged; <code>type: object</code> is inferred if missing</li>
+<li><code>required</code> lists are unioned across every mixin and the subcommand itself</li>
+<li>Subcommands explicitly opt-in via <code>allOf</code></li>
+</ul>
+<p>This approach uses standard JSON Schema keywords while keeping mixin definitions alongside subcommands in a single file.</p>
+<p>Note that Jargon <em>flattens</em> <code>allOf</code> rather than evaluating it as a true conjunction: if the same property is defined in more than one subschema, the last definition wins. Strict JSON Schema would intersect the constraints instead. This rarely matters for CLI schemas, but it is a deliberate approximation.</p>
+<h3><a id="json-from-stdin" class="anchor" href="#json-from-stdin">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>JSON from Stdin</h3>
+<p>Use <code>-</code> to read JSON input from stdin:</p>
+<pre><code class="language-sh"># JSON with subcommand field
+echo '{&quot;subcommand&quot;: &quot;query&quot;, &quot;query_text&quot;: &quot;search term&quot;, &quot;top&quot;: 5}' | xerp -
+
+# JSON args for explicit subcommand
+echo '{&quot;result_id&quot;: &quot;abc123&quot;, &quot;useful&quot;: true}' | xerp mark -</code></pre>
+<p>If no <code>subcommand</code> field is present in <code>xerp -</code>, the default subcommand is used (if set).</p>
+<p>The field name is configurable:</p>
+<pre><code class="language-crystal">cli.subcommand_key(<span class="s">&quot;op&quot;</span>)  <span class="c"># default is &quot;subcommand&quot;</span></code></pre>
+<pre><code class="language-sh">echo '{&quot;op&quot;: &quot;query&quot;, &quot;query_text&quot;: &quot;search&quot;}' | xerp -</code></pre>
+<h2><a id="environment-variables" class="anchor" href="#environment-variables">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Environment Variables</h2>
+<p>Map schema properties to environment variables with the <code>env</code> property:</p>
+<pre><code class="language-crystal">schema <span class="o">=</span> <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;api-key&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;env&quot;: &quot;MY_APP_API_KEY&quot;},
+    &quot;host&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;env&quot;: &quot;MY_APP_HOST&quot;, &quot;default&quot;: &quot;localhost&quot;},
+    &quot;debug&quot;: {&quot;type&quot;: &quot;boolean&quot;, &quot;env&quot;: &quot;MY_APP_DEBUG&quot;}
+  }
+})</span>
+
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;myapp&quot;</span>, json: schema)
+cli.run <span class="k">do</span> <span class="o">|</span>result<span class="o">|</span>
+  <span class="c"># result contains api-key, host from env, debug from CLI</span>
+<span class="k">end</span></code></pre>
+<pre><code class="language-sh">export MY_APP_API_KEY=secret123
+export MY_APP_HOST=prod.example.com
+myapp --debug  # api-key and host from env, debug from CLI</code></pre>
+<p>Merge order (highest priority first):</p>
+<ol>
+<li>CLI arguments</li>
+<li>Environment variables</li>
+<li>Config file defaults</li>
+<li>Schema defaults</li>
+</ol>
+<p>Nested objects merge key by key, so <code>--server.port 1</code> overrides only that key
+and keeps a <code>server.host</code> from the config file. Parsing never modifies the
+<code>defaults:</code> you pass in.</p>
+<h2><a id="config-files" class="anchor" href="#config-files">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Config Files</h2>
+<p>Load configuration from standard XDG locations with <code>load_config</code>. Supports YAML and JSON:</p>
+<pre><code class="language-crystal">cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;myapp&quot;</span>, json: schema)
+config <span class="o">=</span> cli.load_config  <span class="c"># Returns JSON::Any or nil</span>
+cli.run(defaults: config) <span class="k">do</span> <span class="o">|</span>result<span class="o">|</span>
+  <span class="c"># ...</span>
+<span class="k">end</span></code></pre>
+<p>Paths searched (merged by default, or first found wins with <code>merge: false</code>):</p>
+<ol>
+<li><code>./.config/myapp.yaml</code> / <code>.yml</code> / <code>.json</code> (project local, <code>project: true</code> only)</li>
+<li><code>./.config/myapp/config.yaml</code> / <code>.yml</code> / <code>.json</code> (project local, directory style, <code>project: true</code> only)</li>
+<li><code>$XDG_CONFIG_HOME/myapp.yaml</code> / <code>.yml</code> / <code>.json</code> (user global, typically <code>~/.config</code>)</li>
+<li><code>$XDG_CONFIG_HOME/myapp/config.yaml</code> / <code>.yml</code> / <code>.json</code> (user global, directory style)</li>
+</ol>
+<p>YAML is preferred over JSON when both exist at the same location. An empty or
+relative <code>$XDG_CONFIG_HOME</code> is ignored in favor of <code>~/.config</code>, as the XDG spec
+requires.</p>
+<h3><a id="project-local-configs" class="anchor" href="#project-local-configs">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Project-Local Configs</h3>
+<p>By default only the user's own config is read. Project-local configs are opt-in:</p>
+<pre><code class="language-crystal">config <span class="o">=</span> cli.load_config(project: <span class="n">true</span>)</code></pre>
+<p>They are off by default because they are read from the <em>current directory</em>
+and take precedence over the user's config. Running your tool inside a
+directory someone else controls, such as a freshly cloned repository, would
+otherwise let that directory set any option your schema defines. Opt in when
+per-project settings are the point (a formatter's style rules, a build tool's
+targets), and think twice if an option can point the tool at a server, a
+credential, or a command to run.</p>
+<p>When enabled, configs are deep-merged with project overriding user:</p>
+<pre><code class="language-crystal"><span class="c"># Merge all found configs (default) - project wins over user</span>
+config <span class="o">=</span> cli.load_config(project: <span class="n">true</span>)
+
+<span class="c"># Or first-found wins</span>
+config <span class="o">=</span> cli.load_config(merge: <span class="n">false</span>, project: <span class="n">true</span>)</code></pre>
+<h3><a id="deep-merge" class="anchor" href="#deep-merge">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Deep Merge</h3>
+<p>Nested objects are recursively merged, not overwritten:</p>
+<pre><code class="language-yaml"># User config (~/.config/myapp.yaml)
+database:
+  host: localhost
+  port: 5432
+  user: default_user
+
+# Project config (.config/myapp.yaml, read with project: true)
+database:
+  host: production.example.com
+
+# Result after merge:
+database:
+  host: production.example.com  # from project
+  port: 5432                    # preserved from user
+  user: default_user            # preserved from user</code></pre>
+<h3><a id="config-warnings" class="anchor" href="#config-warnings">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Config Warnings</h3>
+<p>Invalid config files (unparseable, or not a mapping at the top level) are
+skipped with a warning to STDERR by default; an empty file is simply ignored.
+To suppress the warnings:</p>
+<pre><code class="language-crystal"><span class="t">Jargon</span>.config_warnings <span class="o">=</span> <span class="n">false</span>
+config <span class="o">=</span> cli.load_config
+<span class="t">Jargon</span>.config_warnings <span class="o">=</span> <span class="n">true</span></code></pre>
+<p>Example config (<code>~/.config/myapp.yaml</code>):</p>
+<pre><code class="language-yaml">host: localhost
+port: 8080
+debug: true</code></pre>
+<p>Or JSON (<code>~/.config/myapp.json</code>):</p>
+<pre><code class="language-json">{
+  &quot;host&quot;: &quot;localhost&quot;,
+  &quot;port&quot;: 8080,
+  &quot;debug&quot;: true
+}</code></pre>
+<p>The <code>defaults:</code> parameter accepts a JSON object (<code>JSON::Any</code> or
+<code>Hash(String, JSON::Any)</code>), so you can load config however you prefer:</p>
+<pre><code class="language-crystal"><span class="c"># From YAML</span>
+config <span class="o">=</span> <span class="t">JSON</span>.parse(<span class="t">YAML</span>.parse(<span class="t">File</span>.read(<span class="s">&quot;config.yaml&quot;</span>)).to_json)
+cli.run(defaults: config) { <span class="o">|</span>result<span class="o">|</span> ... }
+
+<span class="c"># From JSON</span>
+config <span class="o">=</span> <span class="t">JSON</span>.parse(<span class="t">File</span>.read(<span class="s">&quot;settings.json&quot;</span>))
+cli.run(defaults: config) { <span class="o">|</span>result<span class="o">|</span> ... }</code></pre>
+<h2><a id="extension-annotations-x-" class="anchor" href="#extension-annotations-x-">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Extension Annotations (x-*)</h2>
+<p>Schema keys starting with <code>x-</code> are treated as consumer-defined metadata,
+following the JSON Schema / OpenAPI extension convention. Jargon preserves
+them verbatim — on commands (doc level) and on individual properties — and
+ignores them completely for parsing and validation. This gives downstream
+consumers (a GUI, a docs generator, an AI tool layer) an open vocabulary of
+hints carried by the same schema that drives the CLI:</p>
+<pre><code class="language-yaml">---
+name: forget
+description: Remove a document from the store
+x-ui:
+  destructive: true        # GUI: confirm before running
+properties:
+  query:
+    type: string
+    x-ui:
+      control: typeahead   # GUI: render a search box, not a text field
+      source: documents</code></pre>
+<p>Annotations are exposed through the schema introspection API:</p>
+<pre><code class="language-crystal">schema <span class="o">=</span> cli.subcommands[<span class="s">&quot;forget&quot;</span>].<span class="k">as</span>(<span class="t">Jargon</span><span class="t">::</span><span class="t">Schema</span>)
+
+schema.root.extensions             <span class="c"># =&gt; {&quot;x-ui&quot; =&gt; {&quot;destructive&quot; =&gt; true}}</span>
+schema.root.extensions[<span class="s">&quot;x-ui&quot;</span>]?    <span class="c"># =&gt; keys are stored exactly as written</span>
+
+query <span class="o">=</span> schema.root.properties.not_nil![<span class="s">&quot;query&quot;</span>]
+query.extensions[<span class="s">&quot;x-ui&quot;</span>][<span class="s">&quot;control&quot;</span>]  <span class="c"># =&gt; &quot;typeahead&quot;</span></code></pre>
+<p>Jargon assigns no meaning to any <code>x-</code> key — define whatever vocabulary your
+consumers need. (The built-in <code>service</code> hint predates this mechanism and
+remains first-class.)</p>
+<h2><a id="standalone-validator" class="anchor" href="#standalone-validator">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Standalone Validator</h2>
+<p>Use <code><a href="Jargon/Validator.html">Jargon::Validator</a></code> to validate data against a schema without the CLI parser. This is useful for validating JSON from APIs, config files, or other sources:</p>
+<pre><code class="language-crystal"><span class="k">require</span> <span class="s">&quot;jargon&quot;</span>
+
+schema <span class="o">=</span> <span class="t">Jargon</span><span class="t">::</span><span class="t">Schema</span>.from_json(<span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;name&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1},
+    &quot;age&quot;: {&quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 0},
+    &quot;role&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;admin&quot;, &quot;user&quot;]}
+  },
+  &quot;required&quot;: [&quot;name&quot;],
+  &quot;additionalProperties&quot;: false
+})</span>)
+
+data <span class="o">=</span> {<span class="s">&quot;name&quot;</span> <span class="o">=&gt;</span> <span class="t">JSON</span><span class="t">::</span><span class="t">Any</span>.new(<span class="s">&quot;Alice&quot;</span>), <span class="s">&quot;age&quot;</span> <span class="o">=&gt;</span> <span class="t">JSON</span><span class="t">::</span><span class="t">Any</span>.new(<span class="n">30_i64</span>)}
+errors <span class="o">=</span> <span class="t">Jargon</span><span class="t">::</span><span class="t">Validator</span>.validate(data, schema)
+<span class="c"># =&gt; [] (empty = valid)</span>
+
+bad_data <span class="o">=</span> {<span class="s">&quot;name&quot;</span> <span class="o">=&gt;</span> <span class="t">JSON</span><span class="t">::</span><span class="t">Any</span>.new(<span class="s">&quot;&quot;</span>), <span class="s">&quot;extra&quot;</span> <span class="o">=&gt;</span> <span class="t">JSON</span><span class="t">::</span><span class="t">Any</span>.new(<span class="s">&quot;?&quot;</span>)}
+errors <span class="o">=</span> <span class="t">Jargon</span><span class="t">::</span><span class="t">Validator</span>.validate(bad_data, schema)
+<span class="c"># =&gt; [&quot;Value for name must be at least 1 characters&quot;,</span>
+<span class="c">#     &quot;Unknown property &#39;extra&#39;: additionalProperties is false&quot;]</span></code></pre>
+<p>The validator supports all the same constraints as CLI parsing: types, required fields, enums, numeric ranges, string patterns, formats, array constraints, <code>const</code>, <code>$ref</code>, nested objects, and <code>additionalProperties</code>.</p>
+<h2><a id="api" class="anchor" href="#api">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>API</h2>
+<pre><code class="language-crystal"><span class="c"># Create CLI (program name first, named schema parameter)</span>
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(program_name, json: json_string)
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(program_name, yaml: yaml_string)
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(program_name, file: <span class="s">&quot;schema.json&quot;</span>)
+
+<span class="c"># For subcommands (no root schema)</span>
+cli <span class="o">=</span> <span class="t">Jargon</span>.new(program_name)
+cli.subcommand(<span class="s">&quot;name&quot;</span>, json: schema_string)
+cli.subcommand(<span class="s">&quot;name&quot;</span>, yaml: schema_string)
+cli.subcommand(<span class="s">&quot;name&quot;</span>, file: <span class="s">&quot;schema.yaml&quot;</span>)      <span class="c"># single-doc file</span>
+cli.subcommand(file: <span class="s">&quot;commands.yaml&quot;</span>)            <span class="c"># multi-doc as top-level</span>
+cli.subcommand(<span class="s">&quot;parent&quot;</span>, file: <span class="s">&quot;commands.yaml&quot;</span>)  <span class="c"># multi-doc as nested</span>
+
+<span class="c"># Merge global options into subcommand schema</span>
+merged <span class="o">=</span> <span class="t">Jargon</span>.merge(subcommand_schema, global_schema)
+
+<span class="c"># Run with automatic help/completions/error handling (recommended)</span>
+cli.run { <span class="o">|</span>result<span class="o">|</span> puts result.to_pretty_json }
+cli.run(<span class="t">ARGV</span>) { <span class="o">|</span>result<span class="o">|</span> ... }
+result <span class="o">=</span> cli.run                      <span class="c"># without block, returns Result</span>
+
+<span class="c"># Parse arguments - returns Result with errors array</span>
+result <span class="o">=</span> cli.parse(<span class="t">ARGV</span>)
+result <span class="o">=</span> cli.parse(<span class="t">ARGV</span>, defaults: config)
+
+<span class="c"># Get data as JSON - returns JSON::Any, raises ParseError on errors</span>
+data <span class="o">=</span> cli.json(<span class="t">ARGV</span>)
+data <span class="o">=</span> cli.json(<span class="t">ARGV</span>, defaults: config)
+
+<span class="c"># Config file loading</span>
+config <span class="o">=</span> cli.load_config                <span class="c"># merge user configs found</span>
+config <span class="o">=</span> cli.load_config(project: <span class="n">true</span>) <span class="c"># also ./.config/ (project wins)</span>
+config <span class="o">=</span> cli.load_config(merge: <span class="n">false</span>)  <span class="c"># first found wins</span>
+paths <span class="o">=</span> cli.config_paths                <span class="c"># list of paths searched (takes project: too)</span>
+
+<span class="c"># Result methods (from parse or run)</span>
+result.valid?      <span class="c"># =&gt; true/false</span>
+result.errors      <span class="c"># =&gt; Array(String)</span>
+result.data        <span class="c"># =&gt; JSON::Any</span>
+result.to_json         <span class="c"># =&gt; compact JSON string</span>
+result.to_pretty_json  <span class="c"># =&gt; formatted JSON string</span>
+result[<span class="s">&quot;key&quot;</span>]          <span class="c"># =&gt; access values</span>
+result.subcommand      <span class="c"># =&gt; String? (nil if no subcommands)</span>
+
+<span class="c"># Help/completion detection (when using parse)</span>
+result.help_requested?  <span class="c"># =&gt; true if --help/-h was passed</span>
+result.help_subcommand  <span class="c"># =&gt; String? (which subcommand&#39;s help, nil for top-level)</span>
+result.completion_requested?  <span class="c"># =&gt; true if --completions was passed</span>
+result.completion_shell       <span class="c"># =&gt; String? (&quot;bash&quot;, &quot;zsh&quot;, or &quot;fish&quot;)</span>
+
+<span class="c"># Help text</span>
+cli.help              <span class="c"># =&gt; usage string with all options</span>
+cli.help(<span class="s">&quot;fetch&quot;</span>)     <span class="c"># =&gt; help for specific subcommand</span>
+cli.help(<span class="s">&quot;config set&quot;</span>) <span class="c"># =&gt; help for nested subcommand</span>
+
+<span class="c"># Completion shims (pass command: to target a separate helper binary)</span>
+cli.bash_completion                       <span class="c"># =&gt; bash completion shim</span>
+cli.zsh_completion                        <span class="c"># =&gt; zsh completion shim</span>
+cli.fish_completion                       <span class="c"># =&gt; fish completion shim</span>
+cli.bash_completion(command: <span class="s">&quot;app-complete&quot;</span>)
+
+<span class="c"># Dynamic completers</span>
+cli.completer(<span class="s">&quot;forget.query&quot;</span>) { <span class="o">|</span>ctx<span class="o">|</span> ... }  <span class="c"># register; returns Array(String)</span>
+cli.handle_completion                         <span class="c"># answer __complete + exit (no-op otherwise)</span>
+
+<span class="c"># Standalone validation (no CLI needed)</span>
+errors <span class="o">=</span> <span class="t">Jargon</span><span class="t">::</span><span class="t">Validator</span>.validate(data_hash, schema)  <span class="c"># =&gt; Array(String)</span>
+
+<span class="c"># Schema introspection (for GUI/tooling consumers)</span>
+schema <span class="o">=</span> cli.schema                    <span class="c"># =&gt; Jargon::Schema? (root schema, if any)</span>
+schema <span class="o">=</span> cli.subcommands[<span class="s">&quot;name&quot;</span>]       <span class="c"># =&gt; Jargon::Schema | Jargon::CLI</span>
+schema.root                            <span class="c"># =&gt; Jargon::Property (command-level)</span>
+schema.root.properties                 <span class="c"># =&gt; Hash(String, Property)?</span>
+schema.positional                      <span class="c"># =&gt; Array(String)</span>
+property.extensions                    <span class="c"># =&gt; Hash(String, JSON::Any) (x-* annotations, keys as written)</span>
+property.extensions[<span class="s">&quot;x-ui&quot;</span>]?           <span class="c"># =&gt; JSON::Any?</span></code></pre>
+<h2><a id="development" class="anchor" href="#development">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Development</h2>
+<h3><a id="prerequisites" class="anchor" href="#prerequisites">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Prerequisites</h3>
+<ul>
+<li>Crystal &gt;= 1.18.2</li>
+</ul>
+<h3><a id="running-tests" class="anchor" href="#running-tests">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Running Tests</h3>
+<pre><code class="language-sh">shards install
+crystal spec</code></pre>
+<h3><a id="project-structure" class="anchor" href="#project-structure">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Project Structure</h3>
+<pre><code class="language-crystal">src<span class="o">/</span>
+├── jargon.cr              <span class="c"># Main module, convenience methods</span>
+└── jargon<span class="o">/</span>
+    ├── cli.cr             <span class="c"># Core CLI parser</span>
+    ├── schema.cr          <span class="c"># JSON Schema parsing</span>
+    ├── schema<span class="o">/</span>property.cr <span class="c"># Property definitions</span>
+    ├── result.cr          <span class="c"># Parse result container</span>
+    ├── validator.cr       <span class="c"># Standalone schema validator</span>
+    ├── config.cr          <span class="c"># Config file loading (XDG)</span>
+    ├── help.cr            <span class="c"># Help text generation</span>
+    └── completion.cr      <span class="c"># Shell completion scripts</span>
+spec<span class="o">/</span>
+└── jargon_spec.cr         <span class="c"># Test suite</span></code></pre>
+<h3><a id="building-docs" class="anchor" href="#building-docs">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Building Docs</h3>
+<pre><code class="language-sh">crystal docs
+open docs/index.html</code></pre>
+<h2><a id="license" class="anchor" href="#license">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>License</h2>
+<p>MIT</p>
+</div>
+</body>
 </html>

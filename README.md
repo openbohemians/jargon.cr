@@ -4,6 +4,8 @@
 
 A Crystal library that generates CLI interfaces from JSON Schema definitions. Define your data structure once in JSON Schema, get a CLI parser with validation for free.
 
+Jargon is also available for Rust, as [jargon.rs](https://github.com/openbohemians/jargon.rs). The project's site is [jargon.openbohemians.org](https://jargon.openbohemians.org), and the API docs are at [openbohemians.org/jargon.cr](https://openbohemians.org/jargon.cr/).
+
 ## Features
 
 - **Validation**: Required fields, enum values, strict type checking, `additionalProperties`
