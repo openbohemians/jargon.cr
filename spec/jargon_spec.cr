@@ -3084,12 +3084,24 @@ describe Jargon do
       group.should contain("Run 'git remote <command> --help'")
     end
 
-    it "cli.help(subcommand) returns error for unknown subcommand" do
+    it "cli.help(subcommand) raises for an unknown subcommand" do
       cli = Jargon.new("myapp")
       cli.subcommand("query", json: %({"type": "object", "properties": {}}))
 
-      help = cli.help("unknown")
-      help.should contain("Unknown subcommand: unknown")
+      expect_raises(ArgumentError, "Unknown subcommand: unknown") do
+        cli.help("unknown")
+      end
+    end
+
+    it "cli.help(subcommand) raises for an unknown nested subcommand" do
+      remote = Jargon.new("remote")
+      remote.subcommand("add", json: %({"type": "object", "properties": {}}))
+      cli = Jargon.new("git")
+      cli.subcommand("remote", remote)
+
+      expect_raises(ArgumentError, "Unknown subcommand: nope") do
+        cli.help("remote nope")
+      end
     end
 
     it "help_requested is false when not requested" do

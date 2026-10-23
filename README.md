@@ -1082,6 +1082,7 @@ result.completion_shell       # => String? ("bash", "zsh", or "fish")
 cli.help              # => usage string with all options
 cli.help("fetch")     # => help for specific subcommand
 cli.help("config set") # => help for nested subcommand
+cli.help("nope")      # raises ArgumentError: Unknown subcommand: nope
 
 # Completion shims (pass command: to target a separate helper binary)
 cli.bash_completion                       # => bash completion shim

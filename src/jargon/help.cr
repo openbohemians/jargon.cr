@@ -7,7 +7,8 @@ module Jargon
     end
 
     # Render help for a single subcommand. `subcommand` is space-separated for
-    # nested commands (e.g. `"remote add"`).
+    # nested commands (e.g. `"remote add"`). Raises `ArgumentError` for a
+    # subcommand the CLI doesn't have, as `validate` does.
     def help(subcommand : String) : String
       subcommand_help_as(program_name, subcommand)
     end
@@ -35,7 +36,7 @@ module Jargon
       when Schema
         build_help_text(subcmd, subcmd_command)
       else
-        "Unknown subcommand: #{subcmd_name}"
+        raise ArgumentError.new("Unknown subcommand: #{subcmd_name}")
       end
     end
 

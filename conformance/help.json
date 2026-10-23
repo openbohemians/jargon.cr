@@ -266,7 +266,7 @@
     "expect": "Usage: git remote <command> [options]\n\nCommands:\n  add\n\nRun 'git remote <command> --help' for command-specific options."
   },
   {
-    "spec": "automatic help detection > cli.help(subcommand) returns error for unknown subcommand",
+    "spec": "automatic help detection > cli.help(subcommand) raises for an unknown subcommand",
     "cli": [
       {
         "op": "new",
@@ -279,7 +279,37 @@
       }
     ],
     "subcommand": "unknown",
-    "expect": "Unknown subcommand: unknown"
+    "expect": {
+      "raises": "Unknown subcommand: unknown"
+    }
+  },
+  {
+    "spec": "automatic help detection > cli.help(subcommand) raises for an unknown nested subcommand",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\"type\": \"object\", \"properties\": {}}"
+          }
+        ]
+      }
+    ],
+    "subcommand": "remote nope",
+    "expect": {
+      "raises": "Unknown subcommand: nope"
+    }
   },
   {
     "spec": "$ref edge cases > lists a recursive $ref in help without expanding it forever",
