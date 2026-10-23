@@ -30,7 +30,7 @@ Add the dependency to your `shard.yml`:
 ```yaml
 dependencies:
   jargon:
-    github: trans/jargon
+    github: openbohemians/jargon.cr
 ```
 
 Then run `shards install`.
