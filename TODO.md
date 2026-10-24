@@ -3,7 +3,7 @@
 ## Completed
 
 - **`help(subcommand)` raises for an unknown subcommand** (v0.23.0) — it returned the text "Unknown subcommand: x" as though that were the help, while `validate` raises `ArgumentError` for the same mistake. It now raises too. Found in jargon.rs's API review, where `help_for` returns an error for it.
-- **One error for a value that doesn't convert** (v0.22.2) — `--count two` reported both "Invalid integer value 'two' for count" and "Invalid type for count: expected integer, got string" (and an `enum` error, if any). Validation now skips a field whose argument or environment variable didn't convert; values from defaults, config, and stdin JSON are validated as before. jargon.rs does the same.
+- **One error for a value that doesn't convert** (v0.22.2) — `--count two` reported both "Invalid integer value 'two' for count" and "Invalid type for count: expected integer, got string" (and an `enum` error, if any). Validation now skips a field whose argument or environment variable didn't convert; values from defaults, config, and stdin JSON are validated as before. This covers a variadic item too (`nums 1 oops 3`). jargon.rs does the same.
 - **Type errors name schema types** (v0.22.1) — "Invalid type for x: expected integer, got object" instead of "expected Integer, got Hash(String, JSON::Any)", so an end user sees the words the schema uses rather than Crystal's classes. jargon.rs says the same.
 - **Fixes found by the Rust port** (v0.22.0) — porting to Rust (jargon.rs) turned up these, now fixed in both implementations where they applied:
   - Help shows a default that isn't a string as JSON (`[default: ["a",1]]`, `[default: null]`), not in Crystal's inspect form.
@@ -131,10 +131,8 @@ Scoped out of the initial dynamic-completion work (v0.19.0). All are refinements
 
 ### Positional Parsing Follow-ups
 
-Edges left after the v0.20.0 parsing work. Neither is a regression; both surfaced
-during that work and are low-priority refinements.
-
-- **Double error on a bad variadic item.** A non-coercible variadic token (e.g. `nums 1 oops 3` against `items: {type: integer}`) emits *two* messages: the coercion error (`Invalid integer value 'oops' for vals`) and the validator's type error (`expected Integer, got String`). Consistent with how scalar flags already double up (coerce + validate), so it was left as-is. If it reads as noisy in practice, suppress the validator pass for tokens that already failed coercion. Low priority.
+An edge left after the v0.20.0 parsing work. It isn't a regression; it surfaced
+during that work and is a low-priority refinement.
 
 - **`bare_assignment` is per-CLI, not inherited.** The setting applies to a CLI and its directly-attached Schema subcommands, but a *nested* `CLI` keeps its own (default-on) setting. To turn it off across a deep subcommand tree today you must set it on each nested CLI. Fix if it bites: propagate the parent's setting into nested CLIs at parse/dispatch time (or expose a recursive setter). Low priority until a nested-CLI user actually needs it.
 
