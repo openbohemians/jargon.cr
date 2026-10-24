@@ -9,7 +9,7 @@
       }
     ],
     "subcommand": null,
-    "expect": "Usage: myapp [options]\n\nOptions:\n      --name=<string> (required)\n      The user name"
+    "expect": "Usage: myapp [options]\n\nOptions:\n      --name=<string>  The user name (required)"
   },
   {
     "spec": "help > shows a default that isn't a string as JSON",
@@ -21,7 +21,43 @@
       }
     ],
     "subcommand": null,
-    "expect": "Usage: myapp [options]\n\nOptions:\n      --tags=<array> [default: [\"a\",1]]\n      --limits=<object> [default: {\"max\":2}]\n      --label=<string> [default: null]\n      --name=<string> [default: x]\n      --ratio=<number> [default: 0.5]"
+    "expect": "Usage: myapp [options]\n\nOptions:\n      --tags=<array>     [default: [\"a\",1]]\n      --limits=<object>  [default: {\"max\":2}]\n      --label=<string>   [default: null]\n      --name=<string>    [default: x]\n      --ratio=<number>   [default: 0.5]"
+  },
+  {
+    "spec": "help > lists arguments and options in two columns",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "mycmd",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"source\", \"format\"],\n        \"properties\": {\n          \"source\": {\"type\": \"string\", \"description\": \"File to convert\"},\n          \"format\": {\"type\": \"string\", \"enum\": [\"json\", \"yaml\"], \"description\": \"Output format\"},\n          \"verbose\": {\"type\": \"boolean\", \"short\": \"v\", \"description\": \"Enable verbose logging\"},\n          \"level\": {\"type\": \"integer\", \"enum\": [1, 2, 3], \"default\": 1, \"description\": \"Log level\"},\n          \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]},\n          \"token\": {\"type\": \"string\", \"description\": \"API token\"},\n          \"db\": {\"type\": \"object\", \"description\": \"Database settings\", \"properties\": {\n            \"port\": {\"type\": \"integer\"}\n          }}\n        },\n        \"required\": [\"source\", \"token\"]\n      }"
+      }
+    ],
+    "subcommand": null,
+    "expect": "Usage: mycmd <source> [format] [options]\n\nArguments:\n  source  File to convert\n  format  Output format [json|yaml]\n\nOptions:\n  -v, --verbose            Enable verbose logging\n      --level=<integer>    Log level [1|2|3] [default: 1]\n      --mode=<string>      [fast|safe]\n      --token=<string>     API token (required)\n      --db=<object>        Database settings\n      --db.port=<integer>"
+  },
+  {
+    "spec": "help > puts the description of a flag too wide for the column on the next line",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "mycmd",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\", \"description\": \"Number of retries\"},\n          \"certificate-authority-file\": {\"type\": \"string\", \"description\": \"CA bundle\"}\n        }\n      }"
+      }
+    ],
+    "subcommand": null,
+    "expect": "Usage: mycmd [options]\n\nOptions:\n      --count=<integer>         Number of retries\n      --certificate-authority-file=<string>\n                                CA bundle"
+  },
+  {
+    "spec": "help > lines up each line of a description at the column",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "mycmd",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"notes\": {\"type\": \"string\", \"default\": \"none\", \"description\": \"First line\\nsecond line\\n\\nafter a gap\\n\"}\n        }\n      }"
+      }
+    ],
+    "subcommand": null,
+    "expect": "Usage: mycmd [options]\n\nOptions:\n      --notes=<string>  First line\n                        second line\n\n                        after a gap [default: none]"
   },
   {
     "spec": "subcommands > infers type: object when multi-doc YAML omits type but has properties",
@@ -62,7 +98,7 @@
       }
     ],
     "subcommand": "fmt",
-    "expect": "Usage: myapp fmt [file] [options]\n\nArguments:\n  file    \n\nOptions:\n  -o, --output=<string>\n      Output path"
+    "expect": "Usage: myapp fmt [file] [options]\n\nArguments:\n  file\n\nOptions:\n  -o, --output=<string>  Output path"
   },
   {
     "spec": "help with new features > generates help with short flags",
@@ -74,7 +110,7 @@
       }
     ],
     "subcommand": null,
-    "expect": "Usage: cli [options]\n\nOptions:\n  -n, --count=<integer>\n      Number of items"
+    "expect": "Usage: cli [options]\n\nOptions:\n  -n, --count=<integer>  Number of items"
   },
   {
     "spec": "help with new features > generates help with positional args",
@@ -86,7 +122,7 @@
       }
     ],
     "subcommand": null,
-    "expect": "Usage: myapp [file] [options]\n\nArguments:\n  file    Input file\n\nOptions:\n      --verbose"
+    "expect": "Usage: myapp [file] [options]\n\nArguments:\n  file  Input file\n\nOptions:\n      --verbose"
   },
   {
     "spec": "help with new features > generates help for subcommands",
@@ -211,7 +247,7 @@
       }
     ],
     "subcommand": "query",
-    "expect": "Usage: myapp query <text> [options]\n\nArguments:\n  text    Search text\n\nOptions:\n  -n, --limit=<integer>\n      Result limit"
+    "expect": "Usage: myapp query <text> [options]\n\nArguments:\n  text  Search text\n\nOptions:\n  -n, --limit=<integer>  Result limit"
   },
   {
     "spec": "automatic help detection > cli.help(subcommand) works for nested subcommands",
@@ -237,7 +273,7 @@
       }
     ],
     "subcommand": "remote add",
-    "expect": "Usage: git remote add <name> [options]\n\nArguments:\n  name    Remote name\n\nOptions:"
+    "expect": "Usage: git remote add <name> [options]\n\nArguments:\n  name  Remote name\n\nOptions:"
   },
   {
     "spec": "automatic help detection > cli.help(subcommand) works for nested subcommands",
@@ -321,6 +357,6 @@
       }
     ],
     "subcommand": null,
-    "expect": "Usage: cli [options]\n\nOptions:\n      --root=<object> [default: {}]\n      --root.child=<object> [default: {}]\n      --root.name=<string>"
+    "expect": "Usage: cli [options]\n\nOptions:\n      --root=<object>        [default: {}]\n      --root.child=<object>  [default: {}]\n      --root.name=<string>"
   }
 ]

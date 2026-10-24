@@ -949,11 +949,84 @@ describe Jargon do
       }))
 
       help = cli.help
-      help.should contain(%(--tags=<array> [default: ["a",1]]))
-      help.should contain(%(--limits=<object> [default: {"max":2}]))
-      help.should contain(%(--label=<string> [default: null]))
-      help.should contain(%(--name=<string> [default: x]))
-      help.should contain(%(--ratio=<number> [default: 0.5]))
+      help.should contain(%(--tags=<array>     [default: ["a",1]]))
+      help.should contain(%(--limits=<object>  [default: {"max":2}]))
+      help.should contain(%(--label=<string>   [default: null]))
+      help.should contain(%(--name=<string>    [default: x]))
+      help.should contain(%(--ratio=<number>   [default: 0.5]))
+    end
+
+    it "lists arguments and options in two columns" do
+      cli = Jargon.cli("mycmd", json: %({
+        "type": "object",
+        "positional": ["source", "format"],
+        "properties": {
+          "source": {"type": "string", "description": "File to convert"},
+          "format": {"type": "string", "enum": ["json", "yaml"], "description": "Output format"},
+          "verbose": {"type": "boolean", "short": "v", "description": "Enable verbose logging"},
+          "level": {"type": "integer", "enum": [1, 2, 3], "default": 1, "description": "Log level"},
+          "mode": {"type": "string", "enum": ["fast", "safe"]},
+          "token": {"type": "string", "description": "API token"},
+          "db": {"type": "object", "description": "Database settings", "properties": {
+            "port": {"type": "integer"}
+          }}
+        },
+        "required": ["source", "token"]
+      }))
+
+      cli.help.should eq(<<-HELP)
+        Usage: mycmd <source> [format] [options]
+
+        Arguments:
+          source  File to convert
+          format  Output format [json|yaml]
+
+        Options:
+          -v, --verbose            Enable verbose logging
+              --level=<integer>    Log level [1|2|3] [default: 1]
+              --mode=<string>      [fast|safe]
+              --token=<string>     API token (required)
+              --db=<object>        Database settings
+              --db.port=<integer>
+        HELP
+    end
+
+    it "puts the description of a flag too wide for the column on the next line" do
+      cli = Jargon.cli("mycmd", json: %({
+        "type": "object",
+        "properties": {
+          "count": {"type": "integer", "description": "Number of retries"},
+          "certificate-authority-file": {"type": "string", "description": "CA bundle"}
+        }
+      }))
+
+      cli.help.should eq(<<-HELP)
+        Usage: mycmd [options]
+
+        Options:
+              --count=<integer>         Number of retries
+              --certificate-authority-file=<string>
+                                        CA bundle
+        HELP
+    end
+
+    it "lines up each line of a description at the column" do
+      cli = Jargon.cli("mycmd", json: %({
+        "type": "object",
+        "properties": {
+          "notes": {"type": "string", "default": "none", "description": "First line\\nsecond line\\n\\nafter a gap\\n"}
+        }
+      }))
+
+      cli.help.should eq(<<-HELP)
+        Usage: mycmd [options]
+
+        Options:
+              --notes=<string>  First line
+                                second line
+
+                                after a gap [default: none]
+        HELP
     end
   end
 

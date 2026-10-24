@@ -131,25 +131,28 @@ module Jargon
       lines << usage_parts.join(" ")
       lines << ""
 
-      # Arguments section
+      # Arguments section. Whether one is required shows in the usage line.
       unless positional_names.empty?
         lines << "Arguments:"
+        entries = [] of {String, String}
         positional_names.each do |name|
           if prop = root.properties.try(&.[name]?)
-            desc = prop.description || ""
-            lines << "  #{name}    #{desc}"
+            entries << {name, help_text_for(resolve_property(prop, schema), required: false)}
           end
         end
+        help_columns(lines, entries)
         lines << ""
       end
 
       # Options section
       lines << "Options:"
       if props = root.properties
+        entries = [] of {String, String}
         props.each do |name, prop|
           next if positional_names.includes?(name)
-          build_help_lines(lines, name, prop, "", schema)
+          option_entries(entries, name, prop, "", schema)
         end
+        help_columns(lines, entries)
       end
 
       lines.join("\n")
@@ -158,41 +161,75 @@ module Jargon
     # `expanding` holds the `$ref`s being descended through on this path. A ref
     # already in it is recursive (a tree-shaped schema): its option is listed
     # but not expanded again, which would never end.
-    private def build_help_lines(lines : Array(String), name : String, prop : Property, prefix : String, schema : Schema, expanding : Set(String) = Set(String).new)
+    private def option_entries(entries : Array({String, String}), name : String, prop : Property, prefix : String, schema : Schema, expanding : Set(String) = Set(String).new)
       ref = prop.ref
       prop = resolve_property(prop, schema)
       full_name = prefix.empty? ? name : "#{prefix}.#{name}"
-      desc = prop.description || ""
 
-      lines << help_option_line(full_name, prop)
-      lines << "      #{desc}" unless desc.empty?
+      entries << {help_flag(full_name, prop), help_text_for(prop, required: true)}
       return if ref && expanding.includes?(ref)
 
       if prop.type.object? && (nested_props = prop.properties)
         inner = ref ? expanding | Set{ref} : expanding
         nested_props.each do |nested_name, nested_prop|
-          build_help_lines(lines, nested_name, nested_prop, full_name, schema, inner)
+          option_entries(entries, nested_name, nested_prop, full_name, schema, inner)
         end
       end
     end
 
-    # One option's listing: its flag spelling, value type, and required/default.
-    private def help_option_line(full_name : String, prop : Property) : String
-      type_str = prop.type.to_s.downcase
-      required_str = prop.required? ? " (required)" : ""
-      # A string as itself, anything else as JSON (`[1, 2]`, `null`).
-      default_str = (default = prop.default) ? " [default: #{default.as_s? || default.to_json}]" : ""
+    # An option's flag spelling and, unless it's a boolean, its value type.
+    private def help_flag(full_name : String, prop : Property) : String
+      flag = (short = prop.short) ? "-#{short}, --#{full_name}" : "    --#{full_name}"
+      prop.type.boolean? ? flag : "#{flag}=<#{prop.type.to_s.downcase}>"
+    end
 
-      flag_str = if short = prop.short
-                   "-#{short}, --#{full_name}"
-                 else
-                   "    --#{full_name}"
-                 end
+    # What help says about an argument or option: its description, the values
+    # an enum allows, whether it's required (when `required`), and its default.
+    private def help_text_for(prop : Property, required : Bool) : String
+      parts = [] of String
+      if (desc = prop.description.try(&.rstrip)) && !desc.empty?
+        parts << desc
+      end
+      if (values = prop.enum_values) && !values.empty?
+        parts << "[#{values.join("|") { |value| help_value(value) }}]"
+      end
+      parts << "(required)" if required && prop.required?
+      if default = prop.default
+        parts << "[default: #{help_value(default)}]"
+      end
+      parts.join(" ")
+    end
 
-      if prop.type.boolean?
-        "  #{flag_str}#{required_str}#{default_str}"
-      else
-        "  #{flag_str}=<#{type_str}>#{required_str}#{default_str}"
+    # A string as itself, anything else as JSON (`[1, 2]`, `null`).
+    private def help_value(value : JSON::Any) : String
+      value.as_s? || value.to_json
+    end
+
+    # The furthest into a line that the second column of `Arguments:` and
+    # `Options:` starts.
+    HELP_COLUMN_LIMIT = 32
+
+    # Lay out `{name, text}` entries in two columns: each text starts two
+    # spaces past the widest name, or at `HELP_COLUMN_LIMIT` if that is
+    # nearer, and a name too wide for that has its text on the next line. A
+    # text of several lines has each one at the column.
+    private def help_columns(lines : Array(String), entries : Array({String, String}))
+      column = Math.min((entries.max_of?(&.[0].size) || 0) + 4, HELP_COLUMN_LIMIT)
+      indent = " " * column
+      entries.each do |name, text|
+        entry = "  #{name}"
+        if text.empty?
+          lines << entry
+          next
+        end
+        first, *rest = text.split('\n')
+        if entry.size + 2 <= column
+          lines << "#{entry.ljust(column)}#{first}"
+        else
+          lines << entry
+          lines << "#{indent}#{first}"
+        end
+        rest.each { |line| lines << "#{indent}#{line}".rstrip }
       end
     end
   end
