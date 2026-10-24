@@ -1078,6 +1078,7 @@ result.completion_shell       <span class="c"># =&gt; String? (&quot;bash&quot;,
 cli.help              <span class="c"># =&gt; usage string with all options</span>
 cli.help(<span class="s">&quot;fetch&quot;</span>)     <span class="c"># =&gt; help for specific subcommand</span>
 cli.help(<span class="s">&quot;config set&quot;</span>) <span class="c"># =&gt; help for nested subcommand</span>
+cli.help(<span class="s">&quot;nope&quot;</span>)      <span class="c"># raises ArgumentError: Unknown subcommand: nope</span>
 
 <span class="c"># Completion shims (pass command: to target a separate helper binary)</span>
 cli.bash_completion                       <span class="c"># =&gt; bash completion shim</span>

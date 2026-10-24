@@ -853,7 +853,8 @@ the verb itself; the generated shim supplies it.</p>
         <div class="doc">
           
           <p>Render help for a single subcommand. <code><a href="../Jargon/CLI.html#subcommand%28name%3AString%2Cschema%3ASchema%29-instance-method">#subcommand</a></code> is space-separated for
-nested commands (e.g. <code>&quot;remote add&quot;</code>).</p>
+nested commands (e.g. <code>&quot;remote add&quot;</code>). Raises <code>ArgumentError</code> for a
+subcommand the CLI doesn't have, as <code><a href="../Jargon/CLI.html#validate%28data%3AHash%28String%2CJSON%3A%3AAny%29%2Csubcommand%3AString%7CNil%3Dnil%29%3AArray%28String%29-instance-method">#validate</a></code> does.</p>
         </div>
       
       <br/>
