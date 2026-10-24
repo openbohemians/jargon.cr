@@ -956,6 +956,17 @@ describe Jargon do
       help.should contain(%(--ratio=<number>   [default: 0.5]))
     end
 
+    it "shows an empty string as \"\"" do
+      cli = Jargon.cli("myapp", json: %({
+        "type": "object",
+        "properties": {
+          "prefix": {"type": "string", "enum": ["", "v"], "default": ""}
+        }
+      }))
+
+      cli.help.should contain(%(--prefix=<string>  [""|v] [default: ""]))
+    end
+
     it "lists arguments and options in two columns" do
       cli = Jargon.cli("mycmd", json: %({
         "type": "object",
@@ -2579,6 +2590,30 @@ describe Jargon do
       help.should contain("forget  Remove a document")
       # No description: bare name, no trailing padding/description.
       help.should contain("\n  ls\n")
+    end
+
+    it "lines up each line of a subcommand's description" do
+      remote = Jargon.new("remote")
+      remote.subcommand("add", json: %({"type": "object", "description": "Add a remote\\nby its URL\\n", "properties": {}}))
+      cli = Jargon.new("git")
+      cli.subcommand("commit", json: %({"type": "object", "description": "Record changes\\n\\nto the repository\\n", "properties": {}}))
+      cli.subcommand("remote", remote)
+      cli.subcommand("status", json: %({"type": "object", "description": "", "properties": {}}))
+
+      cli.help.should eq(<<-HELP)
+        Usage: git <command> [options]
+
+        Commands:
+          commit  Record changes
+
+                  to the repository
+          remote
+            add  Add a remote
+                 by its URL
+          status
+
+        Run 'git <command> --help' for command-specific options.
+        HELP
     end
 
     it "shows nested subcommand descriptions" do

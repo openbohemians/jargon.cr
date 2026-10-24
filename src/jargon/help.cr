@@ -47,15 +47,15 @@ module Jargon
       @subcommands.each do |name, subcmd|
         case subcmd
         when Schema
-          lines << command_line(name, subcmd.root.description, 2, width)
+          help_entry(lines, "  #{name}", width + 4, subcmd.root.description)
         when CLI
           # A nested CLI is a group with no description of its own; list its
           # children indented, each aligned within their own column.
-          lines << command_line(name, nil, 2, width)
+          help_entry(lines, "  #{name}", width + 4, nil)
           sub_width = subcmd.subcommands.keys.max_of?(&.size) || 0
           subcmd.subcommands.each do |sub_name, sub|
             description = sub.is_a?(Schema) ? sub.root.description : nil
-            lines << command_line(sub_name, description, 4, sub_width)
+            help_entry(lines, "    #{sub_name}", sub_width + 6, description)
           end
         end
       end
@@ -63,13 +63,6 @@ module Jargon
       lines << ""
       lines << "Run '#{command} <command> --help' for command-specific options."
       lines.join("\n")
-    end
-
-    # Format one command listing: the name padded to `width`, followed by its
-    # description when present. Trailing padding is trimmed when there is none.
-    private def command_line(name : String, description : String?, indent : Int32, width : Int32) : String
-      entry = "#{" " * indent}#{name.ljust(width)}"
-      (desc = description) ? "#{entry}  #{desc}" : entry.rstrip
     end
 
     private def user_defined_help?(schema : Schema) : Bool
@@ -200,37 +193,43 @@ module Jargon
       parts.join(" ")
     end
 
-    # A string as itself, anything else as JSON (`[1, 2]`, `null`).
+    # A string as itself, anything else as JSON (`[1, 2]`, `null`). An empty
+    # string is `""`, so that it shows.
     private def help_value(value : JSON::Any) : String
-      value.as_s? || value.to_json
+      (string = value.as_s?) && !string.empty? ? string : value.to_json
     end
 
     # The furthest into a line that the second column of `Arguments:` and
     # `Options:` starts.
-    HELP_COLUMN_LIMIT = 32
+    private HELP_COLUMN_LIMIT = 32
 
     # Lay out `{name, text}` entries in two columns: each text starts two
     # spaces past the widest name, or at `HELP_COLUMN_LIMIT` if that is
-    # nearer, and a name too wide for that has its text on the next line. A
-    # text of several lines has each one at the column.
+    # nearer.
     private def help_columns(lines : Array(String), entries : Array({String, String}))
       column = Math.min((entries.max_of?(&.[0].size) || 0) + 4, HELP_COLUMN_LIMIT)
-      indent = " " * column
-      entries.each do |name, text|
-        entry = "  #{name}"
-        if text.empty?
-          lines << entry
-          next
-        end
-        first, *rest = text.split('\n')
-        if entry.size + 2 <= column
-          lines << "#{entry.ljust(column)}#{first}"
-        else
-          lines << entry
-          lines << "#{indent}#{first}"
-        end
-        rest.each { |line| lines << "#{indent}#{line}".rstrip }
+      entries.each { |name, text| help_entry(lines, "  #{name}", column, text) }
+    end
+
+    # Add one listing: `entry`, then `text` from `column` on, or on the next
+    # line if `entry` is too wide to leave two spaces before the column. A
+    # text of several lines has each one at the column.
+    private def help_entry(lines : Array(String), entry : String, column : Int32, text : String?)
+      text = text.try(&.rstrip) || ""
+      if text.empty?
+        lines << entry
+        return
       end
+
+      indent = " " * column
+      first, *rest = text.split('\n')
+      if entry.size + 2 <= column
+        lines << "#{entry.ljust(column)}#{first}".rstrip
+      else
+        lines << entry
+        lines << "#{indent}#{first}".rstrip
+      end
+      rest.each { |line| lines << "#{indent}#{line}".rstrip }
     end
   end
 end
