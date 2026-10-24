@@ -3,6 +3,7 @@
 ## Completed
 
 - **Help in two columns** (unreleased) — `Arguments:` and `Options:` list each description beside its flag or argument, aligned like `Commands:`, where a description sat under its flag at the indent of a long-only flag and read as another option. The column starts two spaces past the widest flag, but no further than 32 characters in; a wider flag has its description on the next line. An enum's values follow the description (`Operation mode [fast|safe]`), then `(required)` and `[default: …]`. A description of several lines has each at the column. jargon.rs lays help out the same.
+- **Completion after an abbreviated subcommand** (unreleased) — `parse` accepts an unambiguous prefix of 3 or more characters for a subcommand (`git fet` for `fetch`), but completion looked subcommands up by exact name, so it offered nothing after one. It now resolves them as `parse` does, and runs the full name's completers (`fetch.url`). jargon.rs does the same.
 - **`help(subcommand)` raises for an unknown subcommand** (v0.23.0) — it returned the text "Unknown subcommand: x" as though that were the help, while `validate` raises `ArgumentError` for the same mistake. It now raises too. Found in jargon.rs's API review, where `help_for` returns an error for it.
 - **One error for a value that doesn't convert** (v0.22.2) — `--count two` reported both "Invalid integer value 'two' for count" and "Invalid type for count: expected integer, got string" (and an `enum` error, if any). Validation now skips a field whose argument or environment variable didn't convert; values from defaults, config, and stdin JSON are validated as before. This covers a variadic item too (`nums 1 oops 3`). jargon.rs does the same.
 - **Type errors name schema types** (v0.22.1) — "Invalid type for x: expected integer, got object" instead of "expected Integer, got Hash(String, JSON::Any)", so an end user sees the words the schema uses rather than Crystal's classes. jargon.rs says the same.
@@ -116,9 +117,7 @@ $(delete old logs) → rm ...  # destructive, confirm first
 
 ### Dynamic Completion Follow-ups
 
-Scoped out of the initial dynamic-completion work (v0.19.0). All are refinements, not blockers. Assessed 2026-06-14 — only #2 is judged worth doing.
-
-- **#2 Subcommand abbreviation during completion — WORTH REVISITING.** The completion engine resolves subcommands by exact match only; abbreviations (which `parse` supports — `git ci` → `commit`) aren't expanded when computing candidates. So completing the *args* after an abbreviated subcommand silently yields nothing. Completing the subcommand *name* itself works fine; this is only about arg completion after an abbreviated one. A real correctness gap — the one follow-up actually queued. Fix: have the engine reuse the same prefix-resolution `parse` uses when descending into a subcommand.
+Scoped out of the initial dynamic-completion work (v0.19.0). All are refinements, not blockers. Assessed 2026-06-14; the one judged worth doing, #2 (completion after an abbreviated subcommand), is done (see Completed).
 
 - **#3 bash 3.2 portability — will resolve itself.** The generated bash shim uses `readarray`/`mapfile` (bash 4+). macOS ships bash 3.2 as `/bin/bash`, so the shim fails there. But most macOS users have moved to zsh (default since Catalina), and bash 3.2 fades over time. Low urgency; a `read`-loop fallback is the fix if a user actually hits it.
 

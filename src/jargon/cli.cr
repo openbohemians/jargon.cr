@@ -1233,7 +1233,7 @@ module Jargon
 
     # Resolve abbreviated subcommand name to full name
     # Returns nil if no match, ambiguous, or too short (< 3 chars for non-exact)
-    private def resolve_subcommand(input : String) : String?
+    protected def resolve_subcommand(input : String) : String?
       return input if @subcommands.has_key?(input) # Exact match
       return if input.size < 3                     # Too short for abbreviation
 

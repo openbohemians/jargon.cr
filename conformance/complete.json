@@ -288,6 +288,220 @@
     ]
   },
   {
+    "spec": "shell completion > candidates engine > completes after an abbreviated subcommand, as parse resolves it",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "format",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}}\n        }"
+          }
+        ]
+      }
+    ],
+    "words": [
+      "git",
+      "fet",
+      "--"
+    ],
+    "cword": 2,
+    "expect": [
+      "--help",
+      "--url"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes after an abbreviated subcommand, as parse resolves it",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "format",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}}\n        }"
+          }
+        ]
+      }
+    ],
+    "words": [
+      "git",
+      "rem",
+      ""
+    ],
+    "cword": 2,
+    "expect": [
+      "add"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes after an abbreviated subcommand, as parse resolves it",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "format",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}}\n        }"
+          }
+        ]
+      }
+    ],
+    "words": [
+      "git",
+      "rem",
+      "add",
+      "--"
+    ],
+    "cword": 3,
+    "expect": [
+      "--help",
+      "--name"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes after an abbreviated subcommand, as parse resolves it",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "format",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}}\n        }"
+          }
+        ]
+      }
+    ],
+    "words": [
+      "git",
+      "fe",
+      "--"
+    ],
+    "cword": 2,
+    "expect": []
+  },
+  {
+    "spec": "shell completion > candidates engine > completes after an abbreviated subcommand, as parse resolves it",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "format",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}}\n        }"
+          }
+        ]
+      }
+    ],
+    "words": [
+      "git",
+      "f",
+      "--"
+    ],
+    "cword": 2,
+    "expect": []
+  },
+  {
     "spec": "shell completion > candidates engine > returns nothing for a flag value with no enum or completer",
     "cli": [
       {

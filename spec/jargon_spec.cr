@@ -3531,6 +3531,26 @@ describe Jargon do
         c.candidates(["git", "remote", "add", "--"], 3).should eq(["--help", "--name", "--url"])
       end
 
+      it "completes after an abbreviated subcommand, as parse resolves it" do
+        remote = Jargon.new("remote")
+        remote.subcommand("add", json: %({
+          "type": "object", "properties": {"name": {"type": "string"}}
+        }))
+        cli = Jargon.new("git")
+        cli.subcommand("fetch", json: %({
+          "type": "object", "properties": {"url": {"type": "string"}}
+        }))
+        cli.subcommand("format", json: %({"type": "object", "properties": {}}))
+        cli.subcommand("remote", remote)
+        c = Jargon::Completion.new(cli)
+        c.candidates(["git", "fet", "--"], 2).should eq(["--help", "--url"])
+        c.candidates(["git", "rem", ""], 2).should eq(["add"])
+        c.candidates(["git", "rem", "add", "--"], 3).should eq(["--help", "--name"])
+        # Too short, or ambiguous: `parse` doesn't resolve these either.
+        c.candidates(["git", "fe", "--"], 2).should eq([] of String)
+        c.candidates(["git", "f", "--"], 2).should eq([] of String)
+      end
+
       it "returns nothing for a flag value with no enum or completer" do
         cli = Jargon.cli("myapp", json: %({
           "type": "object", "properties": {"name": {"type": "string"}}
@@ -3634,6 +3654,16 @@ describe Jargon do
         cli.completer("fetch.url") { |ctx| ["https://#{ctx.partial}.example"] }
         c = Jargon::Completion.new(cli)
         c.candidates(["git", "fetch", "site"], 2).should eq(["https://site.example"])
+      end
+
+      it "invokes a subcommand's completer after its abbreviation" do
+        cli = Jargon.new("git")
+        cli.subcommand("fetch", json: %({
+          "type": "object", "positional": ["url"], "properties": {"url": {"type": "string"}}
+        }))
+        cli.completer("fetch.url") { |ctx| ["#{ctx.subcommand}:#{ctx.partial}"] }
+        c = Jargon::Completion.new(cli)
+        c.candidates(["git", "fet", "site"], 2).should eq(["fetch:site"])
       end
 
       it "exposes subcommand and prior arguments on the context" do

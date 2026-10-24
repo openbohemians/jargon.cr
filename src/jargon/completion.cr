@@ -133,8 +133,9 @@ module Jargon
           return filter(names, partial)
         end
 
-        # Descend into the chosen subcommand.
-        name = args[0]?
+        # Descend into the chosen subcommand, which may be abbreviated, as
+        # it may be for `parse`.
+        name = args[0]?.try { |arg| cli.resolve_subcommand(arg) }
         sub = name ? cli.subcommands[name]? : nil
         sub_path = name ? join(path, name) : path
         case sub
