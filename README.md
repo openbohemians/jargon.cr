@@ -1025,6 +1025,21 @@ errors = Jargon::Validator.validate(bad_data, schema)
 
 The validator supports all the same constraints as CLI parsing: types, required fields, enums, numeric ranges, string patterns, formats, array constraints, `const`, `$ref`, nested objects, and `additionalProperties`.
 
+## Where Parsing Stops
+
+Jargon's job ends at a valid value: one with the type, format, and constraints its schema gives it. What that value refers to is up to your program. If a positional `query` names a document, Jargon checks that it's a string; finding the document, saying that none matches, or asking the user to choose between several is your program's work, once `parse` returns or inside `run`:
+
+```crystal
+cli.run do |result|
+  query = result["query"].as_s   # Jargon's part ends here: a valid string
+  matches = store.search(query)  # resolving it is the program's
+  abort "No document matches '#{query}'" if matches.empty?
+  doc = matches.size == 1 ? matches.first : choose(matches) # e.g. ask the user
+end
+```
+
+A [completer](#dynamic-completions) helps the user type such a value, but it doesn't resolve it.
+
 ## API
 
 ```crystal
