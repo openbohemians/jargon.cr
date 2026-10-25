@@ -502,6 +502,269 @@
     "expect": []
   },
   {
+    "spec": "shell completion > candidates engine > completes for the default subcommand when the first word names none, as parse does",
+    "cli": [
+      {
+        "op": "new",
+        "program": "app"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "query",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\"],\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]},\n            \"limit\": {\"type\": \"integer\", \"short\": \"l\"}\n          }\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "index",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "default_subcommand",
+        "name": "query"
+      }
+    ],
+    "words": [
+      "app",
+      ""
+    ],
+    "cword": 1,
+    "expect": [
+      "query",
+      "index",
+      "fast",
+      "safe"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes for the default subcommand when the first word names none, as parse does",
+    "cli": [
+      {
+        "op": "new",
+        "program": "app"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "query",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\"],\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]},\n            \"limit\": {\"type\": \"integer\", \"short\": \"l\"}\n          }\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "index",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "default_subcommand",
+        "name": "query"
+      }
+    ],
+    "words": [
+      "app",
+      "f"
+    ],
+    "cword": 1,
+    "expect": [
+      "fast"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes for the default subcommand when the first word names none, as parse does",
+    "cli": [
+      {
+        "op": "new",
+        "program": "app"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "query",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\"],\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]},\n            \"limit\": {\"type\": \"integer\", \"short\": \"l\"}\n          }\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "index",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "default_subcommand",
+        "name": "query"
+      }
+    ],
+    "words": [
+      "app",
+      "-"
+    ],
+    "cword": 1,
+    "expect": [
+      "--help",
+      "-h",
+      "--limit",
+      "-l"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes for the default subcommand when the first word names none, as parse does",
+    "cli": [
+      {
+        "op": "new",
+        "program": "app"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "query",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\"],\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]},\n            \"limit\": {\"type\": \"integer\", \"short\": \"l\"}\n          }\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "index",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "default_subcommand",
+        "name": "query"
+      }
+    ],
+    "words": [
+      "app",
+      "fast",
+      "--"
+    ],
+    "cword": 2,
+    "expect": [
+      "--help",
+      "--limit"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes for the default subcommand when the first word names none, as parse does",
+    "cli": [
+      {
+        "op": "new",
+        "program": "app"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "query",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\"],\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]},\n            \"limit\": {\"type\": \"integer\", \"short\": \"l\"}\n          }\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "index",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "default_subcommand",
+        "name": "query"
+      }
+    ],
+    "words": [
+      "app",
+      "--limit",
+      "5",
+      ""
+    ],
+    "cword": 3,
+    "expect": [
+      "fast",
+      "safe"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes for the default subcommand when the first word names none, as parse does",
+    "cli": [
+      {
+        "op": "new",
+        "program": "app"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "query",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\"],\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]},\n            \"limit\": {\"type\": \"integer\", \"short\": \"l\"}\n          }\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "index",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "default_subcommand",
+        "name": "query"
+      }
+    ],
+    "words": [
+      "app",
+      "fe",
+      "--"
+    ],
+    "cword": 2,
+    "expect": [
+      "--help",
+      "--limit"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes for the default subcommand when the first word names none, as parse does",
+    "cli": [
+      {
+        "op": "new",
+        "program": "app"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "query",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\"],\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]},\n            \"limit\": {\"type\": \"integer\", \"short\": \"l\"}\n          }\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "index",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "default_subcommand",
+        "name": "query"
+      }
+    ],
+    "words": [
+      "app",
+      "index",
+      "--"
+    ],
+    "cword": 2,
+    "expect": [
+      "--help"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes for the default subcommand when the first word names none, as parse does",
+    "cli": [
+      {
+        "op": "new",
+        "program": "app"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "query",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\"],\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]},\n            \"limit\": {\"type\": \"integer\", \"short\": \"l\"}\n          }\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "index",
+        "text": "{\"type\": \"object\", \"properties\": {}}"
+      },
+      {
+        "op": "default_subcommand",
+        "name": "query"
+      }
+    ],
+    "words": [
+      "app",
+      "ind",
+      "--"
+    ],
+    "cword": 2,
+    "expect": [
+      "--help"
+    ]
+  },
+  {
     "spec": "shell completion > candidates engine > returns nothing for a flag value with no enum or completer",
     "cli": [
       {

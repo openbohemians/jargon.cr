@@ -3586,6 +3586,32 @@ describe Jargon do
         c.candidates(["git", "f", "--"], 2).should eq([] of String)
       end
 
+      it "completes for the default subcommand when the first word names none, as parse does" do
+        cli = Jargon.new("app")
+        cli.subcommand("query", json: %({
+          "type": "object",
+          "positional": ["mode"],
+          "properties": {
+            "mode": {"type": "string", "enum": ["fast", "safe"]},
+            "limit": {"type": "integer", "short": "l"}
+          }
+        }))
+        cli.subcommand("index", json: %({"type": "object", "properties": {}}))
+        cli.default_subcommand("query")
+        c = Jargon::Completion.new(cli)
+        # The first word may be a subcommand or the default's first word.
+        c.candidates(["app", ""], 1).should eq(["query", "index", "fast", "safe"])
+        c.candidates(["app", "f"], 1).should eq(["fast"])
+        c.candidates(["app", "-"], 1).should eq(["--help", "-h", "--limit", "-l"])
+        # After a word that names no subcommand, every word is the default's.
+        c.candidates(["app", "fast", "--"], 2).should eq(["--help", "--limit"])
+        c.candidates(["app", "--limit", "5", ""], 3).should eq(["fast", "safe"])
+        c.candidates(["app", "fe", "--"], 2).should eq(["--help", "--limit"])
+        # A subcommand's words are its own.
+        c.candidates(["app", "index", "--"], 2).should eq(["--help"])
+        c.candidates(["app", "ind", "--"], 2).should eq(["--help"])
+      end
+
       it "returns nothing for a flag value with no enum or completer" do
         cli = Jargon.cli("myapp", json: %({
           "type": "object", "properties": {"name": {"type": "string"}}
@@ -3699,6 +3725,21 @@ describe Jargon do
         cli.completer("fetch.url") { |ctx| ["#{ctx.subcommand}:#{ctx.partial}"] }
         c = Jargon::Completion.new(cli)
         c.candidates(["git", "fet", "site"], 2).should eq(["fetch:site"])
+      end
+
+      it "invokes the default subcommand's completer for words that name no subcommand" do
+        cli = Jargon.new("app")
+        cli.subcommand("query", json: %({
+          "type": "object",
+          "positional": ["term"],
+          "properties": {"term": {"type": "string"}, "verbose": {"type": "boolean"}}
+        }))
+        cli.subcommand("index", json: %({"type": "object", "properties": {}}))
+        cli.default_subcommand("query")
+        cli.completer("query.term") { |ctx| ["#{ctx.subcommand}:#{ctx.partial}"] }
+        c = Jargon::Completion.new(cli)
+        c.candidates(["app", "in"], 1).should eq(["index", "query:in"])
+        c.candidates(["app", "--verbose", "se"], 2).should eq(["query:se"])
       end
 
       it "exposes subcommand and prior arguments on the context" do

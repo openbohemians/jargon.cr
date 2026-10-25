@@ -126,23 +126,25 @@ module Jargon
 
     private def complete_cli(cli : CLI, args : Array(String), cursor : Int32, path : String, partial : String) : Array(String)
       unless cli.subcommands.empty?
-        # Completing the subcommand token itself.
+        default = cli.default_subcommand
+
+        # Completing the subcommand token itself, which may instead be the
+        # default subcommand's first word.
         if cursor <= 0
           names = cli.subcommands.keys
           names += ["--help", "-h"] if partial.starts_with?("-")
-          return filter(names, partial)
+          candidates = filter(names, partial)
+          candidates += complete_subcommand(cli, default, args, cursor, path, partial) if default
+          return candidates.uniq
         end
 
-        # Descend into the chosen subcommand, which may be abbreviated, as
-        # it may be for `parse`.
-        name = args[0]?.try { |arg| cli.resolve_subcommand(arg) }
-        sub = name ? cli.subcommands[name]? : nil
-        sub_path = name ? join(path, name) : path
-        case sub
-        when CLI    then return complete_cli(sub, args[1..], cursor - 1, sub_path, partial)
-        when Schema then return complete_schema(sub, args[1..], cursor - 1, sub_path, partial)
-        else             return [] of String
+        # Descend into the chosen subcommand, which may be abbreviated, or,
+        # when the first word names none, into the default subcommand with
+        # every word, as `parse` does.
+        if name = args[0]?.try { |arg| cli.resolve_subcommand(arg) }
+          return complete_subcommand(cli, name, args[1..], cursor - 1, path, partial)
         end
+        return default ? complete_subcommand(cli, default, args, cursor, path, partial) : [] of String
       end
 
       if schema = cli.schema
@@ -150,6 +152,15 @@ module Jargon
       end
 
       [] of String
+    end
+
+    private def complete_subcommand(cli : CLI, name : String, args : Array(String), cursor : Int32, path : String, partial : String) : Array(String)
+      sub_path = join(path, name)
+      case sub = cli.subcommands[name]?
+      when CLI    then complete_cli(sub, args, cursor, sub_path, partial)
+      when Schema then complete_schema(sub, args, cursor, sub_path, partial)
+      else             [] of String
+      end
     end
 
     private def complete_schema(schema : Schema, args : Array(String), cursor : Int32, path : String, partial : String) : Array(String)
