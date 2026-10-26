@@ -11,7 +11,7 @@ Jargon is also available for Rust, as [jargon.rs](https://github.com/openbohemia
 - **Validation**: Required fields, enum values, strict type checking, `additionalProperties`
 - **Standalone validator**: Use `Jargon::Validator` to validate data without the CLI parser
 - **Defaults**: Schema defaults, config file defaults, environment variables
-- **Config files**: Load from `~/.config/` (XDG spec), optionally project `.config/`, with deep merge support
+- **Config files**: Load from `~/.config/` (XDG spec), optionally project `.config/`, with deep merge support and sections for subcommands
 - **Help text**: Generated from schema descriptions
 - **Auto help flags**: `--help` and `-h` detected automatically
 - **Shell completions**: Generate completion shims for bash, zsh, and fish, with optional app-driven dynamic completers for live data
@@ -914,6 +914,31 @@ database:
   port: 5432                    # preserved from user
   user: default_user            # preserved from user
 ```
+
+### Sections for Subcommands
+
+With subcommands, a config can set options for all of them and for each one:
+
+```yaml
+verbose: true    # global: for any subcommand with a verbose option
+fetch:           # fetch's own section
+  depth: 1
+remote:          # a nested CLI's section holds its subcommands' sections
+  add:
+    name: upstream
+```
+
+A mapping under a subcommand's name is that subcommand's section, and every
+other key is global. A subcommand takes the global keys it has an option for,
+so a global `depth` doesn't reach a subcommand without one, then its own
+section's keys over them, nested objects merged key by key. Every key in a
+section is passed on, as every key is for a CLI without subcommands, so a
+misspelled one is reported if the schema has `additionalProperties: false`.
+
+A key that names a subcommand but doesn't hold a mapping (`remote: origin`)
+is an ordinary global. An object option named after a subcommand, though,
+can only be set in a section. Sections apply to `defaults:` from any
+source, not only `load_config`.
 
 ### Config Warnings
 

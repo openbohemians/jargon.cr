@@ -358,16 +358,28 @@ module Jargon
     # Parse arguments into a `Result` (parsed data plus any validation errors);
     # never raises on invalid input. `defaults` seeds values not given on the
     # command line (e.g. from a config file), below CLI args and env vars.
+    #
+    # With subcommands, a mapping in `defaults` under a subcommand's name is
+    # that subcommand's section, and any other key is global. A subcommand
+    # takes the global keys it has an option for, then its section's keys
+    # over them, every one of them. A nested CLI's section holds its own
+    # subcommands' sections the same way.
     def parse(args : Array(String) = ARGV, *, defaults : Defaults? = nil) : Result
       parse(args, STDIN, defaults: defaults)
     end
 
     # :ditto: `input` supplies the stream read for the `-` (stdin JSON) form.
     def parse(args : Array(String), input : IO, *, defaults : Defaults? = nil) : Result
+      parse_scoped(args, input, {} of String => JSON::Any, defaults_hash(defaults))
+    end
+
+    # Parse with the defaults split as `parse` describes: `globals`, those
+    # from further up, and `section`, the ones given for this CLI.
+    protected def parse_scoped(args : Array(String), input : IO, globals : Hash(String, JSON::Any), section : Hash(String, JSON::Any)) : Result
       if !@subcommands.empty?
-        parse_with_subcommands(args, input, defaults)
+        parse_with_subcommands(args, input, globals, section)
       elsif schema = @schema
-        parse_flat(args, schema, input, nil, defaults)
+        parse_flat(args, schema, input, nil, command_defaults(schema, globals, section))
       else
         raise ArgumentError.new("CLI has no schema and no subcommands defined")
       end
@@ -434,9 +446,9 @@ module Jargon
       end
     end
 
-    private def parse_with_subcommands(args : Array(String), input : IO, defaults : Defaults? = nil) : Result
+    private def parse_with_subcommands(args : Array(String), input : IO, globals : Hash(String, JSON::Any), section : Hash(String, JSON::Any)) : Result
       # Handle "xerp -" - full JSON with subcommand field
-      return parse_from_stdin_full(input, defaults) if args == ["-"]
+      return parse_from_stdin_full(input, globals, section) if args == ["-"]
 
       # Check for top-level help (--help/-h before any subcommand)
       return Result.new({} of String => JSON::Any, [] of String, nil, true, nil) if help_flag?(args.first?)
@@ -448,12 +460,12 @@ module Jargon
 
       # Check if first arg matches a known subcommand (supports abbreviations)
       if (first = args.first?) && (resolved_name = resolve_subcommand(first)) && (subcmd = @subcommands[resolved_name]?)
-        return dispatch_subcommand(subcmd, resolved_name, args[1..], input, defaults)
+        return dispatch_subcommand(subcmd, resolved_name, args[1..], input, globals, section)
       end
 
       # Fall back to default subcommand if set
       if (default = @default_subcommand) && (subcmd = @subcommands[default]?)
-        return dispatch_subcommand(subcmd, default, args, input, defaults)
+        return dispatch_subcommand(subcmd, default, args, input, globals, section)
       end
 
       # No match and no default
@@ -465,10 +477,11 @@ module Jargon
       arg == "--help" || arg == "-h"
     end
 
-    private def dispatch_subcommand(subcmd : Schema | CLI, subcmd_name : String, args : Array(String), input : IO, defaults : Defaults?) : Result
+    private def dispatch_subcommand(subcmd : Schema | CLI, subcmd_name : String, args : Array(String), input : IO, globals : Hash(String, JSON::Any), section : Hash(String, JSON::Any)) : Result
+      globals, section = subcommand_defaults(subcmd_name, globals, section)
       case subcmd
       when CLI
-        result = subcmd.parse(args, input, defaults: defaults)
+        result = subcmd.parse_scoped(args, input, globals, section)
         full_subcmd = result.subcommand ? "#{subcmd_name} #{result.subcommand}" : subcmd_name
         if result.help_requested?
           help_subcmd = result.help_subcommand ? "#{subcmd_name} #{result.help_subcommand}" : subcmd_name
@@ -476,7 +489,7 @@ module Jargon
         end
         Result.new(result.data, result.errors, full_subcmd)
       when Schema
-        result = parse_flat(args, subcmd, input, subcmd_name, defaults)
+        result = parse_flat(args, subcmd, input, subcmd_name, command_defaults(subcmd, globals, section))
         if result.help_requested?
           return Result.new(result.data, result.errors, subcmd_name, true, subcmd_name)
         end
@@ -496,7 +509,7 @@ module Jargon
       end
     end
 
-    private def parse_from_stdin_full(input : IO, defaults : Defaults?) : Result
+    private def parse_from_stdin_full(input : IO, globals : Hash(String, JSON::Any), section : Hash(String, JSON::Any)) : Result
       json_str = input.gets_to_end
       json = JSON.parse(json_str)
       data = json.as_h? || {} of String => JSON::Any
@@ -517,18 +530,19 @@ module Jargon
         return Result.new({} of String => JSON::Any, ["Unknown subcommand: #{subcmd_name}"])
       end
       subcmd_name = resolved_name
+      globals, section = subcommand_defaults(subcmd_name, globals, section)
 
       case subcmd
       when CLI
         # For nested CLI, pass remaining JSON to it via stdin simulation
         nested_input = IO::Memory.new(data.to_json)
-        result = subcmd.parse(["-"], nested_input, defaults: defaults)
+        result = subcmd.parse_scoped(["-"], nested_input, globals, section)
         full_subcmd = result.subcommand ? "#{subcmd_name} #{result.subcommand}" : subcmd_name
         return Result.new(result.data, result.errors, full_subcmd)
       when Schema
         errors = [] of String
         apply_env_vars(data, errors, subcmd)
-        apply_user_defaults(data, defaults)
+        apply_user_defaults(data, command_defaults(subcmd, globals, section))
         apply_defaults(data, subcmd)
         errors.concat(Validator.validate(data, subcmd))
         return Result.new(data, errors, subcmd_name)
@@ -539,7 +553,7 @@ module Jargon
       Result.new({} of String => JSON::Any, ["Invalid JSON from stdin: #{ex.message}"])
     end
 
-    private def parse_from_stdin_args(input : IO, schema : Schema, defaults : Defaults?) : Result
+    private def parse_from_stdin_args(input : IO, schema : Schema, defaults : Hash(String, JSON::Any)) : Result
       json_str = input.gets_to_end
       json = JSON.parse(json_str)
       data = json.as_h? || {} of String => JSON::Any
@@ -555,7 +569,7 @@ module Jargon
       Result.new({} of String => JSON::Any, ["Invalid JSON from stdin: #{ex.message}"])
     end
 
-    private def parse_flat(args : Array(String), schema : Schema, input : IO = STDIN, subcommand_path : String? = nil, defaults : Defaults? = nil) : Result
+    private def parse_flat(args : Array(String), schema : Schema, input : IO, subcommand_path : String?, defaults : Hash(String, JSON::Any)) : Result
       # Handle "xerp mark -" - JSON args for this schema
       if args == ["-"]
         return parse_from_stdin_args(input, schema, defaults)
@@ -1105,11 +1119,38 @@ module Jargon
       end
     end
 
-    private def apply_user_defaults(data : Hash(String, JSON::Any), defaults : Defaults?)
-      return unless defaults
-      default_hash = defaults.is_a?(JSON::Any) ? defaults.as_h? : defaults
-      raise ArgumentError.new("defaults must be a JSON object") unless default_hash
-      fill_user_defaults(data, default_hash)
+    private def apply_user_defaults(data : Hash(String, JSON::Any), defaults : Hash(String, JSON::Any))
+      fill_user_defaults(data, defaults)
+    end
+
+    private def defaults_hash(defaults : Defaults?) : Hash(String, JSON::Any)
+      return {} of String => JSON::Any unless defaults
+      hash = defaults.is_a?(JSON::Any) ? defaults.as_h? : defaults
+      hash || raise ArgumentError.new("defaults must be a JSON object")
+    end
+
+    # Split this CLI's `section` of the defaults for subcommand `name`: the
+    # keys that aren't a subcommand's section are global, over the `globals`
+    # from further up, and `name`'s section is the subcommand's own.
+    private def subcommand_defaults(name : String, globals : Hash(String, JSON::Any), section : Hash(String, JSON::Any)) : {Hash(String, JSON::Any), Hash(String, JSON::Any)}
+      own = section.reject { |key, value| @subcommands.has_key?(key) && value.as_h? }
+      unless own.empty?
+        globals = globals.clone
+        deep_merge!(globals, own)
+      end
+      {globals, section[name]?.try(&.as_h?) || {} of String => JSON::Any}
+    end
+
+    # The defaults a command takes: the global ones it has an option for,
+    # then its section's, all of them, as a CLI without subcommands takes
+    # all of its defaults.
+    private def command_defaults(schema : Schema, globals : Hash(String, JSON::Any), section : Hash(String, JSON::Any)) : Hash(String, JSON::Any)
+      props = resolve_property(schema.root, schema).properties
+      defaults = globals.select { |key, _| props.try(&.has_key?(key)) }
+      return section if defaults.empty?
+      defaults = defaults.clone
+      deep_merge!(defaults, section)
+      defaults
     end
 
     # Fill keys missing from `data`, recursing into objects present on both

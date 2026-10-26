@@ -4358,6 +4358,107 @@ describe Jargon do
         cli.parse([] of String, defaults: JSON.parse(%(["a"])))
       end
     end
+
+    describe "with subcommands" do
+      sections_cli = -> do
+        cli = Jargon.new("git")
+        cli.subcommand("fetch", json: %({
+          "type": "object",
+          "positional": ["remote"],
+          "properties": {
+            "remote": {"type": "string"},
+            "depth": {"type": "integer"},
+            "verbose": {"type": "boolean"},
+            "server": {"type": "object", "properties": {"host": {"type": "string"}, "port": {"type": "integer"}}}
+          },
+          "additionalProperties": false
+        }))
+        cli.subcommand("fmt", json: %({
+          "type": "object",
+          "properties": {"verbose": {"type": "boolean"}, "add": {"type": "object"}},
+          "additionalProperties": false
+        }))
+        remote = Jargon.new("remote")
+        remote.subcommand("add", json: %({
+          "type": "object",
+          "properties": {"name": {"type": "string"}, "url": {"type": "string"}},
+          "additionalProperties": false
+        }))
+        cli.subcommand("remote", remote)
+        cli.default_subcommand("fetch")
+        cli
+      end
+
+      it "gives a subcommand its section over the global keys" do
+        defaults = JSON.parse(%({"verbose": true, "depth": 5, "fetch": {"depth": 1}}))
+        result = sections_cli.call.parse(["fetch"], defaults: defaults)
+        result.errors.should be_empty
+        result.data.to_json.should eq(%({"verbose":true,"depth":1}))
+      end
+
+      it "gives a global key only to the subcommands with that option" do
+        defaults = JSON.parse(%({"verbose": true, "depth": 5}))
+        result = sections_cli.call.parse(["fmt"], defaults: defaults)
+        result.errors.should be_empty
+        result.data.to_json.should eq(%({"verbose":true}))
+      end
+
+      it "merges a section's object over a global one key by key" do
+        defaults = JSON.parse(%({"server": {"host": "a", "port": 1}, "fetch": {"server": {"port": 2}}}))
+        result = sections_cli.call.parse(["fetch"], defaults: defaults)
+        result["server"].to_json.should eq(%({"host":"a","port":2}))
+      end
+
+      it "passes every key in a section, so a mistake there is reported" do
+        defaults = JSON.parse(%({"fetch": {"dpeth": 1}}))
+        result = sections_cli.call.parse(["fetch"], defaults: defaults)
+        result.errors.should eq(["Unknown property 'dpeth': additionalProperties is false"])
+      end
+
+      it "reads a nested CLI's sections within its own" do
+        defaults = JSON.parse(%({"name": "a", "remote": {"name": "b", "add": {"url": "u"}}}))
+        result = sections_cli.call.parse(["remote", "add"], defaults: defaults)
+        result.errors.should be_empty
+        result.data.to_json.should eq(%({"name":"b","url":"u"}))
+      end
+
+      it "reads a key that names a subcommand as global unless it holds a mapping" do
+        result = sections_cli.call.parse(["fetch"], defaults: JSON.parse(%({"remote": "origin"})))
+        result["remote"].as_s.should eq("origin")
+      end
+
+      it "keeps a global key a global further down, though a subcommand there has its name" do
+        defaults = JSON.parse(%({"add": {"all": true}}))
+        sections_cli.call.parse(["fmt"], defaults: defaults)["add"].to_json.should eq(%({"all":true}))
+        result = sections_cli.call.parse(["remote", "add"], defaults: defaults)
+        result.errors.should be_empty
+        result.data.to_json.should eq(%({}))
+      end
+
+      it "gives the default subcommand its section" do
+        result = sections_cli.call.parse([] of String, defaults: JSON.parse(%({"fetch": {"depth": 1}})))
+        result["depth"].as_i64.should eq(1)
+      end
+
+      it "ranks command-line arguments over a section" do
+        result = sections_cli.call.parse(["fetch", "--depth", "3"], defaults: JSON.parse(%({"fetch": {"depth": 1}})))
+        result["depth"].as_i64.should eq(3)
+      end
+
+      it "applies sections to JSON on standard input" do
+        input = IO::Memory.new(%({"subcommand": "fetch"}))
+        defaults = JSON.parse(%({"verbose": true, "fetch": {"depth": 1}}))
+        result = sections_cli.call.parse(["-"], input, defaults: defaults)
+        result.errors.should be_empty
+        result.data.to_json.should eq(%({"verbose":true,"depth":1}))
+      end
+
+      it "never mutates the caller's defaults" do
+        defaults = JSON.parse(%({"server": {"host": "a"}, "fetch": {"server": {"port": 2}}}))
+        sections_cli.call.parse(["fetch"], defaults: defaults)
+        defaults.to_json.should eq(%({"server":{"host":"a"},"fetch":{"server":{"port":2}}}))
+      end
+    end
   end
 
   describe "error handling edge cases" do

@@ -7056,6 +7056,707 @@
     }
   },
   {
+    "spec": "defaults parameter > with subcommands > gives a subcommand its section over the global keys",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"remote\"],\n          \"properties\": {\n            \"remote\": {\"type\": \"string\"},\n            \"depth\": {\"type\": \"integer\"},\n            \"verbose\": {\"type\": \"boolean\"},\n            \"server\": {\"type\": \"object\", \"properties\": {\"host\": {\"type\": \"string\"}, \"port\": {\"type\": \"integer\"}}}\n          },\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fmt",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\"}, \"add\": {\"type\": \"object\"}},\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          }
+        ]
+      },
+      {
+        "op": "default_subcommand",
+        "name": "fetch"
+      }
+    ],
+    "args": [
+      "fetch"
+    ],
+    "defaults": {
+      "verbose": true,
+      "depth": 5,
+      "fetch": {
+        "depth": 1
+      }
+    },
+    "expect": {
+      "data": {
+        "verbose": true,
+        "depth": 1
+      },
+      "errors": [],
+      "subcommand": "fetch",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > gives a global key only to the subcommands with that option",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"remote\"],\n          \"properties\": {\n            \"remote\": {\"type\": \"string\"},\n            \"depth\": {\"type\": \"integer\"},\n            \"verbose\": {\"type\": \"boolean\"},\n            \"server\": {\"type\": \"object\", \"properties\": {\"host\": {\"type\": \"string\"}, \"port\": {\"type\": \"integer\"}}}\n          },\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fmt",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\"}, \"add\": {\"type\": \"object\"}},\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          }
+        ]
+      },
+      {
+        "op": "default_subcommand",
+        "name": "fetch"
+      }
+    ],
+    "args": [
+      "fmt"
+    ],
+    "defaults": {
+      "verbose": true,
+      "depth": 5
+    },
+    "expect": {
+      "data": {
+        "verbose": true
+      },
+      "errors": [],
+      "subcommand": "fmt",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > merges a section's object over a global one key by key",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"remote\"],\n          \"properties\": {\n            \"remote\": {\"type\": \"string\"},\n            \"depth\": {\"type\": \"integer\"},\n            \"verbose\": {\"type\": \"boolean\"},\n            \"server\": {\"type\": \"object\", \"properties\": {\"host\": {\"type\": \"string\"}, \"port\": {\"type\": \"integer\"}}}\n          },\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fmt",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\"}, \"add\": {\"type\": \"object\"}},\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          }
+        ]
+      },
+      {
+        "op": "default_subcommand",
+        "name": "fetch"
+      }
+    ],
+    "args": [
+      "fetch"
+    ],
+    "defaults": {
+      "server": {
+        "host": "a",
+        "port": 1
+      },
+      "fetch": {
+        "server": {
+          "port": 2
+        }
+      }
+    },
+    "expect": {
+      "data": {
+        "server": {
+          "host": "a",
+          "port": 2
+        }
+      },
+      "errors": [],
+      "subcommand": "fetch",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > passes every key in a section, so a mistake there is reported",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"remote\"],\n          \"properties\": {\n            \"remote\": {\"type\": \"string\"},\n            \"depth\": {\"type\": \"integer\"},\n            \"verbose\": {\"type\": \"boolean\"},\n            \"server\": {\"type\": \"object\", \"properties\": {\"host\": {\"type\": \"string\"}, \"port\": {\"type\": \"integer\"}}}\n          },\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fmt",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\"}, \"add\": {\"type\": \"object\"}},\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          }
+        ]
+      },
+      {
+        "op": "default_subcommand",
+        "name": "fetch"
+      }
+    ],
+    "args": [
+      "fetch"
+    ],
+    "defaults": {
+      "fetch": {
+        "dpeth": 1
+      }
+    },
+    "expect": {
+      "data": {
+        "dpeth": 1
+      },
+      "errors": [
+        "Unknown property 'dpeth': additionalProperties is false"
+      ],
+      "subcommand": "fetch",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > reads a nested CLI's sections within its own",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"remote\"],\n          \"properties\": {\n            \"remote\": {\"type\": \"string\"},\n            \"depth\": {\"type\": \"integer\"},\n            \"verbose\": {\"type\": \"boolean\"},\n            \"server\": {\"type\": \"object\", \"properties\": {\"host\": {\"type\": \"string\"}, \"port\": {\"type\": \"integer\"}}}\n          },\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fmt",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\"}, \"add\": {\"type\": \"object\"}},\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          }
+        ]
+      },
+      {
+        "op": "default_subcommand",
+        "name": "fetch"
+      }
+    ],
+    "args": [
+      "remote",
+      "add"
+    ],
+    "defaults": {
+      "name": "a",
+      "remote": {
+        "name": "b",
+        "add": {
+          "url": "u"
+        }
+      }
+    },
+    "expect": {
+      "data": {
+        "name": "b",
+        "url": "u"
+      },
+      "errors": [],
+      "subcommand": "remote add",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > reads a key that names a subcommand as global unless it holds a mapping",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"remote\"],\n          \"properties\": {\n            \"remote\": {\"type\": \"string\"},\n            \"depth\": {\"type\": \"integer\"},\n            \"verbose\": {\"type\": \"boolean\"},\n            \"server\": {\"type\": \"object\", \"properties\": {\"host\": {\"type\": \"string\"}, \"port\": {\"type\": \"integer\"}}}\n          },\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fmt",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\"}, \"add\": {\"type\": \"object\"}},\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          }
+        ]
+      },
+      {
+        "op": "default_subcommand",
+        "name": "fetch"
+      }
+    ],
+    "args": [
+      "fetch"
+    ],
+    "defaults": {
+      "remote": "origin"
+    },
+    "expect": {
+      "data": {
+        "remote": "origin"
+      },
+      "errors": [],
+      "subcommand": "fetch",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > keeps a global key a global further down, though a subcommand there has its name",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"remote\"],\n          \"properties\": {\n            \"remote\": {\"type\": \"string\"},\n            \"depth\": {\"type\": \"integer\"},\n            \"verbose\": {\"type\": \"boolean\"},\n            \"server\": {\"type\": \"object\", \"properties\": {\"host\": {\"type\": \"string\"}, \"port\": {\"type\": \"integer\"}}}\n          },\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fmt",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\"}, \"add\": {\"type\": \"object\"}},\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          }
+        ]
+      },
+      {
+        "op": "default_subcommand",
+        "name": "fetch"
+      }
+    ],
+    "args": [
+      "fmt"
+    ],
+    "defaults": {
+      "add": {
+        "all": true
+      }
+    },
+    "expect": {
+      "data": {
+        "add": {
+          "all": true
+        }
+      },
+      "errors": [],
+      "subcommand": "fmt",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > keeps a global key a global further down, though a subcommand there has its name",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"remote\"],\n          \"properties\": {\n            \"remote\": {\"type\": \"string\"},\n            \"depth\": {\"type\": \"integer\"},\n            \"verbose\": {\"type\": \"boolean\"},\n            \"server\": {\"type\": \"object\", \"properties\": {\"host\": {\"type\": \"string\"}, \"port\": {\"type\": \"integer\"}}}\n          },\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fmt",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\"}, \"add\": {\"type\": \"object\"}},\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          }
+        ]
+      },
+      {
+        "op": "default_subcommand",
+        "name": "fetch"
+      }
+    ],
+    "args": [
+      "remote",
+      "add"
+    ],
+    "defaults": {
+      "add": {
+        "all": true
+      }
+    },
+    "expect": {
+      "data": {},
+      "errors": [],
+      "subcommand": "remote add",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > gives the default subcommand its section",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"remote\"],\n          \"properties\": {\n            \"remote\": {\"type\": \"string\"},\n            \"depth\": {\"type\": \"integer\"},\n            \"verbose\": {\"type\": \"boolean\"},\n            \"server\": {\"type\": \"object\", \"properties\": {\"host\": {\"type\": \"string\"}, \"port\": {\"type\": \"integer\"}}}\n          },\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fmt",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\"}, \"add\": {\"type\": \"object\"}},\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          }
+        ]
+      },
+      {
+        "op": "default_subcommand",
+        "name": "fetch"
+      }
+    ],
+    "args": [],
+    "defaults": {
+      "fetch": {
+        "depth": 1
+      }
+    },
+    "expect": {
+      "data": {
+        "depth": 1
+      },
+      "errors": [],
+      "subcommand": "fetch",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > ranks command-line arguments over a section",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"remote\"],\n          \"properties\": {\n            \"remote\": {\"type\": \"string\"},\n            \"depth\": {\"type\": \"integer\"},\n            \"verbose\": {\"type\": \"boolean\"},\n            \"server\": {\"type\": \"object\", \"properties\": {\"host\": {\"type\": \"string\"}, \"port\": {\"type\": \"integer\"}}}\n          },\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fmt",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\"}, \"add\": {\"type\": \"object\"}},\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          }
+        ]
+      },
+      {
+        "op": "default_subcommand",
+        "name": "fetch"
+      }
+    ],
+    "args": [
+      "fetch",
+      "--depth",
+      "3"
+    ],
+    "defaults": {
+      "fetch": {
+        "depth": 1
+      }
+    },
+    "expect": {
+      "data": {
+        "depth": 3
+      },
+      "errors": [],
+      "subcommand": "fetch",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > applies sections to JSON on standard input",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"remote\"],\n          \"properties\": {\n            \"remote\": {\"type\": \"string\"},\n            \"depth\": {\"type\": \"integer\"},\n            \"verbose\": {\"type\": \"boolean\"},\n            \"server\": {\"type\": \"object\", \"properties\": {\"host\": {\"type\": \"string\"}, \"port\": {\"type\": \"integer\"}}}\n          },\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fmt",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\"}, \"add\": {\"type\": \"object\"}},\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          }
+        ]
+      },
+      {
+        "op": "default_subcommand",
+        "name": "fetch"
+      }
+    ],
+    "args": [
+      "-"
+    ],
+    "stdin": "{\"subcommand\": \"fetch\"}",
+    "defaults": {
+      "verbose": true,
+      "fetch": {
+        "depth": 1
+      }
+    },
+    "expect": {
+      "data": {
+        "verbose": true,
+        "depth": 1
+      },
+      "errors": [],
+      "subcommand": "fetch",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > never mutates the caller's defaults",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"remote\"],\n          \"properties\": {\n            \"remote\": {\"type\": \"string\"},\n            \"depth\": {\"type\": \"integer\"},\n            \"verbose\": {\"type\": \"boolean\"},\n            \"server\": {\"type\": \"object\", \"properties\": {\"host\": {\"type\": \"string\"}, \"port\": {\"type\": \"integer\"}}}\n          },\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fmt",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\"}, \"add\": {\"type\": \"object\"}},\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          }
+        ]
+      },
+      {
+        "op": "default_subcommand",
+        "name": "fetch"
+      }
+    ],
+    "args": [
+      "fetch"
+    ],
+    "defaults": {
+      "server": {
+        "host": "a"
+      },
+      "fetch": {
+        "server": {
+          "port": 2
+        }
+      }
+    },
+    "expect": {
+      "data": {
+        "server": {
+          "host": "a",
+          "port": 2
+        }
+      },
+      "errors": [],
+      "subcommand": "fetch",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
     "spec": "error handling edge cases > handles invalid integer coercion with clear error",
     "cli": [
       {
