@@ -4280,6 +4280,35 @@ describe Jargon do
         end
       end
 
+      it "reads what YAML.parse returns, in place of Jargon's YAML reader" do
+        Dir.mkdir_p("./.config")
+        File.write("./.config/testfmtyaml.yml", "server:\n  host: h\n  ports: [1, 2]\n")
+        begin
+          cli = Jargon.cli("testfmtyaml", json: %({"type": "object"}))
+          cli.config_format("yaml", "yml") { |text| YAML.parse(text) }
+          cli.load_config(project: true).to_json.should eq(%({"server":{"host":"h","ports":[1,2]}}))
+        ensure
+          File.delete("./.config/testfmtyaml.yml")
+        end
+      end
+
+      it "reads any value that can be written as JSON, and nil as no config" do
+        Dir.mkdir_p("./.config")
+        File.write("./.config/testfmtvalue.nt", "")
+        File.write("./.config/testfmtnil.nt", "")
+        begin
+          cli = Jargon.cli("testfmtvalue", json: %({"type": "object"}))
+          cli.config_format("nt") { |_text| {host: "h", port: 1} }
+          cli.load_config(project: true).to_json.should eq(%({"host":"h","port":1}))
+          cli = Jargon.cli("testfmtnil", json: %({"type": "object"}))
+          cli.config_format("nt") { |_text| nil }
+          cli.load_config(project: true).should be_nil
+        ensure
+          File.delete("./.config/testfmtvalue.nt")
+          File.delete("./.config/testfmtnil.nt")
+        end
+      end
+
       it "skips a file its parser can't read" do
         Dir.mkdir_p("./.config")
         File.write("./.config/testfmtbad.kv", "no equals sign")
@@ -4462,6 +4491,7 @@ describe Jargon do
           "properties": {"name": {"type": "string"}, "url": {"type": "string"}},
           "additionalProperties": false
         }))
+        remote.default_subcommand("add")
         cli.subcommand("remote", remote)
         cli.default_subcommand("fetch")
         cli
@@ -4529,6 +4559,43 @@ describe Jargon do
         result = sections_cli.call.parse(["-"], input, defaults: defaults)
         result.errors.should be_empty
         result.data.to_json.should eq(%({"verbose":true,"depth":1}))
+      end
+
+      it "reads a nested CLI's sections for JSON on standard input" do
+        input = IO::Memory.new(%({"subcommand": "remote"}))
+        defaults = JSON.parse(%({"remote": {"add": {"name": "b"}}}))
+        result = sections_cli.call.parse(["-"], input, defaults: defaults)
+        result.errors.should be_empty
+        result.subcommand.should eq("remote add")
+        result.data.to_json.should eq(%({"name":"b"}))
+      end
+
+      it "gives an abbreviated subcommand the section under its full name" do
+        defaults = JSON.parse(%({"fetch": {"depth": 1}}))
+        sections_cli.call.parse(["fet"], defaults: defaults)["depth"].as_i64.should eq(1)
+        input = IO::Memory.new(%({"subcommand": "fet"}))
+        sections_cli.call.parse(["-"], input, defaults: defaults)["depth"].as_i64.should eq(1)
+      end
+
+      it "gives a global key to an option a mixin defines" do
+        cli = Jargon.cli("app", json: <<-JSON)
+          {"$id": "common", "properties": {"verbose": {"type": "boolean"}}}
+          {"name": "build", "type": "object", "allOf": [{"$ref": "common"}], "properties": {"target": {"type": "string"}}}
+          JSON
+        result = cli.parse(["build"], defaults: JSON.parse(%({"verbose": true, "debug": true})))
+        result.errors.should be_empty
+        result.data.to_json.should eq(%({"verbose":true}))
+      end
+
+      it "gives a global key to an option of a schema whose root is a $ref" do
+        cli = Jargon.new("app")
+        cli.subcommand("build", json: %({
+          "$ref": "#/$defs/options",
+          "$defs": {"options": {"type": "object", "properties": {"verbose": {"type": "boolean"}}}}
+        }))
+        result = cli.parse(["build"], defaults: JSON.parse(%({"verbose": true, "debug": true})))
+        result.errors.should be_empty
+        result.data.to_json.should eq(%({"verbose":true}))
       end
 
       it "never mutates the caller's defaults" do

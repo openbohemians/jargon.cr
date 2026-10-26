@@ -7084,6 +7084,10 @@
             "op": "subcommand_json",
             "name": "add",
             "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          },
+          {
+            "op": "default_subcommand",
+            "name": "add"
           }
         ]
       },
@@ -7143,6 +7147,10 @@
             "op": "subcommand_json",
             "name": "add",
             "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          },
+          {
+            "op": "default_subcommand",
+            "name": "add"
           }
         ]
       },
@@ -7198,6 +7206,10 @@
             "op": "subcommand_json",
             "name": "add",
             "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          },
+          {
+            "op": "default_subcommand",
+            "name": "add"
           }
         ]
       },
@@ -7263,6 +7275,10 @@
             "op": "subcommand_json",
             "name": "add",
             "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          },
+          {
+            "op": "default_subcommand",
+            "name": "add"
           }
         ]
       },
@@ -7321,6 +7337,10 @@
             "op": "subcommand_json",
             "name": "add",
             "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          },
+          {
+            "op": "default_subcommand",
+            "name": "add"
           }
         ]
       },
@@ -7383,6 +7403,10 @@
             "op": "subcommand_json",
             "name": "add",
             "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          },
+          {
+            "op": "default_subcommand",
+            "name": "add"
           }
         ]
       },
@@ -7437,6 +7461,10 @@
             "op": "subcommand_json",
             "name": "add",
             "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          },
+          {
+            "op": "default_subcommand",
+            "name": "add"
           }
         ]
       },
@@ -7495,6 +7523,10 @@
             "op": "subcommand_json",
             "name": "add",
             "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          },
+          {
+            "op": "default_subcommand",
+            "name": "add"
           }
         ]
       },
@@ -7550,6 +7582,10 @@
             "op": "subcommand_json",
             "name": "add",
             "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          },
+          {
+            "op": "default_subcommand",
+            "name": "add"
           }
         ]
       },
@@ -7604,6 +7640,10 @@
             "op": "subcommand_json",
             "name": "add",
             "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          },
+          {
+            "op": "default_subcommand",
+            "name": "add"
           }
         ]
       },
@@ -7662,6 +7702,10 @@
             "op": "subcommand_json",
             "name": "add",
             "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          },
+          {
+            "op": "default_subcommand",
+            "name": "add"
           }
         ]
       },
@@ -7687,6 +7731,248 @@
       },
       "errors": [],
       "subcommand": "fetch",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > reads a nested CLI's sections for JSON on standard input",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"remote\"],\n          \"properties\": {\n            \"remote\": {\"type\": \"string\"},\n            \"depth\": {\"type\": \"integer\"},\n            \"verbose\": {\"type\": \"boolean\"},\n            \"server\": {\"type\": \"object\", \"properties\": {\"host\": {\"type\": \"string\"}, \"port\": {\"type\": \"integer\"}}}\n          },\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fmt",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\"}, \"add\": {\"type\": \"object\"}},\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          },
+          {
+            "op": "default_subcommand",
+            "name": "add"
+          }
+        ]
+      },
+      {
+        "op": "default_subcommand",
+        "name": "fetch"
+      }
+    ],
+    "args": [
+      "-"
+    ],
+    "stdin": "{\"subcommand\": \"remote\"}",
+    "defaults": {
+      "remote": {
+        "add": {
+          "name": "b"
+        }
+      }
+    },
+    "expect": {
+      "data": {
+        "name": "b"
+      },
+      "errors": [],
+      "subcommand": "remote add",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > gives an abbreviated subcommand the section under its full name",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"remote\"],\n          \"properties\": {\n            \"remote\": {\"type\": \"string\"},\n            \"depth\": {\"type\": \"integer\"},\n            \"verbose\": {\"type\": \"boolean\"},\n            \"server\": {\"type\": \"object\", \"properties\": {\"host\": {\"type\": \"string\"}, \"port\": {\"type\": \"integer\"}}}\n          },\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fmt",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\"}, \"add\": {\"type\": \"object\"}},\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          },
+          {
+            "op": "default_subcommand",
+            "name": "add"
+          }
+        ]
+      },
+      {
+        "op": "default_subcommand",
+        "name": "fetch"
+      }
+    ],
+    "args": [
+      "fet"
+    ],
+    "defaults": {
+      "fetch": {
+        "depth": 1
+      }
+    },
+    "expect": {
+      "data": {
+        "depth": 1
+      },
+      "errors": [],
+      "subcommand": "fetch",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > gives an abbreviated subcommand the section under its full name",
+    "cli": [
+      {
+        "op": "new",
+        "program": "git"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fetch",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"remote\"],\n          \"properties\": {\n            \"remote\": {\"type\": \"string\"},\n            \"depth\": {\"type\": \"integer\"},\n            \"verbose\": {\"type\": \"boolean\"},\n            \"server\": {\"type\": \"object\", \"properties\": {\"host\": {\"type\": \"string\"}, \"port\": {\"type\": \"integer\"}}}\n          },\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "fmt",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"verbose\": {\"type\": \"boolean\"}, \"add\": {\"type\": \"object\"}},\n          \"additionalProperties\": false\n        }"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "remote",
+        "cli": [
+          {
+            "op": "new",
+            "program": "remote"
+          },
+          {
+            "op": "subcommand_json",
+            "name": "add",
+            "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          },
+          {
+            "op": "default_subcommand",
+            "name": "add"
+          }
+        ]
+      },
+      {
+        "op": "default_subcommand",
+        "name": "fetch"
+      }
+    ],
+    "args": [
+      "-"
+    ],
+    "stdin": "{\"subcommand\": \"fet\"}",
+    "defaults": {
+      "fetch": {
+        "depth": 1
+      }
+    },
+    "expect": {
+      "data": {
+        "depth": 1
+      },
+      "errors": [],
+      "subcommand": "fetch",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > gives a global key to an option a mixin defines",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "app",
+        "text": "{\"$id\": \"common\", \"properties\": {\"verbose\": {\"type\": \"boolean\"}}}\n{\"name\": \"build\", \"type\": \"object\", \"allOf\": [{\"$ref\": \"common\"}], \"properties\": {\"target\": {\"type\": \"string\"}}}"
+      }
+    ],
+    "args": [
+      "build"
+    ],
+    "defaults": {
+      "verbose": true,
+      "debug": true
+    },
+    "expect": {
+      "data": {
+        "verbose": true
+      },
+      "errors": [],
+      "subcommand": "build",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "defaults parameter > with subcommands > gives a global key to an option of a schema whose root is a $ref",
+    "cli": [
+      {
+        "op": "new",
+        "program": "app"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "build",
+        "text": "{\n          \"$ref\": \"#/$defs/options\",\n          \"$defs\": {\"options\": {\"type\": \"object\", \"properties\": {\"verbose\": {\"type\": \"boolean\"}}}}\n        }"
+      }
+    ],
+    "args": [
+      "build"
+    ],
+    "defaults": {
+      "verbose": true,
+      "debug": true
+    },
+    "expect": {
+      "data": {
+        "verbose": true
+      },
+      "errors": [],
+      "subcommand": "build",
       "help": false,
       "help_subcommand": null,
       "completion_shell": null
@@ -7721,6 +8007,10 @@
             "op": "subcommand_json",
             "name": "add",
             "text": "{\n          \"type\": \"object\",\n          \"properties\": {\"name\": {\"type\": \"string\"}, \"url\": {\"type\": \"string\"}},\n          \"additionalProperties\": false\n        }"
+          },
+          {
+            "op": "default_subcommand",
+            "name": "add"
           }
         ]
       },
