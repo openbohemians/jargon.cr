@@ -9,7 +9,7 @@ require "./jargon/completion"
 # shell completion. Start from `Jargon.cli` (flat CLI) or `Jargon.new`
 # (subcommand mode), then `parse`/`run` the arguments.
 module Jargon
-  VERSION = "0.23.1"
+  VERSION = "0.24.0"
 
   # Raised by `CLI#json` when validation fails. `errors` holds each message;
   # the exception message is them joined by newlines.

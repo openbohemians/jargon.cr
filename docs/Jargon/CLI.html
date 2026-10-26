@@ -299,6 +299,13 @@ or <code><a href="../Jargon/CLI.html#run%28args%3AArray%28String%29%2Cinput%3AIO
       </li>
     
       <li class="entry-summary">
+        <a href="#config_format%28%2Aextensions%3AString%2C%26block%3AString-%3ET%29%3AselfforallT-instance-method" class="signature"><strong>#config_format</strong>(*extensions : String, &block : String -> T) : <span class="k">self</span> forall T</a>
+        
+          <div class="summary"><p>Read config files ending in any of <code>extensions</code> with the block, which turns a file's text into anything that can be written as JSON: a TOML library's <code>TOML.parse</code>, say.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#config_paths%28%2A%2Cproject%3ABool%3Dfalse%29%3AArray%28String%29-instance-method" class="signature"><strong>#config_paths</strong>(*, project : Bool = <span class="n">false</span>) : Array(String)</a>
         
           <div class="summary"><p>Returns the list of config paths <code><a href="../Jargon/CLI.html#load_config%28%2A%2Cmerge%3ABool%3Dtrue%2Cproject%3ABool%3Dfalse%29%3AJSON%3A%3AAny%7CNil-instance-method">#load_config</a></code> would search, given the same <code>project:</code> setting.</p></div>
@@ -744,6 +751,33 @@ typos and renames fail fast.</p>
       </div>
     </div>
   
+    <div class="entry-detail" id="config_format(*extensions:String,&amp;block:String-&gt;T):selfforallT-instance-method">
+      <div class="signature">
+        
+        def <strong>config_format</strong>(*extensions : String, &block : String -> T) : <span class="k">self</span> forall T
+
+        <a class="method-permalink" href="#config_format%28%2Aextensions%3AString%2C%26block%3AString-%3ET%29%3AselfforallT-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Read config files ending in any of <code>extensions</code> with the block, which
+turns a file's text into anything that can be written as JSON: a TOML
+library's <code>TOML.parse</code>, say. An added format is looked for ahead of
+YAML and JSON, and ahead of formats added after it, its extensions in
+the order given, so where a directory has both <code>app.toml</code> and
+<code>app.yaml</code>, <code>app.toml</code> takes precedence. Adding <code>yaml</code>, <code>yml</code>, or
+<code><a href="../Jargon/CLI.html#json%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AJSON%3A%3AAny-instance-method">#json</a></code> replaces that extension's parser, and it keeps its place.</p>
+<pre><code class="language-crystal">cli.config_format(<span class="s">&quot;toml&quot;</span>) { <span class="o">|</span>text<span class="o">|</span> <span class="t">TOML</span>.parse(text) }
+cli.config_format(<span class="s">&quot;yaml&quot;</span>, <span class="s">&quot;yml&quot;</span>) { <span class="o">|</span>text<span class="o">|</span> <span class="t">YAML</span>.parse(text) } <span class="c"># in place of Jargon&#39;s YAML reader</span></code></pre>
+        </div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
     <div class="entry-detail" id="config_paths(*,project:Bool=false):Array(String)-instance-method">
       <div class="signature">
         
@@ -928,7 +962,8 @@ Use when you want the values directly and treat invalid input as fatal.</p>
         <div class="doc">
           
           <p>Load config from standard locations.
-Supports YAML (.yaml, .yml) and JSON (.json) files.</p>
+Supports YAML (.yaml, .yml) and JSON (.json) files, and any format
+added with <code><a href="../Jargon/CLI.html#config_format%28%2Aextensions%3AString%2C%26block%3AString-%3ET%29%3AselfforallT-instance-method">#config_format</a></code>, which is looked for ahead of them.</p>
 <p>Paths searched (in order):</p>
 <ol>
 <li>./.config/{program_name}.yaml/.yml/.json (project local, flat; project: true only)</li>
@@ -1011,6 +1046,11 @@ Returns nil if no config file found.</p>
           <p>Parse arguments into a <code><a href="../Jargon/Result.html">Result</a></code> (parsed data plus any validation errors);
 never raises on invalid input. <code>defaults</code> seeds values not given on the
 command line (e.g. from a config file), below CLI args and env vars.</p>
+<p>With subcommands, a mapping in <code>defaults</code> under a subcommand's name is
+that subcommand's section, and any other key is global. A subcommand
+takes the global keys it has an option for, then its section's keys
+over them, every one of them. A nested CLI's section holds its own
+subcommands' sections the same way.</p>
         </div>
       
       <br/>

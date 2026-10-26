@@ -150,7 +150,7 @@
 <li><strong>Validation</strong>: Required fields, enum values, strict type checking, <code>additionalProperties</code></li>
 <li><strong>Standalone validator</strong>: Use <code><a href="Jargon/Validator.html">Jargon::Validator</a></code> to validate data without the CLI parser</li>
 <li><strong>Defaults</strong>: Schema defaults, config file defaults, environment variables</li>
-<li><strong>Config files</strong>: Load from <code>~/.config/</code> (XDG spec), optionally project <code>.config/</code>, with deep merge support</li>
+<li><strong>Config files</strong>: Load from <code>~/.config/</code> (XDG spec), optionally project <code>.config/</code>, with deep merge support, sections for subcommands, and any format you add</li>
 <li><strong>Help text</strong>: Generated from schema descriptions</li>
 <li><strong>Auto help flags</strong>: <code>--help</code> and <code>-h</code> detected automatically</li>
 <li><strong>Shell completions</strong>: Generate completion shims for bash, zsh, and fish, with optional app-driven dynamic completers for live data</li>
@@ -871,7 +871,8 @@ and keeps a <code>server.host</code> from the config file. Parsing never modifie
     <use href="#octicon-link"/>
   </svg>
 </a>Config Files</h2>
-<p>Load configuration from standard XDG locations with <code>load_config</code>. Supports YAML and JSON:</p>
+<p>Load configuration from standard XDG locations with <code>load_config</code>. Supports YAML and JSON, and
+any format you add (see <a href="#other-formats">Other Formats</a>):</p>
 <pre><code class="language-crystal">cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;myapp&quot;</span>, json: schema)
 config <span class="o">=</span> cli.load_config  <span class="c"># Returns JSON::Any or nil</span>
 cli.run(defaults: config) <span class="k">do</span> <span class="o">|</span>result<span class="o">|</span>
@@ -884,7 +885,8 @@ cli.run(defaults: config) <span class="k">do</span> <span class="o">|</span>resu
 <li><code>$XDG_CONFIG_HOME/myapp.yaml</code> / <code>.yml</code> / <code>.json</code> (user global, typically <code>~/.config</code>)</li>
 <li><code>$XDG_CONFIG_HOME/myapp/config.yaml</code> / <code>.yml</code> / <code>.json</code> (user global, directory style)</li>
 </ol>
-<p>YAML is preferred over JSON when both exist at the same location. An empty or
+<p>YAML is preferred over JSON when both exist at the same location, and an added
+format over both. An empty or
 relative <code>$XDG_CONFIG_HOME</code> is ignored in favor of <code>~/.config</code>, as the XDG spec
 requires.</p>
 <h3><a id="project-local-configs" class="anchor" href="#project-local-configs">
@@ -928,6 +930,43 @@ database:
   host: production.example.com  # from project
   port: 5432                    # preserved from user
   user: default_user            # preserved from user</code></pre>
+<h3><a id="sections-for-subcommands" class="anchor" href="#sections-for-subcommands">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Sections for Subcommands</h3>
+<p>With subcommands, a config can set options for all of them and for each one:</p>
+<pre><code class="language-yaml">verbose: true    # global: for any subcommand with a verbose option
+fetch:           # fetch's own section
+  depth: 1
+remote:          # a nested CLI's section holds its subcommands' sections
+  add:
+    name: upstream</code></pre>
+<p>A mapping under a subcommand's name is that subcommand's section, and every
+other key is global. A subcommand takes the global keys it has an option for,
+so a global <code>depth</code> doesn't reach a subcommand without one, then its own
+section's keys over them, nested objects merged key by key. Every key in a
+section is passed on, as every key is for a CLI without subcommands, so a
+misspelled one is reported if the schema has <code>additionalProperties: false</code>.</p>
+<p>A key that names a subcommand but doesn't hold a mapping (<code>remote: origin</code>)
+is an ordinary global. An object option named after a subcommand, though,
+can only be set in a section. Sections apply to <code>defaults:</code> from any
+source, not only <code>load_config</code>.</p>
+<h3><a id="other-formats" class="anchor" href="#other-formats">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Other Formats</h3>
+<p>Add a config format with <code>config_format</code> and a block that turns a file's
+text into anything that can be written as JSON, such as a TOML library's
+result:</p>
+<pre><code class="language-crystal">cli.config_format(<span class="s">&quot;toml&quot;</span>) { <span class="o">|</span>text<span class="o">|</span> <span class="t">TOML</span>.parse(text) }
+config <span class="o">=</span> cli.load_config  <span class="c"># now also finds ~/.config/myapp.toml</span></code></pre>
+<p>A format can have several extensions, looked for in the order given:</p>
+<pre><code class="language-crystal">cli.config_format(<span class="s">&quot;conf&quot;</span>, <span class="s">&quot;cfg&quot;</span>) { <span class="o">|</span>text<span class="o">|</span> <span class="t">MyConf</span>.parse(text) }</code></pre>
+<p>An added format is looked for ahead of YAML and JSON. Adding <code>yaml</code>, <code>yml</code>,
+or <code>json</code> replaces Jargon's own parser for each extension named, so
+<code>config_format(&quot;yaml&quot;, &quot;yml&quot;)</code> replaces it for both.</p>
 <h3><a id="config-warnings" class="anchor" href="#config-warnings">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -1071,6 +1110,7 @@ config <span class="o">=</span> cli.load_config                <span class="c">#
 config <span class="o">=</span> cli.load_config(project: <span class="n">true</span>) <span class="c"># also ./.config/ (project wins)</span>
 config <span class="o">=</span> cli.load_config(merge: <span class="n">false</span>)  <span class="c"># first found wins</span>
 paths <span class="o">=</span> cli.config_paths                <span class="c"># list of paths searched (takes project: too)</span>
+cli.config_format(<span class="s">&quot;toml&quot;</span>) { <span class="o">|</span>text<span class="o">|</span> <span class="t">TOML</span>.parse(text) } <span class="c"># read myapp.toml too</span>
 
 <span class="c"># Result methods (from parse or run)</span>
 result.valid?      <span class="c"># =&gt; true/false</span>
