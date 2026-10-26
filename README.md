@@ -11,7 +11,7 @@ Jargon is also available for Rust, as [jargon.rs](https://github.com/openbohemia
 - **Validation**: Required fields, enum values, strict type checking, `additionalProperties`
 - **Standalone validator**: Use `Jargon::Validator` to validate data without the CLI parser
 - **Defaults**: Schema defaults, config file defaults, environment variables
-- **Config files**: Load from `~/.config/` (XDG spec), optionally project `.config/`, with deep merge support and sections for subcommands
+- **Config files**: Load from `~/.config/` (XDG spec), optionally project `.config/`, with deep merge support, sections for subcommands, and any format you add
 - **Help text**: Generated from schema descriptions
 - **Auto help flags**: `--help` and `-h` detected automatically
 - **Shell completions**: Generate completion shims for bash, zsh, and fish, with optional app-driven dynamic completers for live data
@@ -847,7 +847,8 @@ and keeps a `server.host` from the config file. Parsing never modifies the
 
 ## Config Files
 
-Load configuration from standard XDG locations with `load_config`. Supports YAML and JSON:
+Load configuration from standard XDG locations with `load_config`. Supports YAML and JSON, and
+any format you add (see [Other Formats](#other-formats)):
 
 ```crystal
 cli = Jargon.cli("myapp", json: schema)
@@ -863,7 +864,8 @@ Paths searched (merged by default, or first found wins with `merge: false`):
 3. `$XDG_CONFIG_HOME/myapp.yaml` / `.yml` / `.json` (user global, typically `~/.config`)
 4. `$XDG_CONFIG_HOME/myapp/config.yaml` / `.yml` / `.json` (user global, directory style)
 
-YAML is preferred over JSON when both exist at the same location. An empty or
+YAML is preferred over JSON when both exist at the same location, and an added
+format over both. An empty or
 relative `$XDG_CONFIG_HOME` is ignored in favor of `~/.config`, as the XDG spec
 requires.
 
@@ -939,6 +941,21 @@ A key that names a subcommand but doesn't hold a mapping (`remote: origin`)
 is an ordinary global. An object option named after a subcommand, though,
 can only be set in a section. Sections apply to `defaults:` from any
 source, not only `load_config`.
+
+### Other Formats
+
+Add a config format with `config_format` and a block that turns a file's
+text into anything that can be written as JSON, such as a TOML library's
+result:
+
+```crystal
+cli.config_format("toml") { |text| TOML.parse(text) }
+config = cli.load_config  # now also finds ~/.config/myapp.toml
+```
+
+An added format is looked for ahead of YAML and JSON. Adding `yaml`, `yml`,
+or `json` replaces Jargon's own parser for that extension (each is separate,
+so to replace YAML's, add both `yaml` and `yml`).
 
 ### Config Warnings
 
@@ -1102,6 +1119,7 @@ config = cli.load_config                # merge user configs found
 config = cli.load_config(project: true) # also ./.config/ (project wins)
 config = cli.load_config(merge: false)  # first found wins
 paths = cli.config_paths                # list of paths searched (takes project: too)
+cli.config_format("toml") { |text| TOML.parse(text) } # read myapp.toml too
 
 # Result methods (from parse or run)
 result.valid?      # => true/false

@@ -4226,6 +4226,68 @@ describe Jargon do
         Dir.delete("#{xdg_config}/testoptin") rescue nil
       end
     end
+
+    describe "config_format" do
+      # `key=value` lines, as a Hash(String, String): any value that can be
+      # written as JSON will do.
+      key_values = ->(text : String) { text.lines.to_h { |line| {line.split("=")[0], line.split("=")[1]} } }
+
+      it "reads an added format, ahead of YAML and JSON" do
+        Dir.mkdir_p("./.config")
+        File.write("./.config/testfmt.kv", "host=kv-host")
+        File.write("./.config/testfmt.json", %({"host": "json-host", "port": 1}))
+        begin
+          cli = Jargon.cli("testfmt", json: %({"type": "object"}))
+          cli.config_format("kv") { |text| key_values.call(text) }
+          cli.config_paths(project: true).first(4).should eq([
+            "./.config/testfmt.kv", "./.config/testfmt.yaml", "./.config/testfmt.yml", "./.config/testfmt.json",
+          ])
+          cli.load_config(project: true, merge: false).to_json.should eq(%({"host":"kv-host"}))
+          cli.load_config(project: true).to_json.should eq(%({"host":"kv-host","port":1}))
+        ensure
+          File.delete("./.config/testfmt.kv")
+          File.delete("./.config/testfmt.json")
+        end
+      end
+
+      it "replaces a built-in format's parser, keeping its place" do
+        Dir.mkdir_p("./.config")
+        File.write("./.config/testfmtjson.json", %(// a comment\n{"host": "h"}))
+        begin
+          cli = Jargon.cli("testfmtjson", json: %({"type": "object"}))
+          cli.config_format("json") { |text| JSON.parse(text.lines.reject(&.starts_with?("//")).join("\n")) }
+          cli.config_paths(project: true).first(3).should eq([
+            "./.config/testfmtjson.yaml", "./.config/testfmtjson.yml", "./.config/testfmtjson.json",
+          ])
+          cli.load_config(project: true).to_json.should eq(%({"host":"h"}))
+        ensure
+          File.delete("./.config/testfmtjson.json")
+        end
+      end
+
+      it "skips a file its parser can't read" do
+        Dir.mkdir_p("./.config")
+        File.write("./.config/testfmtbad.kv", "no equals sign")
+        Jargon.config_warnings = false
+        begin
+          cli = Jargon.cli("testfmtbad", json: %({"type": "object"}))
+          cli.config_format("kv") { |text| key_values.call(text) }
+          cli.load_config(project: true).should be_nil
+        ensure
+          Jargon.config_warnings = true
+          File.delete("./.config/testfmtbad.kv")
+        end
+      end
+
+      it "raises for an extension that isn't one alone" do
+        cli = Jargon.cli("app", json: %({"type": "object"}))
+        [".toml", "x/toml", ""].each do |ext|
+          expect_raises(ArgumentError, "a config format's extension is the extension alone") do
+            cli.config_format(ext) { |text| JSON.parse(text) }
+          end
+        end
+      end
+    end
   end
 
   describe "defaults parameter" do

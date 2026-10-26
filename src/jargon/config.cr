@@ -5,8 +5,15 @@ module Jargon
   class_property? config_warnings : Bool = true
 
   class CLI
+    # The config formats read without `config_format`, in the order they're
+    # looked for.
+    private BUILT_IN_CONFIG_FORMATS = ["yaml", "yml", "json"]
+
+    @config_formats = {} of String => Proc(String, JSON::Any)
+
     # Load config from standard locations.
-    # Supports YAML (.yaml, .yml) and JSON (.json) files.
+    # Supports YAML (.yaml, .yml) and JSON (.json) files, and any format
+    # added with `config_format`, which is looked for ahead of them.
     #
     # Paths searched (in order):
     # 1. ./.config/{program_name}.yaml/.yml/.json (project local, flat; project: true only)
@@ -41,8 +48,31 @@ module Jargon
         "#{xdg_config}/#{@program_name}/config",
       ]
       bases = ["./.config/#{@program_name}", "./.config/#{@program_name}/config"] + bases if project
-      # For each base, check .yaml, .yml, .json (in that order)
-      bases.flat_map { |base| ["#{base}.yaml", "#{base}.yml", "#{base}.json"] }
+      # For each base, check the added formats, then .yaml, .yml, .json
+      extensions = @config_formats.keys.reject { |ext| BUILT_IN_CONFIG_FORMATS.includes?(ext) } + BUILT_IN_CONFIG_FORMATS
+      bases.flat_map { |base| extensions.map { |ext| "#{base}.#{ext}" } }
+    end
+
+    # Read config files ending in `.ext` with the block, which turns a file's
+    # text into anything that can be written as JSON: a TOML library's
+    # `TOML.parse`, say. An added format is looked for ahead of YAML and
+    # JSON, and ahead of formats added after it, so where a directory has
+    # both `app.toml` and `app.yaml`, `app.toml` takes precedence. Adding
+    # `yaml`, `yml`, or `json` replaces that extension's parser, and it keeps
+    # its place.
+    #
+    # ```
+    # cli.config_format("toml") { |text| TOML.parse(text) }
+    # ```
+    def config_format(ext : String, &block : String -> T) : self forall T
+      if ext.empty? || ext.includes?('.') || ext.includes?('/') || ext.includes?('\\')
+        raise ArgumentError.new("a config format's extension is the extension alone, such as \"toml\"; got #{ext.inspect}")
+      end
+      @config_formats[ext] = ->(text : String) do
+        value = block.call(text)
+        value.is_a?(JSON::Any) ? value : JSON.parse(value.to_json)
+      end
+      self
     end
 
     private def load_config_first(project : Bool) : JSON::Any?
@@ -87,11 +117,16 @@ module Jargon
 
     private def parse_config_file(path : String) : JSON::Any?
       content = File.read(path)
-      config = case File.extname(path).downcase
-               when ".yaml", ".yml"
-                 JSON.parse(YAMLReader.parse(content).to_json)
-               when ".json"
-                 JSON.parse(content)
+      ext = File.extname(path).lchop('.')
+      config = if parser = @config_formats[ext]?
+                 parser.call(content)
+               else
+                 case ext
+                 when "yaml", "yml"
+                   JSON.parse(YAMLReader.parse(content).to_json)
+                 when "json"
+                   JSON.parse(content)
+                 end
                end
       # An empty file configures nothing; anything else must be a mapping of
       # option defaults.
