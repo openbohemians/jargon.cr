@@ -1019,6 +1019,19 @@ errors <span class="o">=</span> <span class="t">Jargon</span><span class="t">::<
 <span class="c"># =&gt; [&quot;Value for name must be at least 1 characters&quot;,</span>
 <span class="c">#     &quot;Unknown property &#39;extra&#39;: additionalProperties is false&quot;]</span></code></pre>
 <p>The validator supports all the same constraints as CLI parsing: types, required fields, enums, numeric ranges, string patterns, formats, array constraints, <code>const</code>, <code>$ref</code>, nested objects, and <code>additionalProperties</code>.</p>
+<h2><a id="where-parsing-stops" class="anchor" href="#where-parsing-stops">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Where Parsing Stops</h2>
+<p>Jargon's job ends at a valid value: one with the type, format, and constraints its schema gives it. What that value refers to is up to your program. If a positional <code>query</code> names a document, Jargon checks that it's a string; finding the document, saying that none matches, or asking the user to choose between several is your program's work, once <code>parse</code> returns or inside <code>run</code>:</p>
+<pre><code class="language-crystal">cli.run <span class="k">do</span> <span class="o">|</span>result<span class="o">|</span>
+  query <span class="o">=</span> result[<span class="s">&quot;query&quot;</span>].as_s   <span class="c"># Jargon&#39;s part ends here: a valid string</span>
+  matches <span class="o">=</span> store.search(query)  <span class="c"># resolving it is the program&#39;s</span>
+  abort <span class="s">&quot;No document matches &#39;</span><span class="i">#{</span>query<span class="i">}</span><span class="s">&#39;&quot;</span> <span class="k">if</span> matches.empty?
+  doc <span class="o">=</span> matches.size <span class="o">==</span> <span class="n">1</span> ? matches.first : choose(matches) <span class="c"># e.g. ask the user</span>
+<span class="k">end</span></code></pre>
+<p>A <a href="#dynamic-completions">completer</a> helps the user type such a value, but it doesn't resolve it.</p>
 <h2><a id="api" class="anchor" href="#api">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
