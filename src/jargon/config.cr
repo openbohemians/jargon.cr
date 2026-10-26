@@ -53,25 +53,29 @@ module Jargon
       bases.flat_map { |base| extensions.map { |ext| "#{base}.#{ext}" } }
     end
 
-    # Read config files ending in `.ext` with the block, which turns a file's
-    # text into anything that can be written as JSON: a TOML library's
-    # `TOML.parse`, say. An added format is looked for ahead of YAML and
-    # JSON, and ahead of formats added after it, so where a directory has
-    # both `app.toml` and `app.yaml`, `app.toml` takes precedence. Adding
-    # `yaml`, `yml`, or `json` replaces that extension's parser, and it keeps
-    # its place.
+    # Read config files ending in any of `extensions` with the block, which
+    # turns a file's text into anything that can be written as JSON: a TOML
+    # library's `TOML.parse`, say. An added format is looked for ahead of
+    # YAML and JSON, and ahead of formats added after it, its extensions in
+    # the order given, so where a directory has both `app.toml` and
+    # `app.yaml`, `app.toml` takes precedence. Adding `yaml`, `yml`, or
+    # `json` replaces that extension's parser, and it keeps its place.
     #
     # ```
     # cli.config_format("toml") { |text| TOML.parse(text) }
+    # cli.config_format("yaml", "yml") { |text| YAML.parse(text) } # in place of Jargon's YAML reader
     # ```
-    def config_format(ext : String, &block : String -> T) : self forall T
-      if ext.empty? || ext.includes?('.') || ext.includes?('/') || ext.includes?('\\')
-        raise ArgumentError.new("a config format's extension is the extension alone, such as \"toml\"; got #{ext.inspect}")
+    def config_format(*extensions : String, &block : String -> T) : self forall T
+      extensions.each do |ext|
+        if ext.empty? || ext.includes?('.') || ext.includes?('/') || ext.includes?('\\')
+          raise ArgumentError.new("a config format's extension is the extension alone, such as \"toml\"; got #{ext.inspect}")
+        end
       end
-      @config_formats[ext] = ->(text : String) do
+      parser = ->(text : String) do
         value = block.call(text)
         value.is_a?(JSON::Any) ? value : JSON.parse(value.to_json)
       end
+      extensions.each { |ext| @config_formats[ext] = parser }
       self
     end
 

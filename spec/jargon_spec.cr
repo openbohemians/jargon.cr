@@ -4265,6 +4265,21 @@ describe Jargon do
         end
       end
 
+      it "reads one format under each extension given, in that order" do
+        Dir.mkdir_p("./.config")
+        File.write("./.config/testfmtmulti.keyval", "host=keyval-host")
+        begin
+          cli = Jargon.cli("testfmtmulti", json: %({"type": "object"}))
+          cli.config_format("kv", "keyval") { |text| key_values.call(text) }
+          cli.config_paths(project: true).first(3).should eq([
+            "./.config/testfmtmulti.kv", "./.config/testfmtmulti.keyval", "./.config/testfmtmulti.yaml",
+          ])
+          cli.load_config(project: true).to_json.should eq(%({"host":"keyval-host"}))
+        ensure
+          File.delete("./.config/testfmtmulti.keyval")
+        end
+      end
+
       it "skips a file its parser can't read" do
         Dir.mkdir_p("./.config")
         File.write("./.config/testfmtbad.kv", "no equals sign")
@@ -4279,13 +4294,14 @@ describe Jargon do
         end
       end
 
-      it "raises for an extension that isn't one alone" do
+      it "raises for an extension that isn't one alone, adding none of them" do
         cli = Jargon.cli("app", json: %({"type": "object"}))
         [".toml", "x/toml", ""].each do |ext|
           expect_raises(ArgumentError, "a config format's extension is the extension alone") do
-            cli.config_format(ext) { |text| JSON.parse(text) }
+            cli.config_format("conf", ext) { |text| JSON.parse(text) }
           end
         end
+        cli.config_paths.none?(&.ends_with?(".conf")).should be_true
       end
     end
   end

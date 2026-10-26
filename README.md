@@ -953,9 +953,15 @@ cli.config_format("toml") { |text| TOML.parse(text) }
 config = cli.load_config  # now also finds ~/.config/myapp.toml
 ```
 
+A format can have several extensions, looked for in the order given:
+
+```crystal
+cli.config_format("conf", "cfg") { |text| MyConf.parse(text) }
+```
+
 An added format is looked for ahead of YAML and JSON. Adding `yaml`, `yml`,
-or `json` replaces Jargon's own parser for that extension (each is separate,
-so to replace YAML's, add both `yaml` and `yml`).
+or `json` replaces Jargon's own parser for each extension named, so
+`config_format("yaml", "yml")` replaces it for both.
 
 ### Config Warnings
 
