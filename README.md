@@ -1,5 +1,7 @@
 # Jargon
 
+[![CI](https://github.com/openbohemians/jargon.cr/actions/workflows/ci.yml/badge.svg)](https://github.com/openbohemians/jargon.cr/actions/workflows/ci.yml)
+
 *Define your CLI jargon with JSON Schema.*
 
 A Crystal library that generates CLI interfaces from JSON Schema definitions. Define your data structure once in JSON Schema, get a CLI parser with validation for free.

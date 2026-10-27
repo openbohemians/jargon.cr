@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly, to catch a new Crystal release breaking something
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  spec:
+    name: Specs (Crystal ${{ matrix.crystal }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest Crystal shard.yml allows, and the latest
+        crystal: ["1.18.2", latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: ${{ matrix.crystal }}
+      # Ameba, the one development dependency, needs a newer Crystal
+      - run: shards install --without-development
+      - run: crystal spec
+
+  lint:
+    name: Format and lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: crystal-lang/install-crystal@v1
+      - run: shards install
+      - run: crystal tool format --check src spec
+      # Shards no longer builds ameba on install
+      - run: crystal build -o bin/ameba lib/ameba/bin/ameba.cr
+      - run: bin/ameba
