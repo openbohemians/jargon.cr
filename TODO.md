@@ -149,6 +149,30 @@ Raised 2026-10-22, when v0.21.0 made project-local configs opt-in
   - *Shape:* a registration call, `cli.project_config_for("fmt", "build")`, that `load_config(project: true)` honors, adds it in both implementations without changing anything that exists (jargon.rs's `ConfigOptions` is a `Copy` struct with a `bool` field, so a list there would change its type). A `project:` that takes a list is the other choice. jargonaut had no dependents when this was discussed, so compatibility needn't decide between them.
   - *Finer still, per option:* mark individual options as user-config-only, so a project file can set `style` but never `server`. More precise trust, but a new schema keyword.
 
+### Conventions Existing Commands Use
+
+Found 2026-10-27 by parsing real `ls`, `cat`, `cp`, and `sudo` command lines with schemas like those in `schemas/coreutils/`, toward a repository of schemas for common commands. Each is also a convention people expect of any CLI. jargon.rs, held to the same behavior, would change with each. The priorities are proposed, not decided.
+
+**Must fix (proposed)**
+
+- **Repeated options add to an array.** `-I '*.o' -I '*.a'`, with `ignore` an array, keeps only `*.a`: the first is dropped without a word. getopt programs collect each one (`-I`, `-e`, `--exclude`).
+- **`-` as an argument.** A lone `-` reads options as JSON from standard input, and `-` among other arguments is rejected (`cat a - b`: "Unexpected argument '-'"). POSIX uses `-` for standard input as a file. A CLI needs a way to give up the JSON form, or a narrower trigger for it, and a `-` within a variadic should be a value.
+- **A value attached to a short option.** `-w80`, `-n5`, and `-j4` fail ("Cannot combine non-boolean flag '-w'"). getopt reads the rest of a cluster as the value once an option that takes one appears in it, so `-lw80` is `-l -w 80`.
+
+**Should fix (proposed)**
+
+- **A positional after a variadic.** With `positional: ["sources", "dest"]`, `cp a b dir/` gives `sources` `["a"]` and `dest` `b`, and rejects `dir/`. `cp`, `mv`, `ln`, and `install` take `SOURCE... DEST`, so `dest` should come from the end.
+- **A command's arguments taken verbatim.** `sudo -u root ls -l` reads `-l` as sudo's own option; only `--` gets it through. `sudo`, `xargs`, `env`, `nice`, `time`, and `ssh` take a command, and everything after it is that command's. A positional could be marked as ending option parsing.
+- **Options whose value is optional.** `ls --color` alone fails ("Missing value for --color"). GNU's `--color[=WHEN]` takes a value only after `=`, and uses one of its own when there's none. It needs a new keyword for that value. POSIX advises against optional values, so this matters mostly for GNU commands.
+- **Counted flags.** `-vvv` fails. `ssh` and others count a repeated flag as a level; `--verbose=3` is the workaround today.
+- **A shorter unknown-option error.** "Unknown option '--al'" lists every option, 60 for `ls`. For a large schema, the suggestion alone would read better.
+
+**Opt-in at most (proposed)**
+
+- **Long-option prefixes.** GNU accepts `--al` for `--all`. Jargon matches options by exact name (it abbreviates only subcommands), as the user prefers exact names.
+
+**Out of scope:** `find` and `test`, whose arguments are expressions; old-style bundles (`tar xzf`, `ps aux`); single-dash long options (`gcc -Wall`, `java -jar`, `find -name`). A repository of schemas can mark these commands as only partly covered.
+
 ### Other Ideas
 
 - Man page generation
