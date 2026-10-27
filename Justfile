@@ -64,7 +64,7 @@ fmt-check:
 
 # Build the ameba linter (shards no longer compiles it on install)
 ameba:
-  crystal build --release -o bin/ameba lib/ameba/bin/ameba.cr
+  mkdir -p bin && crystal build --release -o bin/ameba lib/ameba/bin/ameba.cr
 
 # Run the linter
 lint:
