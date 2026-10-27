@@ -1,5 +1,7 @@
 # Jargon requirements from transfs
 
+**Closed 2026-10-27: all five have shipped.** See the last update, at the end.
+
 > Source: the **transfs** project (`~/Projects/transfs`), a content-addressable
 > file store. transfs has chosen Jargon as its CLI library, specifically because
 > "the CLI is the API": every transfs operation must be expressible as a core
@@ -167,3 +169,17 @@ help self-documenting. Small nicety, not blocking.
 `tags` positional verbatim; bare tags still work without `--`; `untag <id> --
 -weird` handles leading-dash removal too. transfs pinned to `jargon >= 0.19.0`.
 Thanks! #5 (subcommand descriptions in top-level --help) still open, minor.
+
+### Update 2026-10-27: closed, all five shipped
+
+| # | Item | Shipped |
+|---|------|---------|
+| 1 | `x-*` annotations passed through, on `Property#extensions` | 0.18.0 |
+| 2 | App-driven dynamic completions | 0.19.0 |
+| 3 | The resolver boundary: Jargon stops at a valid value, and resolving it is the app's work after `parse` | 0.23.1, the README's "Where Parsing Stops" |
+| 4 | `--` for literal positional values | 0.19.0 |
+| 5 | Subcommand descriptions in top-level `--help` | 0.19.1 |
+
+#5 needs jargon 0.19.1 or later; transfs's `shard.lock` still has 0.19.0
+(its `>= 0.19.0` allows the update). Making `ui:` a first-class keyword,
+alongside `x-ui`, is still a proposal, not decided.
