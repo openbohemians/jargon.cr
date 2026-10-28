@@ -1278,7 +1278,8 @@ module Jargon
       best_match
     end
 
-    # Generate error message for unknown option with suggestion support
+    # Generate error message for unknown option, with a suggestion when one
+    # is close. It doesn't list the options: help does.
     private def unknown_option_error(input : String, candidates : Array(String), prefix : String = "--", context : String? = nil) : String
       display = "#{prefix}#{input}"
       ctx = context ? " #{context}" : ""
@@ -1288,8 +1289,7 @@ module Jargon
       elsif suggestion = find_suggestion(input, candidates)
         "Unknown option '#{display}'#{ctx}. Did you mean '#{prefix}#{suggestion}'?"
       else
-        formatted = candidates.map { |c| "#{prefix}#{c}" }.join(", ")
-        "Unknown option '#{display}'#{ctx}. Available: #{formatted}"
+        "Unknown option '#{display}'#{ctx}"
       end
     end
 

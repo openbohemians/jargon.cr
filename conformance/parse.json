@@ -5140,7 +5140,7 @@
         "verbose": true
       },
       "errors": [
-        "Unknown option '-x' in '-avx'. Available: -a, -v"
+        "Unknown option '-x' in '-avx'"
       ],
       "subcommand": null,
       "help": false,
@@ -5163,7 +5163,7 @@
     "expect": {
       "data": {},
       "errors": [
-        "Unknown option '-x'. Available: -n"
+        "Unknown option '-x'"
       ],
       "subcommand": null,
       "help": false,
@@ -5187,7 +5187,7 @@
     "expect": {
       "data": {},
       "errors": [
-        "Unknown option '--unknown'. Available: --name, --count",
+        "Unknown option '--unknown'",
         "Unexpected argument 'value'"
       ],
       "subcommand": null,
@@ -5211,7 +5211,7 @@
     "expect": {
       "data": {},
       "errors": [
-        "Unknown option 'unknown'. Available: name"
+        "Unknown option 'unknown'"
       ],
       "subcommand": null,
       "help": false,
@@ -5280,7 +5280,7 @@
     "expect": {
       "data": {},
       "errors": [
-        "Unknown option '--xyz'. Available: --verbose"
+        "Unknown option '--xyz'"
       ],
       "subcommand": null,
       "help": false,
@@ -5303,7 +5303,7 @@
     "expect": {
       "data": {},
       "errors": [
-        "Unknown option '-x'. Available: -v"
+        "Unknown option '-x'"
       ],
       "subcommand": null,
       "help": false,
@@ -6425,7 +6425,7 @@
     "expect": {
       "data": {},
       "errors": [
-        "Unknown option '--only_first'. Available: --format, --token",
+        "Unknown option '--only_first'",
         "Unexpected argument 'x'",
         "Missing required field: format",
         "Missing required field: token"
@@ -9912,7 +9912,7 @@
     "expect": {
       "data": {},
       "errors": [
-        "Unknown option 'user.name'. Available: user"
+        "Unknown option 'user.name'"
       ],
       "subcommand": null,
       "help": false,
