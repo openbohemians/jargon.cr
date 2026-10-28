@@ -420,15 +420,36 @@ cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&
 result <span class="o">=</span> cli.parse([<span class="s">&quot;input.txt&quot;</span>, <span class="s">&quot;output.txt&quot;</span>, <span class="s">&quot;--verbose&quot;</span>])
 <span class="c"># =&gt; {&quot;file&quot;: &quot;input.txt&quot;, &quot;output&quot;: &quot;output.txt&quot;, &quot;verbose&quot;: true}</span></code></pre>
 <pre><code class="language-sh">myapp input.txt output.txt --verbose</code></pre>
+<p>Options can come anywhere among the words. A positional is a property like any
+other, so it's an option too (<code>--file input.txt</code>), and help lists it under
+Options as well as Arguments. The words go to the positionals with room,
+wherever the options are: one that holds a single value is full once it's
+given, by name or by a word, as <code>grep -e</code> and <code>cp -t</code> expect, and a variadic is
+never full, so its words add to what an option gave it (<code>cp --sources a b dir/</code>):</p>
+<pre><code class="language-crystal">schema <span class="o">=</span> <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;positional&quot;: [&quot;pattern&quot;, &quot;files*&quot;],
+  &quot;properties&quot;: {
+    &quot;pattern&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;short&quot;: &quot;e&quot;},
+    &quot;files&quot;: {&quot;type&quot;: &quot;array&quot;}
+  }
+})</span>
+
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;grep&quot;</span>, json: schema)
+cli.parse([<span class="s">&quot;foo&quot;</span>, <span class="s">&quot;a.txt&quot;</span>, <span class="s">&quot;b.txt&quot;</span>])
+cli.parse([<span class="s">&quot;-e&quot;</span>, <span class="s">&quot;foo&quot;</span>, <span class="s">&quot;a.txt&quot;</span>, <span class="s">&quot;b.txt&quot;</span>])
+cli.parse([<span class="s">&quot;a.txt&quot;</span>, <span class="s">&quot;b.txt&quot;</span>, <span class="s">&quot;-e&quot;</span>, <span class="s">&quot;foo&quot;</span>])
+<span class="c"># each =&gt; {&quot;pattern&quot;: &quot;foo&quot;, &quot;files&quot;: [&quot;a.txt&quot;, &quot;b.txt&quot;]}</span></code></pre>
 <h3><a id="variadic-positionals" class="anchor" href="#variadic-positionals">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
   </svg>
 </a>Variadic Positionals</h3>
-<p>When the last positional has <code>type: array</code>, it collects all remaining arguments:</p>
+<p>A <code>*</code> after a positional's name makes it variadic, taking a list of words. It
+must be an array:</p>
 <pre><code class="language-crystal">schema <span class="o">=</span> <span class="s">%({
   &quot;type&quot;: &quot;object&quot;,
-  &quot;positional&quot;: [&quot;files&quot;],
+  &quot;positional&quot;: [&quot;files*&quot;],
   &quot;properties&quot;: {
     &quot;files&quot;: {&quot;type&quot;: &quot;array&quot;, &quot;description&quot;: &quot;Input files&quot;},
     &quot;number&quot;: {&quot;type&quot;: &quot;boolean&quot;, &quot;short&quot;: &quot;n&quot;}
@@ -439,19 +460,42 @@ cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&
 result <span class="o">=</span> cli.parse([<span class="s">&quot;-n&quot;</span>, <span class="s">&quot;a.txt&quot;</span>, <span class="s">&quot;b.txt&quot;</span>, <span class="s">&quot;c.txt&quot;</span>])
 <span class="c"># =&gt; {&quot;number&quot;: true, &quot;files&quot;: [&quot;a.txt&quot;, &quot;b.txt&quot;, &quot;c.txt&quot;]}</span></code></pre>
 <pre><code class="language-sh">cat -n a.txt b.txt c.txt</code></pre>
-<p>A variadic positional is <strong>greedy</strong>: it captures every remaining token
-literally, including ones that look like assignments (<code>k=v</code>) or negative
-numbers (<code>-50</code>). It stops only at a genuine
-flag, so put flags before the variadic:</p>
-<pre><code class="language-sh">cat -n a.txt b.txt c.txt      # ok: flag first
-cat a.txt -n b.txt            # -n stops collection; b.txt is then unexpected</code></pre>
+<p>The positionals after a variadic take its last words, one each, so a command
+can take <code>SOURCE... DEST</code> as <code>cp</code> does:</p>
+<pre><code class="language-crystal">schema <span class="o">=</span> <span class="s">%({
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;positional&quot;: [&quot;sources*&quot;, &quot;dest&quot;],
+  &quot;properties&quot;: {
+    &quot;sources&quot;: {&quot;type&quot;: &quot;array&quot;},
+    &quot;dest&quot;: {&quot;type&quot;: &quot;string&quot;}
+  }
+})</span>
+
+cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&quot;cp&quot;</span>, json: schema)
+result <span class="o">=</span> cli.parse([<span class="s">&quot;a.txt&quot;</span>, <span class="s">&quot;b.txt&quot;</span>, <span class="s">&quot;dir/&quot;</span>])
+<span class="c"># =&gt; {&quot;sources&quot;: [&quot;a.txt&quot;, &quot;b.txt&quot;], &quot;dest&quot;: &quot;dir/&quot;}</span></code></pre>
+<p>With too few words, the positionals after the variadic fill first, so
+<code>cp a.txt</code> gives <code>{&quot;sources&quot;: [], &quot;dest&quot;: &quot;a.txt&quot;}</code>; <code>&quot;minItems&quot;: 1</code> makes an
+empty variadic an error. A variadic that isn't given is an empty list. Only
+one positional can be variadic, and the usage line in help shows it as
+<code>[sources]...</code>. An array positional without a <code>*</code> takes one word, split at its
+<a href="#lists">separator</a> if it has one (<code>cut 1,3 data.txt</code>).</p>
+<p>Before 0.26.0, the last positional was variadic whenever it was an array; add
+the <code>*</code> to keep that.</p>
+<p>A variadic positional is <strong>greedy</strong>: it captures every word that isn't an
+option, literally, including ones that look like assignments (<code>k=v</code>) or
+negative numbers (<code>-50</code>). Options can come anywhere among its words, and after
+<code>--</code> every word is collected as it is:</p>
+<pre><code class="language-sh">cat -n a.txt b.txt c.txt      # files: [&quot;a.txt&quot;, &quot;b.txt&quot;, &quot;c.txt&quot;]
+cat a.txt -n b.txt            # the same files
+cat a.txt -- -n.txt           # files: [&quot;a.txt&quot;, &quot;-n.txt&quot;]</code></pre>
 <p>A lone <code>-</code> is a value, not a flag, so <code>cat a.txt - b.txt</code> collects it with
 the rest, as the conventional name for standard input. (JSON from stdin is
 <code>-@</code>; see <a href="#json-from-stdin">JSON from Stdin</a>.)</p>
 <p>When the array declares an <code>items</code> type, each collected token is coerced to it:</p>
 <pre><code class="language-crystal">schema <span class="o">=</span> <span class="s">%({
   &quot;type&quot;: &quot;object&quot;,
-  &quot;positional&quot;: [&quot;values&quot;],
+  &quot;positional&quot;: [&quot;values*&quot;],
   &quot;properties&quot;: {
     &quot;values&quot;: {&quot;type&quot;: &quot;array&quot;, &quot;items&quot;: {&quot;type&quot;: &quot;number&quot;}}
   }
@@ -477,7 +521,7 @@ short flag is never confused with a negative number.</p>
 <p>A bare <code>--</code> marks the end of options (POSIX convention). Everything after it is treated as a positional argument, even if it looks like a flag — useful for passing flags through to another program. The <code>--</code> marker itself is discarded, and a variadic positional captures the rest verbatim:</p>
 <pre><code class="language-crystal">schema <span class="o">=</span> <span class="s">%({
   &quot;type&quot;: &quot;object&quot;,
-  &quot;positional&quot;: [&quot;argv&quot;],
+  &quot;positional&quot;: [&quot;argv*&quot;],
   &quot;properties&quot;: {
     &quot;verbose&quot;: {&quot;type&quot;: &quot;boolean&quot;, &quot;short&quot;: &quot;v&quot;},
     &quot;argv&quot;: {&quot;type&quot;: &quot;array&quot;}

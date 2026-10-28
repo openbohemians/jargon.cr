@@ -234,7 +234,7 @@ arguments, and any reusable <code><a href="../Jargon/Schema.html#definitions%3AH
       </li>
     
       <li class="entry-summary">
-        <a href="#new%28root%3AProperty%2Cdefinitions%3AHash%28String%2CProperty%29%3D%7B%7DofString%3D%3EProperty%2Cpositional%3AArray%28String%29%3D%5B%5DofString%29-class-method" class="signature"><strong>.new</strong>(root : Property, definitions : Hash(String, Property) = {} <span class="k">of</span> <span class="t">String</span> <span class="o">=&gt;</span> <span class="t">Property</span>, positional : Array(String) = <span class="o">[]</span> <span class="k">of</span> <span class="t">String</span>)</a>
+        <a href="#new%28root%3AProperty%2Cdefinitions%3AHash%28String%2CProperty%29%3D%7B%7DofString%3D%3EProperty%2Cpositional%3AArray%28String%29%3D%5B%5DofString%2Cvariadic%3AString%7CNil%3Dnil%29-class-method" class="signature"><strong>.new</strong>(root : Property, definitions : Hash(String, Property) = {} <span class="k">of</span> <span class="t">String</span> <span class="o">=&gt;</span> <span class="t">Property</span>, positional : Array(String) = <span class="o">[]</span> <span class="k">of</span> <span class="t">String</span>, variadic : String | Nil = <span class="n">nil</span>)</a>
         
       </li>
     
@@ -264,6 +264,8 @@ arguments, and any reusable <code><a href="../Jargon/Schema.html#definitions%3AH
       <li class="entry-summary">
         <a href="#positional%3AArray%28String%29-instance-method" class="signature"><strong>#positional</strong> : Array(String)</a>
         
+          <div class="summary"><p>The positional arguments' names, in order, without the <code>*</code> that marks the variadic one.</p></div>
+        
       </li>
     
       <li class="entry-summary">
@@ -275,6 +277,13 @@ arguments, and any reusable <code><a href="../Jargon/Schema.html#definitions%3AH
     
       <li class="entry-summary">
         <a href="#root%3AProperty-instance-method" class="signature"><strong>#root</strong> : Property</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#variadic%3AString%7CNil-instance-method" class="signature"><strong>#variadic</strong> : String | Nil</a>
+        
+          <div class="summary"><p>The positional that takes a list of words, marked in <code><a href="../Jargon/Schema.html#positional%3AArray%28String%29-instance-method">#positional</a></code> with a trailing <code>*</code> (<code>[&quot;sources*&quot;, &quot;dest&quot;]</code>), or nil when there is none.</p></div>
         
       </li>
     
@@ -381,12 +390,12 @@ out alongside it.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="new(root:Property,definitions:Hash(String,Property)={}ofString=&gt;Property,positional:Array(String)=[]ofString)-class-method">
+    <div class="entry-detail" id="new(root:Property,definitions:Hash(String,Property)={}ofString=&gt;Property,positional:Array(String)=[]ofString,variadic:String|Nil=nil)-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(root : <a href="../Jargon/Property.html">Property</a>, definitions : Hash(String, <a href="../Jargon/Property.html">Property</a>) = {} <span class="k">of</span> <span class="t">String</span> <span class="o">=&gt;</span> <span class="t">Property</span>, positional : Array(String) = <span class="o">[]</span> <span class="k">of</span> <span class="t">String</span>)
+        def self.<strong>new</strong>(root : <a href="../Jargon/Property.html">Property</a>, definitions : Hash(String, <a href="../Jargon/Property.html">Property</a>) = {} <span class="k">of</span> <span class="t">String</span> <span class="o">=&gt;</span> <span class="t">Property</span>, positional : Array(String) = <span class="o">[]</span> <span class="k">of</span> <span class="t">String</span>, variadic : String | Nil = <span class="n">nil</span>)
 
-        <a class="method-permalink" href="#new%28root%3AProperty%2Cdefinitions%3AHash%28String%2CProperty%29%3D%7B%7DofString%3D%3EProperty%2Cpositional%3AArray%28String%29%3D%5B%5DofString%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28root%3AProperty%2Cdefinitions%3AHash%28String%2CProperty%29%3D%7B%7DofString%3D%3EProperty%2Cpositional%3AArray%28String%29%3D%5B%5DofString%2Cvariadic%3AString%7CNil%3Dnil%29-class-method">#</a>
       </div>
       
       <br/>
@@ -433,6 +442,12 @@ out alongside it.</p>
         <a class="method-permalink" href="#positional%3AArray%28String%29-instance-method">#</a>
       </div>
       
+        <div class="doc">
+          
+          <p>The positional arguments' names, in order, without the <code>*</code> that marks
+the variadic one.</p>
+        </div>
+      
       <br/>
       <div>
         
@@ -466,6 +481,26 @@ or nil if the pointer is non-local or unknown.</p>
 
         <a class="method-permalink" href="#root%3AProperty-instance-method">#</a>
       </div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="variadic:String|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>variadic</strong> : String | Nil
+
+        <a class="method-permalink" href="#variadic%3AString%7CNil-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>The positional that takes a list of words, marked in <code><a href="../Jargon/Schema.html#positional%3AArray%28String%29-instance-method">#positional</a></code> with a
+trailing <code>*</code> (<code>[&quot;sources*&quot;, &quot;dest&quot;]</code>), or nil when there is none.</p>
+        </div>
       
       <br/>
       <div>
