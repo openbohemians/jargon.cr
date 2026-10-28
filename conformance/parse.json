@@ -1195,6 +1195,159 @@
     }
   },
   {
+    "spec": "type coercion > collects an array option given more than once",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ls",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"ignore\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"short\": \"I\"},\n          \"server\": {\n            \"type\": \"object\",\n            \"properties\": {\"hosts\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}\n          }\n        }\n      }"
+      }
+    ],
+    "args": [
+      "-I",
+      "*.o",
+      "-I",
+      "*.a"
+    ],
+    "expect": {
+      "data": {
+        "ignore": [
+          "*.o",
+          "*.a"
+        ]
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > collects an array option given more than once",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ls",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"ignore\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"short\": \"I\"},\n          \"server\": {\n            \"type\": \"object\",\n            \"properties\": {\"hosts\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}\n          }\n        }\n      }"
+      }
+    ],
+    "args": [
+      "--ignore",
+      "a,b",
+      "-Ic",
+      "--ignore=d",
+      "ignore=e"
+    ],
+    "expect": {
+      "data": {
+        "ignore": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e"
+        ]
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > collects an array option given more than once",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ls",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"ignore\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"short\": \"I\"},\n          \"server\": {\n            \"type\": \"object\",\n            \"properties\": {\"hosts\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}\n          }\n        }\n      }"
+      }
+    ],
+    "args": [
+      "--server.hosts",
+      "x",
+      "--server.hosts",
+      "y"
+    ],
+    "expect": {
+      "data": {
+        "server": {
+          "hosts": [
+            "x",
+            "y"
+          ]
+        }
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > keeps the last value of a repeated option that isn't an array",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ls",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\"width\": {\"type\": \"integer\", \"short\": \"w\"}}\n      }"
+      }
+    ],
+    "args": [
+      "-w",
+      "80",
+      "--width",
+      "100"
+    ],
+    "expect": {
+      "data": {
+        "width": 100
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "type coercion > replaces an array from the defaults with the command line's",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ls",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\"ignore\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"short\": \"I\"}}\n      }"
+      }
+    ],
+    "args": [
+      "-I",
+      "*.o",
+      "-I",
+      "*.a"
+    ],
+    "defaults": {
+      "ignore": [
+        "*.tmp"
+      ]
+    },
+    "expect": {
+      "data": {
+        "ignore": [
+          "*.o",
+          "*.a"
+        ]
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
     "spec": "nested objects > parses nested properties with dot notation",
     "cli": [
       {
@@ -3077,6 +3230,110 @@
     }
   },
   {
+    "spec": "variadic positionals > takes a lone - among the arguments as a value, for standard input",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cat",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"files\"],\n        \"properties\": {\n          \"files\": {\"type\": \"array\"},\n          \"number\": {\"type\": \"boolean\", \"short\": \"n\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "a.txt",
+      "-",
+      "b.txt"
+    ],
+    "expect": {
+      "data": {
+        "files": [
+          "a.txt",
+          "-",
+          "b.txt"
+        ]
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "variadic positionals > takes a lone - among the arguments as a value, for standard input",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cat",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"files\"],\n        \"properties\": {\n          \"files\": {\"type\": \"array\"},\n          \"number\": {\"type\": \"boolean\", \"short\": \"n\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "-n",
+      "-"
+    ],
+    "expect": {
+      "data": {
+        "number": true,
+        "files": [
+          "-"
+        ]
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "variadic positionals > takes a lone - as an option's value",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "tar",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\"file\": {\"type\": \"string\", \"short\": \"f\"}}\n      }"
+      }
+    ],
+    "args": [
+      "--file",
+      "-"
+    ],
+    "expect": {
+      "data": {
+        "file": "-"
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "variadic positionals > takes a lone - as an option's value",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "tar",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\"file\": {\"type\": \"string\", \"short\": \"f\"}}\n      }"
+      }
+    ],
+    "args": [
+      "-f",
+      "-"
+    ],
+    "expect": {
+      "data": {
+        "file": "-"
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
     "spec": "negative number arguments > accepts a negative number as a scalar positional",
     "cli": [
       {
@@ -3642,7 +3899,149 @@
     }
   },
   {
-    "spec": "short flags > errors on combined flags with non-boolean",
+    "spec": "short flags > reads the rest of a cluster as the value of a flag that takes one",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"all\": {\"type\": \"boolean\", \"short\": \"a\"},\n          \"count\": {\"type\": \"integer\", \"short\": \"n\"},\n          \"output\": {\"type\": \"string\", \"short\": \"o\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "-n5"
+    ],
+    "expect": {
+      "data": {
+        "count": 5
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "short flags > reads the rest of a cluster as the value of a flag that takes one",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"all\": {\"type\": \"boolean\", \"short\": \"a\"},\n          \"count\": {\"type\": \"integer\", \"short\": \"n\"},\n          \"output\": {\"type\": \"string\", \"short\": \"o\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "-n-5"
+    ],
+    "expect": {
+      "data": {
+        "count": -5
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "short flags > reads the rest of a cluster as the value of a flag that takes one",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"all\": {\"type\": \"boolean\", \"short\": \"a\"},\n          \"count\": {\"type\": \"integer\", \"short\": \"n\"},\n          \"output\": {\"type\": \"string\", \"short\": \"o\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "-oout.txt"
+    ],
+    "expect": {
+      "data": {
+        "output": "out.txt"
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "short flags > reads the rest of a cluster as the value of a flag that takes one",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"all\": {\"type\": \"boolean\", \"short\": \"a\"},\n          \"count\": {\"type\": \"integer\", \"short\": \"n\"},\n          \"output\": {\"type\": \"string\", \"short\": \"o\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "-an5"
+    ],
+    "expect": {
+      "data": {
+        "all": true,
+        "count": 5
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "short flags > reads the rest of a cluster as the value of a flag that takes one",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"all\": {\"type\": \"boolean\", \"short\": \"a\"},\n          \"count\": {\"type\": \"integer\", \"short\": \"n\"},\n          \"output\": {\"type\": \"string\", \"short\": \"o\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "-aoan"
+    ],
+    "expect": {
+      "data": {
+        "all": true,
+        "output": "an"
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "short flags > takes the next argument for a flag that ends a cluster",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"all\": {\"type\": \"boolean\", \"short\": \"a\"},\n          \"count\": {\"type\": \"integer\", \"short\": \"n\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "-an",
+      "5"
+    ],
+    "expect": {
+      "data": {
+        "all": true,
+        "count": 5
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "short flags > takes the next argument for a flag that ends a cluster",
     "cli": [
       {
         "op": "from_json",
@@ -3654,9 +4053,59 @@
       "-an"
     ],
     "expect": {
-      "data": {},
+      "data": {
+        "all": true
+      },
       "errors": [
-        "Cannot combine non-boolean flag '-n' in '-an'"
+        "Missing value for --count"
+      ],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "short flags > keeps an = in a value attached to a short flag, as getopt does",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\", \"short\": \"n\"},\n          \"output\": {\"type\": \"string\", \"short\": \"o\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "-o=x"
+    ],
+    "expect": {
+      "data": {
+        "output": "=x"
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "short flags > keeps an = in a value attached to a short flag, as getopt does",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"count\": {\"type\": \"integer\", \"short\": \"n\"},\n          \"output\": {\"type\": \"string\", \"short\": \"o\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "-n=5"
+    ],
+    "expect": {
+      "data": {
+        "count": "=5"
+      },
+      "errors": [
+        "Invalid integer value '=5' for count"
       ],
       "subcommand": null,
       "help": false,
@@ -3677,7 +4126,10 @@
       "-avx"
     ],
     "expect": {
-      "data": {},
+      "data": {
+        "all": true,
+        "verbose": true
+      },
       "errors": [
         "Unknown option '-x' in '-avx'. Available: -a, -v"
       ],

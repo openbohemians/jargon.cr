@@ -782,6 +782,67 @@
     "expect": []
   },
   {
+    "spec": "shell completion > candidates engine > reads a cluster of short flags as the parser does",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ls",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\"],\n          \"properties\": {\n            \"all\": {\"type\": \"boolean\", \"short\": \"a\"},\n            \"format\": {\"type\": \"string\", \"short\": \"f\", \"enum\": [\"long\", \"across\"]},\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "ls",
+      "-af",
+      ""
+    ],
+    "cword": 2,
+    "expect": [
+      "long",
+      "across"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > reads a cluster of short flags as the parser does",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ls",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\"],\n          \"properties\": {\n            \"all\": {\"type\": \"boolean\", \"short\": \"a\"},\n            \"format\": {\"type\": \"string\", \"short\": \"f\", \"enum\": [\"long\", \"across\"]},\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "ls",
+      "-af",
+      "long",
+      ""
+    ],
+    "cword": 3,
+    "expect": [
+      "fast",
+      "safe"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > reads a cluster of short flags as the parser does",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ls",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\"],\n          \"properties\": {\n            \"all\": {\"type\": \"boolean\", \"short\": \"a\"},\n            \"format\": {\"type\": \"string\", \"short\": \"f\", \"enum\": [\"long\", \"across\"]},\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "ls",
+      "-aflong",
+      ""
+    ],
+    "cword": 2,
+    "expect": [
+      "fast",
+      "safe"
+    ]
+  },
+  {
     "spec": "shell completion > candidates engine > counts a colon-bearing operand as a filled positional slot",
     "cli": [
       {

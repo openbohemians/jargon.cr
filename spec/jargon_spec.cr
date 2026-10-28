@@ -325,6 +325,50 @@ describe Jargon do
       result.valid?.should be_false
       result.errors.first.should eq("Invalid integer value 'x' for nums")
     end
+
+    it "collects an array option given more than once" do
+      cli = Jargon.cli("ls", json: %({
+        "type": "object",
+        "properties": {
+          "ignore": {"type": "array", "items": {"type": "string"}, "short": "I"},
+          "server": {
+            "type": "object",
+            "properties": {"hosts": {"type": "array", "items": {"type": "string"}}}
+          }
+        }
+      }))
+
+      result = cli.parse(["-I", "*.o", "-I", "*.a"])
+      result.valid?.should be_true
+      result["ignore"].as_a.map(&.as_s).should eq(["*.o", "*.a"])
+
+      # Every form adds, and each still splits at commas.
+      result = cli.parse(["--ignore", "a,b", "-Ic", "--ignore=d", "ignore=e"])
+      result["ignore"].as_a.map(&.as_s).should eq(["a", "b", "c", "d", "e"])
+
+      result = cli.parse(["--server.hosts", "x", "--server.hosts", "y"])
+      result["server"]["hosts"].as_a.map(&.as_s).should eq(["x", "y"])
+    end
+
+    it "keeps the last value of a repeated option that isn't an array" do
+      cli = Jargon.cli("ls", json: %({
+        "type": "object",
+        "properties": {"width": {"type": "integer", "short": "w"}}
+      }))
+
+      cli.parse(["-w", "80", "--width", "100"])["width"].as_i64.should eq(100)
+    end
+
+    it "replaces an array from the defaults with the command line's" do
+      cli = Jargon.cli("ls", json: %({
+        "type": "object",
+        "properties": {"ignore": {"type": "array", "items": {"type": "string"}, "short": "I"}}
+      }))
+
+      defaults = {"ignore" => JSON.parse(%(["*.tmp"]))}
+      result = cli.parse(["-I", "*.o", "-I", "*.a"], defaults: defaults)
+      result["ignore"].as_a.map(&.as_s).should eq(["*.o", "*.a"])
+    end
   end
 
   describe "nested objects" do
@@ -1308,6 +1352,36 @@ describe Jargon do
       result["items"].as_a.map(&.as_s).should eq(["a:b", "c:d"])
       result["amount"].as_f.should eq(9.0)
     end
+
+    it "takes a lone - among the arguments as a value, for standard input" do
+      cli = Jargon.cli("cat", json: %q({
+        "type": "object",
+        "positional": ["files"],
+        "properties": {
+          "files": {"type": "array"},
+          "number": {"type": "boolean", "short": "n"}
+        }
+      }))
+
+      result = cli.parse(["a.txt", "-", "b.txt"])
+      result.valid?.should be_true
+      result["files"].as_a.map(&.as_s).should eq(["a.txt", "-", "b.txt"])
+
+      result = cli.parse(["-n", "-"])
+      result.valid?.should be_true
+      result["number"].as_bool.should be_true
+      result["files"].as_a.map(&.as_s).should eq(["-"])
+    end
+
+    it "takes a lone - as an option's value" do
+      cli = Jargon.cli("tar", json: %q({
+        "type": "object",
+        "properties": {"file": {"type": "string", "short": "f"}}
+      }))
+
+      cli.parse(["--file", "-"])["file"].as_s.should eq("-")
+      cli.parse(["-f", "-"])["file"].as_s.should eq("-")
+    end
   end
 
   describe "negative number arguments" do
@@ -1605,7 +1679,30 @@ describe Jargon do
       result["output"].as_s.should eq("file.txt")
     end
 
-    it "errors on combined flags with non-boolean" do
+    it "reads the rest of a cluster as the value of a flag that takes one" do
+      cli = Jargon.cli("cli", json: %({
+        "type": "object",
+        "properties": {
+          "all": {"type": "boolean", "short": "a"},
+          "count": {"type": "integer", "short": "n"},
+          "output": {"type": "string", "short": "o"}
+        }
+      }))
+
+      cli.parse(["-n5"])["count"].as_i64.should eq(5)
+      cli.parse(["-n-5"])["count"].as_i64.should eq(-5)
+      cli.parse(["-oout.txt"])["output"].as_s.should eq("out.txt")
+
+      result = cli.parse(["-an5"])
+      result.valid?.should be_true
+      result["all"].as_bool.should be_true
+      result["count"].as_i64.should eq(5)
+
+      # Letters after the value-taking flag are its value, not flags.
+      cli.parse(["-aoan"])["output"].as_s.should eq("an")
+    end
+
+    it "takes the next argument for a flag that ends a cluster" do
       cli = Jargon.cli("cli", json: %({
         "type": "object",
         "properties": {
@@ -1614,9 +1711,29 @@ describe Jargon do
         }
       }))
 
+      result = cli.parse(["-an", "5"])
+      result.valid?.should be_true
+      result["all"].as_bool.should be_true
+      result["count"].as_i64.should eq(5)
+
       result = cli.parse(["-an"])
       result.valid?.should be_false
-      result.errors.first.should contain("Cannot combine non-boolean flag '-n'")
+      result.errors.should contain("Missing value for --count")
+    end
+
+    it "keeps an = in a value attached to a short flag, as getopt does" do
+      cli = Jargon.cli("cli", json: %({
+        "type": "object",
+        "properties": {
+          "count": {"type": "integer", "short": "n"},
+          "output": {"type": "string", "short": "o"}
+        }
+      }))
+
+      cli.parse(["-o=x"])["output"].as_s.should eq("=x")
+      result = cli.parse(["-n=5"])
+      result.valid?.should be_false
+      result.errors.should contain("Invalid integer value '=5' for count")
     end
 
     it "errors on combined flags with unknown flag" do
@@ -3618,6 +3735,24 @@ describe Jargon do
         }))
         c = Jargon::Completion.new(cli)
         c.candidates(["myapp", "--name", ""], 2).should eq([] of String)
+      end
+
+      it "reads a cluster of short flags as the parser does" do
+        cli = Jargon.cli("ls", json: %({
+          "type": "object",
+          "positional": ["mode"],
+          "properties": {
+            "all": {"type": "boolean", "short": "a"},
+            "format": {"type": "string", "short": "f", "enum": ["long", "across"]},
+            "mode": {"type": "string", "enum": ["fast", "safe"]}
+          }
+        }))
+        c = Jargon::Completion.new(cli)
+        # A cluster ending in a flag that takes a value takes the next word.
+        c.candidates(["ls", "-af", ""], 2).should eq(["long", "across"])
+        c.candidates(["ls", "-af", "long", ""], 3).should eq(["fast", "safe"])
+        # One with the value attached takes no other word.
+        c.candidates(["ls", "-aflong", ""], 2).should eq(["fast", "safe"])
       end
 
       it "counts a colon-bearing operand as a filled positional slot" do

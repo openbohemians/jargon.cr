@@ -18,7 +18,7 @@ Jargon is also available for Rust, as [jargon.rs](https://github.com/openbohemia
 - **Auto help flags**: `--help` and `-h` detected automatically
 - **Shell completions**: Generate completion shims for bash, zsh, and fish, with optional app-driven dynamic completers for live data
 - **Positional args**: Non-flag arguments assigned by position and variadic support.
-- **Short flags**: Single-character flag aliases (`-v`, `-n 5`)
+- **Short flags**: Single-character flag aliases (`-v`, `-n 5`), combined as getopt combines them (`-vn5`)
 - **Boolean flags**: Support both `--verbose` and `--verbose false` styles
 - **Subcommands**: Named sub-parsers with independent schemas (supports abbreviated invocations)
 - **Default subcommand**: Fall back to a subcommand when none specified
@@ -160,7 +160,7 @@ result = cli.parse(["user.name=John", "user.email=john@example.com"])
 | `integer` | `count=42` | Parsed as Int64, strict validation |
 | `number` | `rate=3.14` | Parsed as Float64, strict validation |
 | `boolean` | `verbose=true` or `--verbose` | Flag style supported |
-| `array` | `tags=a,b,c` | Comma-separated; variadic positionals coerce items to the `items` type |
+| `array` | `tags=a,b,c` | Comma-separated, and each time it's given adds to it (`-I a -I b`); variadic positionals coerce items to the `items` type |
 | `object` | `user.name=John` | Dot notation |
 
 ### Validation Constraints
@@ -310,6 +310,10 @@ cat -n a.txt b.txt c.txt      # ok: flag first
 cat a.txt -n b.txt            # -n stops collection; b.txt is then unexpected
 ```
 
+A lone `-` is a value, not a flag, so `cat a.txt - b.txt` collects it with
+the rest, as the conventional name for standard input. Only a `-` that is
+the whole command line reads JSON (see [JSON from Stdin](#json-from-stdin)).
+
 When the array declares an `items` type, each collected token is coerced to it:
 
 ```crystal
@@ -375,8 +379,18 @@ result = cli.parse(["-v", "-n", "5", "-o", "out.txt"])
 
 ```sh
 myapp -v -n 5 -o out.txt
+myapp -vn5 -oout.txt                         # equivalent
 myapp --verbose --count 5 --output out.txt  # equivalent
 ```
+
+Short flags combine as getopt combines them: each letter is a flag until one
+that takes a value, which takes the rest of the word (`-vn5`), or the next
+argument when it ends the word (`-vn 5`). An `=` there is part of the value,
+as in getopt, so `-o=x` gives `=x`; `--output=x` gives `x`.
+
+An option given more than once keeps its last value, unless it's an array,
+which collects each one's items: `-I '*.o' -I '*.a'` gives
+`["*.o", "*.a"]`.
 
 ## Help Flags
 
@@ -789,7 +803,8 @@ Note that Jargon *flattens* `allOf` rather than evaluating it as a true conjunct
 
 ### JSON from Stdin
 
-Use `-` to read JSON input from stdin:
+Use `-`, alone after the program or subcommand, to read JSON input from
+stdin:
 
 ```sh
 # JSON with subcommand field

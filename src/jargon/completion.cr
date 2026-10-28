@@ -274,12 +274,39 @@ module Jargon
     end
 
     # The field a flag sets when it takes the following word as its value
-    # (`--name`, `-n`); nil for booleans, `--name=value`, and non-flags.
+    # (`--name`, `-n`, or `-ln`, a cluster ending in it); nil for booleans, a
+    # value in the same word (`--name=value`, `-n5`), and non-flags.
     private def value_flag_field(schema : Schema, token : String) : String?
-      return if !flag_token?(token) || token.includes?("=")
-      if (field = field_for_flag(token, schema)) && !boolean?(schema, field)
-        field
+      return unless flag_token?(token)
+      if token.starts_with?("--")
+        return if token.includes?("=")
+        if (field = field_for_flag(token, schema)) && !boolean?(schema, field)
+          field
+        end
+      else
+        _, field, value = short_cluster(schema, token)
+        field unless value
       end
+    end
+
+    # Read a word of short flags as the parser does: each letter is a flag
+    # until one that takes a value, which takes the rest of the word
+    # (`-lw80`), or the next word when it ends this one (`-lw`, value nil).
+    # Returns the boolean fields, then the value-taking field and its value.
+    # An unknown letter ends the reading.
+    private def short_cluster(schema : Schema, token : String) : {Array(String), String?, String?}
+      booleans = [] of String
+      token[1..].each_char_with_index do |c, n|
+        field = field_for_flag("-#{c}", schema)
+        break unless field
+        if boolean?(schema, field)
+          booleans << field
+        else
+          rest = token[(n + 2)..]
+          return {booleans, field, rest.empty? ? nil : rest}
+        end
+      end
+      {booleans, nil, nil}
     end
 
     private def collect_arguments(schema : Schema, args : Array(String)) : Hash(String, String)
@@ -288,28 +315,46 @@ module Jargon
       while i < args.size
         tok = args[i]
         break if tok == "--" # the rest are literal operands
-        if tok.starts_with?("--") && tok.includes?("=")
-          k, v = tok[2..].split("=", 2)
-          result[k] = v
-          i += 1
-        elsif flag_token?(tok)
-          field = field_for_flag(tok, schema)
-          if field && !boolean?(schema, field) && i + 1 < args.size
-            result[field] = args[i + 1]
-            i += 2
-          else
-            result[field || tok] = "true"
-            i += 1
-          end
-        elsif tok.includes?("=")
-          k, v = tok.split("=", 2)
-          result[k] = v
-          i += 1
+        if flag_token?(tok)
+          i += collect_flag(schema, args, i, result)
         else
+          if tok.includes?("=")
+            k, v = tok.split("=", 2)
+            result[k] = v
+          end
           i += 1
         end
       end
       result
+    end
+
+    # Collect the fields a flag word sets, with the next word when it is the
+    # flag's value. Returns the number of words it took.
+    private def collect_flag(schema : Schema, args : Array(String), i : Int32, result : Hash(String, String)) : Int32
+      tok = args[i]
+      booleans, field, value = flag_fields(schema, tok)
+      booleans.each { |name| result[name] = "true" }
+      if field && value
+        result[field] = value
+        1
+      elsif field && i + 1 < args.size
+        result[field] = args[i + 1]
+        2
+      else
+        # An unknown flag is kept under its word.
+        result[field || tok] = "true" if field || booleans.empty?
+        1
+      end
+    end
+
+    # The fields a flag word sets, as `short_cluster` returns them, for a long
+    # flag (`--all`, `--name`, `--name=value`) too.
+    private def flag_fields(schema : Schema, token : String) : {Array(String), String?, String?}
+      return short_cluster(schema, token) unless token.starts_with?("--")
+      name, eq, value = token[2..].partition("=")
+      return {[] of String, name, value} unless eq.empty?
+      field = field_for_flag(token, schema)
+      field && boolean?(schema, field) ? {[field], nil, nil} : {[] of String, field, nil}
     end
 
     # ---- small schema helpers --------------------------------------------

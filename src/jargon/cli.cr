@@ -656,8 +656,7 @@ module Jargon
       if short_keys.size == 1
         handle_single_short_flag(short_keys, args, i, data, errors, short_to_long, schema)
       else
-        handle_combined_short_flags(arg, short_keys, data, errors, short_to_long, schema)
-        1
+        handle_combined_short_flags(arg, short_keys, args, i, data, errors, short_to_long, schema)
       end
     end
 
@@ -666,7 +665,7 @@ module Jargon
         key, value, consumed, coerce_error = parse_long_flag("--#{long_key}", args, i, schema)
         if key
           errors << coerce_error if coerce_error
-          set_nested_value(data, key, value, errors)
+          set_option_value(data, key, value, errors, schema)
         end
         consumed
       else
@@ -675,29 +674,37 @@ module Jargon
       end
     end
 
-    private def handle_combined_short_flags(arg : String, short_keys : String, data : Hash(String, JSON::Any), errors : Array(String), short_to_long : Hash(String, String), schema : Schema) : Nil
-      short_keys.each_char do |c|
+    # A cluster of short flags, read as getopt reads one: each letter is a
+    # flag until one that takes a value, which takes the rest of the cluster
+    # (`-w80`, `-lw80`), or the next argument when it ends the cluster
+    # (`-lw 80`). Returns the number of arguments consumed.
+    private def handle_combined_short_flags(arg : String, short_keys : String, args : Array(String), i : Int32, data : Hash(String, JSON::Any), errors : Array(String), short_to_long : Hash(String, String), schema : Schema) : Int32
+      short_keys.each_char_with_index do |c, n|
         char_str = c.to_s
-        unless short_to_long[char_str]? && boolean_property?(short_to_long[char_str], schema)
-          if !short_to_long[char_str]?
-            errors << unknown_option_error(char_str, short_to_long.keys, "-", "in '#{arg}'")
-          else
-            errors << "Cannot combine non-boolean flag '-#{c}' in '#{arg}'"
-          end
-          return
+        unless long_key = short_to_long[char_str]?
+          errors << unknown_option_error(char_str, short_to_long.keys, "-", "in '#{arg}'")
+          return 1
         end
+        if boolean_property?(long_key, schema)
+          set_nested_value(data, long_key, JSON::Any.new(true), errors)
+          next
+        end
+
+        rest = short_keys[(n + 1)..]
+        return handle_single_short_flag(char_str, args, i, data, errors, short_to_long, schema) if rest.empty?
+        coerced, coerce_error = coerce_value(long_key, rest, schema)
+        errors << coerce_error if coerce_error
+        set_option_value(data, long_key, coerced, errors, schema)
+        return 1
       end
-      short_keys.each_char do |c|
-        long_key = short_to_long[c.to_s]
-        set_nested_value(data, long_key, JSON::Any.new(true), errors)
-      end
+      1
     end
 
     private def handle_long_flag(arg : String, args : Array(String), i : Int32, data : Hash(String, JSON::Any), errors : Array(String), schema : Schema) : Int32
       key, value, consumed, coerce_error = parse_long_flag(arg, args, i, schema)
       if key
         errors << coerce_error if coerce_error
-        set_nested_value(data, key, value, errors)
+        set_option_value(data, key, value, errors, schema)
       else
         opt_name = arg.split("=", 2)[0][2..]
         errors << unknown_option_error(opt_name, available_options(schema))
@@ -753,7 +760,7 @@ module Jargon
       key, value, consumed, coerce_error = parse_argument(arg, args, i, schema)
       if key
         errors << coerce_error if coerce_error
-        set_nested_value(data, key, value, errors)
+        set_option_value(data, key, value, errors, schema)
       elsif bare_assignment? && arg.includes?("=")
         # Looks like an assignment to an unknown property — suggest a fix.
         unknown_key = arg.split("=", 2)[0]
@@ -816,11 +823,12 @@ module Jargon
       arg.downcase.in?("true", "false", "yes", "no", "on", "off", "1", "0")
     end
 
-    # Check if arg looks like a flag (starts with - but not a negative number)
+    # Check if arg looks like a flag: one that starts with -, but not a
+    # negative number (-5, -3.14) or a lone -, which by convention names
+    # standard input or output as a file.
     private def flag_like?(arg : String) : Bool
-      return false unless arg.starts_with?("-")
-      return false if arg.size > 1 && arg[1].ascii_number? # -5, -3.14
-      true
+      return false unless arg.starts_with?("-") && arg.size > 1
+      !arg[1].ascii_number?
     end
 
     # Validate data against a schema, returning any errors.
@@ -1079,6 +1087,26 @@ module Jargon
     # Store a value under a dotted key, building intermediate objects as needed
     # (e.g. "server.port" => {"server" => {"port" => ...}}). A nil value is a
     # no-op; a non-object value blocking the path records an error.
+    # Store an option's value. An array option given more than once collects
+    # the items of each (`-I a -I b`), as getopt programs do; any other
+    # option keeps the last value given.
+    private def set_option_value(data : Hash(String, JSON::Any), key : String, value : JSON::Any?, errors : Array(String), schema : Schema)
+      if value && (items = value.as_a?) && (earlier = nested_value(data, key).try(&.as_a?)) &&
+         find_property(key, schema).try(&.type) == Property::Type::Array
+        value = JSON::Any.new(earlier + items)
+      end
+      set_nested_value(data, key, value, errors)
+    end
+
+    private def nested_value(data : Hash(String, JSON::Any), key : String) : JSON::Any?
+      parts = key.split(".")
+      current = data
+      parts[0..-2].each do |part|
+        current = current[part]?.try(&.as_h?) || return
+      end
+      current[parts.last]?
+    end
+
     private def set_nested_value(data : Hash(String, JSON::Any), key : String, value : JSON::Any?, errors : Array(String))
       return unless value
 
