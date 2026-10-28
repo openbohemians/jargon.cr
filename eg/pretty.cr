@@ -25,6 +25,7 @@ cli = Jargon.cli("pretty", json: <<-JSON)
       "tags": {
         "type": "array",
         "short": "t",
+        "separator": "comma",
         "description": "List of tags"
       },
       "files": {
