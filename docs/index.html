@@ -97,6 +97,11 @@
       
         <ul>
   
+  <li class=" " data-id="jargon/Jargon/Property/Separator" data-name="jargon::property::separator">
+      <a href="Jargon/Property/Separator.html">Separator</a>
+      
+    </li>
+  
   <li class=" " data-id="jargon/Jargon/Property/Type" data-name="jargon::property::type">
       <a href="Jargon/Property/Type.html">Type</a>
       
@@ -138,6 +143,7 @@
     <use href="#octicon-link"/>
   </svg>
 </a>Jargon</h1>
+<p><a href="https://github.com/openbohemians/jargon.cr/actions/workflows/ci.yml"><img src="https://github.com/openbohemians/jargon.cr/actions/workflows/ci.yml/badge.svg" alt="CI" /></a></p>
 <p><em>Define your CLI jargon with JSON Schema.</em></p>
 <p>A Crystal library that generates CLI interfaces from JSON Schema definitions. Define your data structure once in JSON Schema, get a CLI parser with validation for free.</p>
 <p>Jargon is also available for Rust, as <a href="https://github.com/openbohemians/jargon.rs">jargon.rs</a>. The project's site is <a href="https://jargon.openbohemians.org">jargon.openbohemians.org</a>, and the API docs are at <a href="https://openbohemians.org/jargon.cr/">openbohemians.org/jargon.cr</a>.</p>
@@ -155,11 +161,11 @@
 <li><strong>Auto help flags</strong>: <code>--help</code> and <code>-h</code> detected automatically</li>
 <li><strong>Shell completions</strong>: Generate completion shims for bash, zsh, and fish, with optional app-driven dynamic completers for live data</li>
 <li><strong>Positional args</strong>: Non-flag arguments assigned by position and variadic support.</li>
-<li><strong>Short flags</strong>: Single-character flag aliases (<code>-v</code>, <code>-n 5</code>)</li>
+<li><strong>Short flags</strong>: Single-character flag aliases (<code>-v</code>, <code>-n 5</code>), combined as getopt combines them (<code>-vn5</code>)</li>
 <li><strong>Boolean flags</strong>: Support both <code>--verbose</code> and <code>--verbose false</code> styles</li>
 <li><strong>Subcommands</strong>: Named sub-parsers with independent schemas (supports abbreviated invocations)</li>
 <li><strong>Default subcommand</strong>: Fall back to a subcommand when none specified</li>
-<li><strong>Stdin JSON</strong>: Read arguments as JSON from stdin with <code>-</code></li>
+<li><strong>Stdin JSON</strong>: Read arguments as JSON from stdin with <code>-@</code></li>
 <li><strong>Typo suggestions</strong>: &quot;Did you mean?&quot; for mistyped options</li>
 <li><strong>$ref support</strong>: Reuse definitions with <code>$ref: &quot;#/$defs/typename&quot;</code></li>
 <li><strong>Extension annotations</strong>: <code>x-*</code> keys pass through untouched for GUI/tooling consumers</li>
@@ -283,8 +289,35 @@ result <span class="o">=</span> cli.parse([<span class="s">&quot;user.name=John&
 | <code>integer</code> | <code>count=42</code> | Parsed as Int64, strict validation |
 | <code>number</code> | <code>rate=3.14</code> | Parsed as Float64, strict validation |
 | <code>boolean</code> | <code>verbose=true</code> or <code>--verbose</code> | Flag style supported |
-| <code>array</code> | <code>tags=a,b,c</code> | Comma-separated; variadic positionals coerce items to the <code>items</code> type |
+| <code>array</code> | <code>tags=a tags=b</code> | Each time it's given adds an item (<code>-I a -I b</code>), or several with a <a href="#lists">separator</a>; variadic positionals coerce items to the <code>items</code> type |
 | <code>object</code> | <code>user.name=John</code> | Dot notation |</p>
+<h3><a id="lists" class="anchor" href="#lists">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Lists</h3>
+<p>An array option takes one item each time it's given:</p>
+<pre><code class="language-sh">ls -I '*.o' -I '*.a'     # ignore: [&quot;*.o&quot;, &quot;*.a&quot;]
+grep -e 'a,b'            # regexp: [&quot;a,b&quot;], comma and all</code></pre>
+<p>For a value that holds several items, name its <code>separator</code>:</p>
+<pre><code class="language-json">{
+  &quot;properties&quot;: {
+    &quot;fields&quot;: {&quot;type&quot;: &quot;array&quot;, &quot;items&quot;: {&quot;type&quot;: &quot;integer&quot;}, &quot;separator&quot;: &quot;comma&quot;},
+    &quot;output&quot;: {&quot;type&quot;: &quot;array&quot;, &quot;items&quot;: {&quot;type&quot;: &quot;string&quot;}, &quot;separator&quot;: [&quot;comma&quot;, &quot;whitespace&quot;]}
+  }
+}</code></pre>
+<pre><code class="language-sh">cut -f 1,3 -f 5          # fields: [1, 3, 5]
+ps -o &quot;pid, comm user&quot;   # output: [&quot;pid&quot;, &quot;comm&quot;, &quot;user&quot;]</code></pre>
+<p>The separators are <code>comma</code>, <code>colon</code>, <code>semicolon</code>, and <code>whitespace</code> (any
+spaces, tabs, or newlines), and a list of them splits at any one. Each piece
+is trimmed and empty ones are dropped, so <code>--output=</code> gives <code>[]</code>. A
+separator applies wherever a word becomes items: an option's value,
+<code>key=value</code>, an environment variable, and each word of a variadic
+positional. Defaults, config files, and JSON from stdin hold arrays already,
+so they aren't split. An item can't contain its separator on the command
+line; there's no escape. Help names the separators (<code>(comma-separated)</code>),
+and completion completes the item after the last one.</p>
+<p>Before 0.25.0, every array option split at commas; add <code>&quot;separator&quot;: &quot;comma&quot;</code> to keep that.</p>
 <h3><a id="validation-constraints" class="anchor" href="#validation-constraints">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -412,6 +445,9 @@ numbers (<code>-50</code>). It stops only at a genuine
 flag, so put flags before the variadic:</p>
 <pre><code class="language-sh">cat -n a.txt b.txt c.txt      # ok: flag first
 cat a.txt -n b.txt            # -n stops collection; b.txt is then unexpected</code></pre>
+<p>A lone <code>-</code> is a value, not a flag, so <code>cat a.txt - b.txt</code> collects it with
+the rest, as the conventional name for standard input. (JSON from stdin is
+<code>-@</code>; see <a href="#json-from-stdin">JSON from Stdin</a>.)</p>
 <p>When the array declares an <code>items</code> type, each collected token is coerced to it:</p>
 <pre><code class="language-crystal">schema <span class="o">=</span> <span class="s">%({
   &quot;type&quot;: &quot;object&quot;,
@@ -471,7 +507,15 @@ cli <span class="o">=</span> <span class="t">Jargon</span>.cli(<span class="s">&
 result <span class="o">=</span> cli.parse([<span class="s">&quot;-v&quot;</span>, <span class="s">&quot;-n&quot;</span>, <span class="s">&quot;5&quot;</span>, <span class="s">&quot;-o&quot;</span>, <span class="s">&quot;out.txt&quot;</span>])
 <span class="c"># =&gt; {&quot;verbose&quot;: true, &quot;count&quot;: 5, &quot;output&quot;: &quot;out.txt&quot;}</span></code></pre>
 <pre><code class="language-sh">myapp -v -n 5 -o out.txt
+myapp -vn5 -oout.txt                         # equivalent
 myapp --verbose --count 5 --output out.txt  # equivalent</code></pre>
+<p>Short flags combine as getopt combines them: each letter is a flag until one
+that takes a value, which takes the rest of the word (<code>-vn5</code>), or the next
+argument when it ends the word (<code>-vn 5</code>). An <code>=</code> there is part of the value,
+as in getopt, so <code>-o=x</code> gives <code>=x</code>; <code>--output=x</code> gives <code>x</code>.</p>
+<p>An option given more than once keeps its last value, unless it's an array,
+which collects each one's items: <code>-I '*.o' -I '*.a'</code> gives
+<code>[&quot;*.o&quot;, &quot;*.a&quot;]</code>.</p>
 <h2><a id="help-flags" class="anchor" href="#help-flags">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -536,7 +580,7 @@ myapp --completions zsh &gt; ~/.zfunc/_myapp
 
 # Fish
 myapp --completions fish &gt; ~/.config/fish/completions/myapp.fish</code></pre>
-<p>Out of the box you get completion for subcommand names (including nested), long and short flags, and <code>enum</code> values (both <code>--mode &lt;Tab&gt;</code> and <code>--mode=&lt;Tab&gt;</code>) — all derived from the schema, no extra code. Values containing <code>:</code> (<code>Expenses:Food</code>) complete as whole words in every shell, including bash, where the shim undoes readline's splitting at <code>=</code> and <code>:</code>.</p>
+<p>Out of the box you get completion for subcommand names (including nested), long and short flags, and <code>enum</code> values (both <code>--mode &lt;Tab&gt;</code> and <code>--mode=&lt;Tab&gt;</code>, and an array's items) — all derived from the schema, no extra code. Values containing <code>:</code> (<code>Expenses:Food</code>) complete as whole words in every shell, including bash, where the shim undoes readline's splitting at <code>=</code> and <code>:</code>.</p>
 <h3><a id="dynamic-completions" class="anchor" href="#dynamic-completions">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -824,16 +868,24 @@ allOf:
     <use href="#octicon-link"/>
   </svg>
 </a>JSON from Stdin</h3>
-<p>Use <code>-</code> to read JSON input from stdin:</p>
+<p>Use <code>-@</code>, alone after the program or subcommand, to read options as JSON
+from stdin, as <code>zip -@</code> reads its file names:</p>
 <pre><code class="language-sh"># JSON with subcommand field
-echo '{&quot;subcommand&quot;: &quot;query&quot;, &quot;query_text&quot;: &quot;search term&quot;, &quot;top&quot;: 5}' | xerp -
+echo '{&quot;subcommand&quot;: &quot;query&quot;, &quot;query_text&quot;: &quot;search term&quot;, &quot;top&quot;: 5}' | xerp -@
 
 # JSON args for explicit subcommand
-echo '{&quot;result_id&quot;: &quot;abc123&quot;, &quot;useful&quot;: true}' | xerp mark -</code></pre>
-<p>If no <code>subcommand</code> field is present in <code>xerp -</code>, the default subcommand is used (if set).</p>
+echo '{&quot;result_id&quot;: &quot;abc123&quot;, &quot;useful&quot;: true}' | xerp mark -@
+
+# From a file
+xerp mark -@ &lt; options.json</code></pre>
+<p>If no <code>subcommand</code> field is present in <code>xerp -@</code>, the default subcommand is used (if set).</p>
+<p><code>-@</code> takes no other arguments. A schema that defines <code>&quot;short&quot;: &quot;@&quot;</code> for an
+option of its own (as macOS <code>ls -@</code> does) has that option instead, as one
+that defines <code>-h</code> has <code>-h</code>. Before 0.25.0, the JSON form was a lone <code>-</code>,
+which is now standard input as a file.</p>
 <p>The field name is configurable:</p>
 <pre><code class="language-crystal">cli.subcommand_key(<span class="s">&quot;op&quot;</span>)  <span class="c"># default is &quot;subcommand&quot;</span></code></pre>
-<pre><code class="language-sh">echo '{&quot;op&quot;: &quot;query&quot;, &quot;query_text&quot;: &quot;search&quot;}' | xerp -</code></pre>
+<pre><code class="language-sh">echo '{&quot;op&quot;: &quot;query&quot;, &quot;query_text&quot;: &quot;search&quot;}' | xerp -@</code></pre>
 <h2><a id="environment-variables" class="anchor" href="#environment-variables">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>

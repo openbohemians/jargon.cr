@@ -97,6 +97,11 @@
       
         <ul>
   
+  <li class=" " data-id="jargon/Jargon/Property/Separator" data-name="jargon::property::separator">
+      <a href="../Jargon/Property/Separator.html">Separator</a>
+      
+    </li>
+  
   <li class=" " data-id="jargon/Jargon/Property/Type" data-name="jargon::property::type">
       <a href="../Jargon/Property/Type.html">Type</a>
       
@@ -204,6 +209,30 @@ or <code><a href="../Jargon/CLI.html#run%28args%3AArray%28String%29%2Cinput%3AIO
   
 
 
+
+  
+    <h2>
+      <a id="constant-summary" class="anchor" href="#constant-summary">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+      Constant Summary
+    </h2>
+  
+  <dl>
+    
+      <dt class="entry-const" id="STDIN_JSON">
+        <strong>STDIN_JSON</strong> = <code><span class="s">&quot;-@&quot;</span></code>
+      </dt>
+      
+      <dd class="entry-const-doc">
+        <p>Alone on a command line, or after the subcommand, it reads options as
+JSON from stdin (<code>xerp mark -@ &lt; options.json</code>).</p>
+      </dd>
+      
+    
+  </dl>
 
 
 
@@ -384,7 +413,7 @@ or <code><a href="../Jargon/CLI.html#run%28args%3AArray%28String%29%2Cinput%3AIO
       <li class="entry-summary">
         <a href="#parse%28args%3AArray%28String%29%2Cinput%3AIO%2C%2A%2Cdefaults%3ADefaults%7CNil%3Dnil%29%3AResult-instance-method" class="signature"><strong>#parse</strong>(args : Array(String), input : IO, *, defaults : Defaults | Nil = <span class="n">nil</span>) : Result</a>
         
-          <div class="summary"><p>:ditto: <code>input</code> supplies the stream read for the <code>-</code> (stdin JSON) form.</p></div>
+          <div class="summary"><p>:ditto: <code>input</code> supplies the stream read for the <code>-@</code> (stdin JSON) form.</p></div>
         
       </li>
     
@@ -464,7 +493,7 @@ or <code><a href="../Jargon/CLI.html#run%28args%3AArray%28String%29%2Cinput%3AIO
       <li class="entry-summary">
         <a href="#subcommand_key%28key%3AString%29-instance-method" class="signature"><strong>#subcommand_key</strong>(key : String)</a>
         
-          <div class="summary"><p>Set the JSON key that names the subcommand when parsing full JSON from stdin (the <code>-</code> form).</p></div>
+          <div class="summary"><p>Set the JSON key that names the subcommand when parsing full JSON from stdin (the <code>-@</code> form).</p></div>
         
       </li>
     
@@ -1024,7 +1053,7 @@ Returns nil if no config file found.</p>
       
         <div class="doc">
           
-          <p>:ditto: <code>input</code> supplies the stream read for the <code>-</code> (stdin JSON) form.</p>
+          <p>:ditto: <code>input</code> supplies the stream read for the <code>-@</code> (stdin JSON) form.</p>
         </div>
       
       <br/>
@@ -1260,7 +1289,7 @@ Each document must have a &quot;name&quot; field.</p>
         <div class="doc">
           
           <p>Set the JSON key that names the subcommand when parsing full JSON from
-stdin (the <code>-</code> form). Defaults to <code>&quot;subcommand&quot;</code>.</p>
+stdin (the <code>-@</code> form). Defaults to <code>&quot;subcommand&quot;</code>.</p>
         </div>
       
       <br/>
