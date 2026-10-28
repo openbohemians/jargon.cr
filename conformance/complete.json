@@ -59,7 +59,7 @@
     ]
   },
   {
-    "spec": "shell completion > candidates engine > excludes positional fields from flag-name candidates",
+    "spec": "shell completion > candidates engine > offers positional fields as flags too",
     "cli": [
       {
         "op": "from_json",
@@ -74,6 +74,7 @@
     "cword": 1,
     "expect": [
       "--help",
+      "--file",
       "--verbose"
     ]
   },
@@ -596,6 +597,7 @@
     "expect": [
       "--help",
       "-h",
+      "--mode",
       "--limit",
       "-l"
     ]
@@ -630,6 +632,7 @@
     "cword": 2,
     "expect": [
       "--help",
+      "--mode",
       "--limit"
     ]
   },
@@ -697,6 +700,7 @@
     "cword": 2,
     "expect": [
       "--help",
+      "--mode",
       "--limit"
     ]
   },
@@ -1055,6 +1059,67 @@
     "expect": [
       "a",
       "b"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes the positional after a variadic, as the parser would fill it",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "deploy",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\", \"hosts*\"],\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"short\": \"m\", \"enum\": [\"fast\", \"safe\"]},\n            \"hosts\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"web1\", \"web2\"]}}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "deploy",
+      ""
+    ],
+    "cword": 1,
+    "expect": [
+      "fast",
+      "safe"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes the positional after a variadic, as the parser would fill it",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "deploy",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\", \"hosts*\"],\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"short\": \"m\", \"enum\": [\"fast\", \"safe\"]},\n            \"hosts\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"web1\", \"web2\"]}}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "deploy",
+      "-m",
+      "fast",
+      ""
+    ],
+    "cword": 3,
+    "expect": [
+      "web1",
+      "web2"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes the positional after a variadic, as the parser would fill it",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "deploy",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\", \"hosts*\"],\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"short\": \"m\", \"enum\": [\"fast\", \"safe\"]},\n            \"hosts\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"web1\", \"web2\"]}}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "deploy",
+      "",
+      "--mode",
+      "fast"
+    ],
+    "cword": 1,
+    "expect": [
+      "web1",
+      "web2"
     ]
   },
   {

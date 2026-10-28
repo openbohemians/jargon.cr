@@ -1144,6 +1144,8 @@ describe Jargon do
           format  Output format [json|yaml]
 
         Options:
+              --source=<string>    File to convert (required)
+              --format=<string>    Output format [json|yaml]
           -v, --verbose            Enable verbose logging
               --level=<integer>    Log level [1|2|3] [default: 1]
               --mode=<string>      [fast|safe]
@@ -1405,7 +1407,7 @@ describe Jargon do
       result["files"].as_a.should be_empty
     end
 
-    it "stops collecting at flags (flags should come first)" do
+    it "collects its words wherever the options are among them" do
       cli = Jargon.cli("cat", json: %q({
         "type": "object",
         "positional": ["files*"],
@@ -1415,18 +1417,15 @@ describe Jargon do
         }
       }))
 
-      # Correct usage: flags first
       result = cli.parse(["-n", "a.txt", "b.txt", "c.txt"])
       result.valid?.should be_true
       result["number"].as_bool.should be_true
       result["files"].as_a.map(&.as_s).should eq(["a.txt", "b.txt", "c.txt"])
 
-      # Incorrect usage: flag after positionals stops collection
       result2 = cli.parse(["a.txt", "-n", "b.txt"])
-      result2.valid?.should be_false
-      result2["files"].as_a.map(&.as_s).should eq(["a.txt"])
+      result2.valid?.should be_true
+      result2["files"].as_a.map(&.as_s).should eq(["a.txt", "b.txt"])
       result2["number"].as_bool.should be_true
-      result2.errors.should contain("Unexpected argument 'b.txt'")
     end
 
     it "captures tokens containing ':' or '=' literally (greedy)" do
@@ -1524,9 +1523,11 @@ describe Jargon do
       result["sources"].as_a.map(&.as_s).should eq(["a", "b"])
       result["dest"].as_s.should eq("dir/")
 
-      # An option inside the run ends it, as for any variadic.
+      # An option among the words.
       result = cli.parse(["a", "-v", "b", "dir/"])
-      result.errors.should eq(["Unexpected argument 'b'", "Unexpected argument 'dir/'"])
+      result.valid?.should be_true
+      result["sources"].as_a.map(&.as_s).should eq(["a", "b"])
+      result["dest"].as_s.should eq("dir/")
 
       result = cli.parse(["--", "-a", "b", "dir/"])
       result["sources"].as_a.map(&.as_s).should eq(["-a", "b"])
@@ -1560,6 +1561,59 @@ describe Jargon do
       result = cli.parse(["zip"])
       result["inputs"].as_a.should be_empty
       result["out"]?.should be_nil
+    end
+
+    it "skips a positional given by name, wherever the option is" do
+      grep = Jargon.cli("grep", json: %q({
+        "type": "object",
+        "positional": ["pattern", "files*"],
+        "properties": {
+          "pattern": {"type": "string", "short": "e"},
+          "files": {"type": "array"}
+        }
+      }))
+      [["-e", "foo", "a.txt", "b.txt"], ["a.txt", "b.txt", "-e", "foo"], ["foo", "a.txt", "b.txt"]].each do |args|
+        result = grep.parse(args)
+        result.valid?.should be_true
+        result["pattern"].as_s.should eq("foo")
+        result["files"].as_a.map(&.as_s).should eq(["a.txt", "b.txt"])
+      end
+
+      cp = Jargon.cli("cp", json: %q({
+        "type": "object",
+        "positional": ["sources*", "dest"],
+        "properties": {
+          "sources": {"type": "array"},
+          "dest": {"type": "string", "short": "t"}
+        }
+      }))
+      [["-t", "dir/", "a", "b"], ["a", "b", "-t", "dir/"]].each do |args|
+        result = cp.parse(args)
+        result["sources"].as_a.map(&.as_s).should eq(["a", "b"])
+        result["dest"].as_s.should eq("dir/")
+      end
+
+      myapp = Jargon.cli("myapp", json: %q({
+        "type": "object",
+        "positional": ["file", "output"],
+        "properties": {"file": {"type": "string"}, "output": {"type": "string"}, "mode": {"type": "string"}}
+      }))
+      [["--file", "input.txt", "result.txt"], ["result.txt", "--file", "input.txt"]].each do |args|
+        result = myapp.parse(args)
+        result.valid?.should be_true
+        result["file"].as_s.should eq("input.txt")
+        result["output"].as_s.should eq("result.txt")
+      end
+
+      # A word left over is still read in its place, so the last value wins.
+      myapp.parse(["a", "b", "mode=fast", "--mode", "slow"])["mode"].as_s.should eq("slow")
+      myapp.parse(["a", "b", "--mode", "slow", "mode=fast"])["mode"].as_s.should eq("fast")
+
+      # A variadic given by name takes no words.
+      cat = Jargon.cli("cat", json: %q({"type": "object", "positional": ["files*"], "properties": {"files": {"type": "array"}}}))
+      result = cat.parse(["--files", "a", "b"])
+      result["files"].as_a.map(&.as_s).should eq(["a"])
+      result.errors.should eq(["Unexpected argument 'b'"])
     end
 
     it "takes one word for an array positional without a *" do
@@ -3942,7 +3996,7 @@ describe Jargon do
         c.candidates(["myapp", "--na"], 1).should eq(["--name"])
       end
 
-      it "excludes positional fields from flag-name candidates" do
+      it "offers positional fields as flags too" do
         cli = Jargon.cli("myapp", json: %({
           "type": "object",
           "positional": ["file"],
@@ -3954,7 +4008,7 @@ describe Jargon do
         c = Jargon::Completion.new(cli)
         candidates = c.candidates(["myapp", "--"], 1)
         candidates.should contain("--verbose")
-        candidates.should_not contain("--file")
+        candidates.should contain("--file")
       end
 
       it "completes enum values for a flag (string and numeric)" do
@@ -4038,11 +4092,11 @@ describe Jargon do
         # The first word may be a subcommand or the default's first word.
         c.candidates(["app", ""], 1).should eq(["query", "index", "fast", "safe"])
         c.candidates(["app", "f"], 1).should eq(["fast"])
-        c.candidates(["app", "-"], 1).should eq(["--help", "-h", "--limit", "-l"])
+        c.candidates(["app", "-"], 1).should eq(["--help", "-h", "--mode", "--limit", "-l"])
         # After a word that names no subcommand, every word is the default's.
-        c.candidates(["app", "fast", "--"], 2).should eq(["--help", "--limit"])
+        c.candidates(["app", "fast", "--"], 2).should eq(["--help", "--mode", "--limit"])
         c.candidates(["app", "--limit", "5", ""], 3).should eq(["fast", "safe"])
-        c.candidates(["app", "fe", "--"], 2).should eq(["--help", "--limit"])
+        c.candidates(["app", "fe", "--"], 2).should eq(["--help", "--mode", "--limit"])
         # A subcommand's words are its own.
         c.candidates(["app", "index", "--"], 2).should eq(["--help"])
         c.candidates(["app", "ind", "--"], 2).should eq(["--help"])
@@ -4131,6 +4185,20 @@ describe Jargon do
         }))
         c = Jargon::Completion.new(cli)
         c.candidates(["cat", "a", ""], 2).should eq(["a", "b"])
+
+        # A positional given by name is skipped.
+        cli = Jargon.cli("deploy", json: %({
+          "type": "object",
+          "positional": ["mode", "hosts*"],
+          "properties": {
+            "mode": {"type": "string", "short": "m", "enum": ["fast", "safe"]},
+            "hosts": {"type": "array", "items": {"type": "string", "enum": ["web1", "web2"]}}
+          }
+        }))
+        c = Jargon::Completion.new(cli)
+        c.candidates(["deploy", ""], 1).should eq(["fast", "safe"])
+        c.candidates(["deploy", "-m", "fast", ""], 3).should eq(["web1", "web2"])
+        c.candidates(["deploy", "", "--mode", "fast"], 1).should eq(["web1", "web2"])
 
         # Without a *, an array positional takes one word.
         cli = Jargon.cli("cat", json: %({

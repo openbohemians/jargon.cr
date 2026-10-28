@@ -3349,7 +3349,7 @@
     }
   },
   {
-    "spec": "variadic positionals > stops collecting at flags (flags should come first)",
+    "spec": "variadic positionals > collects its words wherever the options are among them",
     "cli": [
       {
         "op": "from_json",
@@ -3380,7 +3380,7 @@
     }
   },
   {
-    "spec": "variadic positionals > stops collecting at flags (flags should come first)",
+    "spec": "variadic positionals > collects its words wherever the options are among them",
     "cli": [
       {
         "op": "from_json",
@@ -3395,14 +3395,13 @@
     ],
     "expect": {
       "data": {
+        "number": true,
         "files": [
-          "a.txt"
-        ],
-        "number": true
+          "a.txt",
+          "b.txt"
+        ]
       },
-      "errors": [
-        "Unexpected argument 'b.txt'"
-      ],
+      "errors": [],
       "subcommand": null,
       "help": false,
       "help_subcommand": null,
@@ -3457,11 +3456,11 @@
     ],
     "expect": {
       "data": {
+        "amount": 9.0,
         "items": [
           "a:b",
           "c:d"
-        ],
-        "amount": 9.0
+        ]
       },
       "errors": [],
       "subcommand": null,
@@ -3590,11 +3589,11 @@
     ],
     "expect": {
       "data": {
+        "dest": "dir/",
         "sources": [
           "a",
           "b"
-        ],
-        "dest": "dir/"
+        ]
       },
       "errors": [],
       "subcommand": null,
@@ -3618,10 +3617,10 @@
     ],
     "expect": {
       "data": {
+        "dest": "dir/",
         "sources": [
           "a"
-        ],
-        "dest": "dir/"
+        ]
       },
       "errors": [],
       "subcommand": null,
@@ -3644,8 +3643,8 @@
     ],
     "expect": {
       "data": {
-        "sources": [],
-        "dest": "a"
+        "dest": "a",
+        "sources": []
       },
       "errors": [],
       "subcommand": null,
@@ -3672,11 +3671,11 @@
     "expect": {
       "data": {
         "verbose": true,
+        "dest": "dir/",
         "sources": [
           "a",
           "b"
-        ],
-        "dest": "dir/"
+        ]
       },
       "errors": [],
       "subcommand": null,
@@ -3702,12 +3701,12 @@
     ],
     "expect": {
       "data": {
+        "dest": "dir/",
+        "verbose": true,
         "sources": [
           "a",
           "b"
-        ],
-        "dest": "dir/",
-        "verbose": true
+        ]
       },
       "errors": [],
       "subcommand": null,
@@ -3733,14 +3732,14 @@
     ],
     "expect": {
       "data": {
-        "sources": [],
-        "dest": "a",
-        "verbose": true
+        "verbose": true,
+        "dest": "dir/",
+        "sources": [
+          "a",
+          "b"
+        ]
       },
-      "errors": [
-        "Unexpected argument 'b'",
-        "Unexpected argument 'dir/'"
-      ],
+      "errors": [],
       "subcommand": null,
       "help": false,
       "help_subcommand": null,
@@ -3764,11 +3763,11 @@
     ],
     "expect": {
       "data": {
+        "dest": "dir/",
         "sources": [
           "-a",
           "b"
-        ],
-        "dest": "dir/"
+        ]
       },
       "errors": [],
       "subcommand": null,
@@ -3797,13 +3796,13 @@
     "expect": {
       "data": {
         "format": "zip",
+        "out": "out.zip",
+        "log": "pack.log",
         "inputs": [
           1,
           2,
           3
-        ],
-        "out": "out.zip",
-        "log": "pack.log"
+        ]
       },
       "errors": [],
       "subcommand": null,
@@ -3828,8 +3827,8 @@
     "expect": {
       "data": {
         "format": "zip",
-        "inputs": [],
-        "out": "out.zip"
+        "out": "out.zip",
+        "inputs": []
       },
       "errors": [],
       "subcommand": null,
@@ -3856,6 +3855,294 @@
         "inputs": []
       },
       "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "variadic positionals > skips a positional given by name, wherever the option is",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "grep",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"pattern\", \"files*\"],\n        \"properties\": {\n          \"pattern\": {\"type\": \"string\", \"short\": \"e\"},\n          \"files\": {\"type\": \"array\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "-e",
+      "foo",
+      "a.txt",
+      "b.txt"
+    ],
+    "expect": {
+      "data": {
+        "pattern": "foo",
+        "files": [
+          "a.txt",
+          "b.txt"
+        ]
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "variadic positionals > skips a positional given by name, wherever the option is",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "grep",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"pattern\", \"files*\"],\n        \"properties\": {\n          \"pattern\": {\"type\": \"string\", \"short\": \"e\"},\n          \"files\": {\"type\": \"array\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "a.txt",
+      "b.txt",
+      "-e",
+      "foo"
+    ],
+    "expect": {
+      "data": {
+        "pattern": "foo",
+        "files": [
+          "a.txt",
+          "b.txt"
+        ]
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "variadic positionals > skips a positional given by name, wherever the option is",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "grep",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"pattern\", \"files*\"],\n        \"properties\": {\n          \"pattern\": {\"type\": \"string\", \"short\": \"e\"},\n          \"files\": {\"type\": \"array\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "foo",
+      "a.txt",
+      "b.txt"
+    ],
+    "expect": {
+      "data": {
+        "pattern": "foo",
+        "files": [
+          "a.txt",
+          "b.txt"
+        ]
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "variadic positionals > skips a positional given by name, wherever the option is",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cp",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"sources*\", \"dest\"],\n        \"properties\": {\n          \"sources\": {\"type\": \"array\"},\n          \"dest\": {\"type\": \"string\", \"short\": \"t\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "-t",
+      "dir/",
+      "a",
+      "b"
+    ],
+    "expect": {
+      "data": {
+        "dest": "dir/",
+        "sources": [
+          "a",
+          "b"
+        ]
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "variadic positionals > skips a positional given by name, wherever the option is",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cp",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"sources*\", \"dest\"],\n        \"properties\": {\n          \"sources\": {\"type\": \"array\"},\n          \"dest\": {\"type\": \"string\", \"short\": \"t\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "a",
+      "b",
+      "-t",
+      "dir/"
+    ],
+    "expect": {
+      "data": {
+        "dest": "dir/",
+        "sources": [
+          "a",
+          "b"
+        ]
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "variadic positionals > skips a positional given by name, wherever the option is",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"file\", \"output\"],\n        \"properties\": {\"file\": {\"type\": \"string\"}, \"output\": {\"type\": \"string\"}, \"mode\": {\"type\": \"string\"}}\n      }"
+      }
+    ],
+    "args": [
+      "--file",
+      "input.txt",
+      "result.txt"
+    ],
+    "expect": {
+      "data": {
+        "file": "input.txt",
+        "output": "result.txt"
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "variadic positionals > skips a positional given by name, wherever the option is",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"file\", \"output\"],\n        \"properties\": {\"file\": {\"type\": \"string\"}, \"output\": {\"type\": \"string\"}, \"mode\": {\"type\": \"string\"}}\n      }"
+      }
+    ],
+    "args": [
+      "result.txt",
+      "--file",
+      "input.txt"
+    ],
+    "expect": {
+      "data": {
+        "output": "result.txt",
+        "file": "input.txt"
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "variadic positionals > skips a positional given by name, wherever the option is",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"file\", \"output\"],\n        \"properties\": {\"file\": {\"type\": \"string\"}, \"output\": {\"type\": \"string\"}, \"mode\": {\"type\": \"string\"}}\n      }"
+      }
+    ],
+    "args": [
+      "a",
+      "b",
+      "mode=fast",
+      "--mode",
+      "slow"
+    ],
+    "expect": {
+      "data": {
+        "file": "a",
+        "output": "b",
+        "mode": "slow"
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "variadic positionals > skips a positional given by name, wherever the option is",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "myapp",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"file\", \"output\"],\n        \"properties\": {\"file\": {\"type\": \"string\"}, \"output\": {\"type\": \"string\"}, \"mode\": {\"type\": \"string\"}}\n      }"
+      }
+    ],
+    "args": [
+      "a",
+      "b",
+      "--mode",
+      "slow",
+      "mode=fast"
+    ],
+    "expect": {
+      "data": {
+        "file": "a",
+        "output": "b",
+        "mode": "fast"
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "variadic positionals > skips a positional given by name, wherever the option is",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cat",
+        "text": "{\"type\": \"object\", \"positional\": [\"files*\"], \"properties\": {\"files\": {\"type\": \"array\"}}}"
+      }
+    ],
+    "args": [
+      "--files",
+      "a",
+      "b"
+    ],
+    "expect": {
+      "data": {
+        "files": [
+          "a"
+        ]
+      },
+      "errors": [
+        "Unexpected argument 'b'"
+      ],
       "subcommand": null,
       "help": false,
       "help_subcommand": null,

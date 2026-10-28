@@ -622,16 +622,37 @@ module Jargon
       Result.new(data, errors)
     end
 
-    # Walk the argument tokens, filling `data`/`errors`.
+    # Walk the argument tokens, filling `data`/`errors`. A first walk finds the
+    # positionals set by name and the bare words, so that the words fill the
+    # other positionals wherever the options are among them (`grep a -e foo
+    # b`); the second applies everything in order.
     private def consume_tokens(args : Array(String), schema : Schema, data : Hash(String, JSON::Any), errors : Array(String), positional_names : Array(String)) : Nil
       short_to_long = build_short_map(schema)
-      positional_index = 0
+      named = {} of String => JSON::Any
+      words = [] of Int32
+      walk_tokens(args, schema, short_to_long, named, [] of String) { |_, i| words << i }
+      open = positional_names.reject { |name| nested_value(named, name) }
+      slots = fill_slots(words, open, schema.variadic)
+
+      variadic_words = [] of String
+      walk_tokens(args, schema, short_to_long, data, errors) do |arg, i|
+        case slot = slots[i]?
+        when nil             then handle_extra_arg(arg, args, i, data, errors, schema)
+        when schema.variadic then variadic_words << arg
+        else                      set_positional(slot, arg, data, errors, schema)
+        end
+      end
+      if (key = schema.variadic) && open.includes?(key)
+        set_variadic(key, variadic_words, data, errors, schema)
+      end
+    end
+
+    # Apply each option to `data`, and yield every other word with its index.
+    private def walk_tokens(args : Array(String), schema : Schema, short_to_long : Hash(String, String), data : Hash(String, JSON::Any), errors : Array(String), &) : Nil
       options_ended = false
       i = 0
-
       while i < args.size
         arg = args[i]
-
         if !options_ended && arg == "--"
           # POSIX end-of-options: everything after is treated as a positional,
           # even if it looks like a flag. The marker itself is discarded.
@@ -641,14 +662,38 @@ module Jargon
           i += handle_short_flag(arg, args, i, data, errors, short_to_long, schema)
         elsif !options_ended && flag?(arg)
           i += handle_long_flag(arg, args, i, data, errors, schema)
-        elsif positional_index < positional_names.size
-          consumed, pos_advance = handle_positional(arg, args, i, positional_index, positional_names, data, errors, schema, options_ended)
-          i += consumed
-          positional_index += pos_advance
         else
-          i += handle_extra_arg(arg, args, i, data, errors, schema)
+          yield arg, i
+          i += 1
         end
       end
+    end
+
+    # The open positional each word fills, by the word's index: in order, but
+    # from the variadic on, the positionals after it take the last words, one
+    # each (`cp a b dir/`), and the variadic the words between. With too few
+    # words, the positionals without a `*` fill first. A word that fills none
+    # is left out.
+    private def fill_slots(words : Array(Int32), open : Array(String), variadic : String?) : Hash(Int32, String)
+      slots = {} of Int32 => String
+      unless variadic && (v = open.index(variadic))
+        words.zip?(open) { |word, name| slots[word] = name if name }
+        return slots
+      end
+
+      before, after = open[0, v], open[(v + 1)..]
+      head = Math.min(before.size, words.size)
+      tail = Math.min(after.size, words.size - head)
+      words.each_with_index do |word, n|
+        slots[word] = if n < head
+                        before[n]
+                      elsif n >= words.size - tail
+                        after[n - (words.size - tail)]
+                      else
+                        variadic
+                      end
+      end
+      slots
     end
 
     private def flag?(arg : String) : Bool
@@ -727,52 +772,10 @@ module Jargon
       consumed
     end
 
-    private def handle_positional(arg : String, args : Array(String), i : Int32, positional_index : Int32, positional_names : Array(String), data : Hash(String, JSON::Any), errors : Array(String), schema : Schema, options_ended : Bool = false) : {Int32, Int32}
-      key = positional_names[positional_index]
-      unless key == schema.variadic
-        set_positional(key, arg, data, errors, schema)
-        return {1, 1}
-      end
-
-      # The variadic takes a run of words, and the positionals after it take
-      # the run's last words, one each (`cp a b dir/`).
-      consumed, words = collect_run(args, i, options_ended)
-      after = positional_names[(positional_index + 1)..]
-      count = Math.min(after.size, words.size)
-      set_variadic(key, words[0, words.size - count], data, errors, schema)
-      words[(words.size - count)..].each_with_index do |word, n|
-        set_positional(after[n], word, data, errors, schema)
-      end
-      {consumed, 1 + after.size}
-    end
-
     private def set_positional(key : String, word : String, data : Hash(String, JSON::Any), errors : Array(String), schema : Schema) : Nil
       coerced, coerce_error = coerce_value(key, word, schema)
       errors << coerce_error if coerce_error
       set_nested_value(data, key, coerced, errors)
-    end
-
-    # The words a variadic takes from `start`, and how many tokens they span.
-    # The run is greedy: it captures every token literally, including ones
-    # that contain `:`/`=` (e.g. Expenses:Food, host:8080) or look like
-    # negative numbers (-50). It stops only at a genuine flag so that flag can
-    # be parsed normally. A `--` in the run is dropped, and after `--` even
-    # flags are captured.
-    private def collect_run(args : Array(String), start : Int32, passthrough : Bool) : {Int32, Array(String)}
-      words = [] of String
-      i = start
-      while i < args.size
-        current_arg = args[i]
-        if !passthrough && current_arg == "--"
-          passthrough = true
-        elsif !passthrough && flag_like?(current_arg)
-          break
-        else
-          words << current_arg
-        end
-        i += 1
-      end
-      {i - start, words}
     end
 
     private def set_variadic(key : String, words : Array(String), data : Hash(String, JSON::Any), errors : Array(String), schema : Schema) : Nil

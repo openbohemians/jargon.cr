@@ -140,7 +140,6 @@ module Jargon
       if props = root.properties
         entries = [] of {String, String}
         props.each do |name, prop|
-          next if positional_names.includes?(name)
           option_entries(entries, name, prop, "", schema)
         end
         help_columns(lines, entries)

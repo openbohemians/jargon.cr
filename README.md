@@ -315,6 +315,28 @@ result = cli.parse(["input.txt", "output.txt", "--verbose"])
 myapp input.txt output.txt --verbose
 ```
 
+Options can come anywhere among the words. A positional is a property like any
+other, so it's an option too (`--file input.txt`), and help lists it under
+Options as well as Arguments. One given by name is skipped when the words are
+given out, wherever the option is, as `grep -e` and `cp -t` do:
+
+```crystal
+schema = %({
+  "type": "object",
+  "positional": ["pattern", "files*"],
+  "properties": {
+    "pattern": {"type": "string", "short": "e"},
+    "files": {"type": "array"}
+  }
+})
+
+cli = Jargon.cli("grep", json: schema)
+cli.parse(["foo", "a.txt", "b.txt"])
+cli.parse(["-e", "foo", "a.txt", "b.txt"])
+cli.parse(["a.txt", "b.txt", "-e", "foo"])
+# each => {"pattern": "foo", "files": ["a.txt", "b.txt"]}
+```
+
 ### Variadic Positionals
 
 A `*` after a positional's name makes it variadic, taking a list of words. It
@@ -367,15 +389,14 @@ one positional can be variadic, and the usage line in help shows it as
 Before 0.26.0, the last positional was variadic whenever it was an array; add
 the `*` to keep that.
 
-A variadic positional is **greedy**: it captures every remaining token
-literally, including ones that look like assignments (`k=v`) or negative
-numbers (`-50`). It stops only at a genuine
-flag, so put flags before or after its words. A `--` among them is dropped,
-and every word after it is collected as it is:
+A variadic positional is **greedy**: it captures every word that isn't an
+option, literally, including ones that look like assignments (`k=v`) or
+negative numbers (`-50`). Options can come anywhere among its words, and after
+`--` every word is collected as it is:
 
 ```sh
-cat -n a.txt b.txt c.txt      # ok: flag first
-cat a.txt -n b.txt            # -n stops collection; b.txt is then unexpected
+cat -n a.txt b.txt c.txt      # files: ["a.txt", "b.txt", "c.txt"]
+cat a.txt -n b.txt            # the same files
 cat a.txt -- -n.txt           # files: ["a.txt", "-n.txt"]
 ```
 

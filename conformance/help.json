@@ -57,7 +57,7 @@
       }
     ],
     "subcommand": null,
-    "expect": "Usage: mycmd <source> [format] [options]\n\nArguments:\n  source  File to convert\n  format  Output format [json|yaml]\n\nOptions:\n  -v, --verbose            Enable verbose logging\n      --level=<integer>    Log level [1|2|3] [default: 1]\n      --mode=<string>      [fast|safe]\n      --token=<string>     API token (required)\n      --db=<object>        Database settings\n      --db.port=<integer>"
+    "expect": "Usage: mycmd <source> [format] [options]\n\nArguments:\n  source  File to convert\n  format  Output format [json|yaml]\n\nOptions:\n      --source=<string>    File to convert (required)\n      --format=<string>    Output format [json|yaml]\n  -v, --verbose            Enable verbose logging\n      --level=<integer>    Log level [1|2|3] [default: 1]\n      --mode=<string>      [fast|safe]\n      --token=<string>     API token (required)\n      --db=<object>        Database settings\n      --db.port=<integer>"
   },
   {
     "spec": "help > puts the description of a flag too wide for the column on the next line",
@@ -122,7 +122,7 @@
       }
     ],
     "subcommand": "fmt",
-    "expect": "Usage: myapp fmt [file] [options]\n\nArguments:\n  file\n\nOptions:\n  -o, --output=<string>  Output path"
+    "expect": "Usage: myapp fmt [file] [options]\n\nArguments:\n  file\n\nOptions:\n      --file=<string>\n  -o, --output=<string>  Output path"
   },
   {
     "spec": "help with new features > generates help with short flags",
@@ -146,7 +146,7 @@
       }
     ],
     "subcommand": null,
-    "expect": "Usage: myapp [file] [options]\n\nArguments:\n  file  Input file\n\nOptions:\n      --verbose"
+    "expect": "Usage: myapp [file] [options]\n\nArguments:\n  file  Input file\n\nOptions:\n      --file=<string>  Input file\n      --verbose"
   },
   {
     "spec": "help with new features > marks the variadic in the usage line",
@@ -158,7 +158,7 @@
       }
     ],
     "subcommand": null,
-    "expect": "Usage: cp [sources]... <dest> [options]\n\nArguments:\n  sources  Files to copy\n  dest     Where to copy them\n\nOptions:"
+    "expect": "Usage: cp [sources]... <dest> [options]\n\nArguments:\n  sources  Files to copy\n  dest     Where to copy them\n\nOptions:\n      --sources=<array>  Files to copy\n      --dest=<string>    Where to copy them (required)"
   },
   {
     "spec": "help with new features > generates help for subcommands",
@@ -319,7 +319,7 @@
       }
     ],
     "subcommand": "query",
-    "expect": "Usage: myapp query <text> [options]\n\nArguments:\n  text  Search text\n\nOptions:\n  -n, --limit=<integer>  Result limit"
+    "expect": "Usage: myapp query <text> [options]\n\nArguments:\n  text  Search text\n\nOptions:\n      --text=<string>    Search text (required)\n  -n, --limit=<integer>  Result limit"
   },
   {
     "spec": "automatic help detection > cli.help(subcommand) works for nested subcommands",
@@ -345,7 +345,7 @@
       }
     ],
     "subcommand": "remote add",
-    "expect": "Usage: git remote add <name> [options]\n\nArguments:\n  name  Remote name\n\nOptions:"
+    "expect": "Usage: git remote add <name> [options]\n\nArguments:\n  name  Remote name\n\nOptions:\n      --name=<string>  Remote name (required)"
   },
   {
     "spec": "automatic help detection > cli.help(subcommand) works for nested subcommands",

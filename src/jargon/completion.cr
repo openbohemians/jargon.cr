@@ -234,10 +234,8 @@ module Jargon
     end
 
     private def flag_name_candidates(schema : Schema, partial : String) : Array(String)
-      positional = schema.positional
       tokens = ["--help", "-h"]
       props_of(schema).each do |name, prop|
-        next if positional.includes?(name)
         tokens << "--#{name}"
         tokens << "-#{prop.short}" if prop.short
       end
@@ -250,7 +248,8 @@ module Jargon
     # the cursor, the last so far, is one of theirs, or the variadic's when
     # none follows it.
     private def positional_at(schema : Schema, args : Array(String), cursor : Int32) : String?
-      names = schema.positional
+      named = named_fields(schema, args, cursor)
+      names = schema.positional.reject { |name| named.includes?(name) }
       idx = positional_index(schema, args, Math.min(cursor, args.size))
       variadic = schema.variadic.try { |name| names.index(name) }
       return names[idx]? unless variadic && idx >= variadic
@@ -344,6 +343,23 @@ module Jargon
         end
       end
       result
+    end
+
+    # The fields the line's flags set, apart from the word under the cursor.
+    # The parser skips these positionals when it gives out the bare words.
+    private def named_fields(schema : Schema, args : Array(String), cursor : Int32) : Array(String)
+      fields = {} of String => String
+      i = 0
+      while i < args.size
+        tok = args[i]
+        break if tok == "--"
+        if i != cursor && flag_token?(tok)
+          i += collect_flag(schema, args, i, fields)
+        else
+          i += 1
+        end
+      end
+      fields.keys
     end
 
     # Collect the fields a flag word sets, with the next word when it is the
