@@ -728,7 +728,8 @@ module Jargon
     end
 
     private def collect_variadic(args : Array(String), start : Int32, key : String, data : Hash(String, JSON::Any), errors : Array(String), schema : Schema, passthrough : Bool = false) : Int32
-      item_type = find_property(key, schema).try(&.items).try(&.type)
+      prop = find_property(key, schema)
+      item_type = prop.try(&.items).try(&.type)
       items = [] of JSON::Any
       i = start
       while i < args.size
@@ -738,9 +739,11 @@ module Jargon
         # look like negative numbers (-50). It stops only at a genuine flag so
         # that flag can be parsed normally. After `--` even flags are captured.
         break if !passthrough && flag_like?(current_arg)
-        coerced, coerce_error = coerce_scalar(key, current_arg, item_type)
-        errors << coerce_error if coerce_error
-        items << coerced
+        array_pieces(current_arg, prop).each do |piece|
+          coerced, coerce_error = coerce_scalar(key, piece, item_type)
+          errors << coerce_error if coerce_error
+          items << coerced
+        end
         i += 1
       end
       set_nested_value(data, key, JSON::Any.new(items), errors)
@@ -1024,12 +1027,13 @@ module Jargon
       when Property::Type::Integer, Property::Type::Number, Property::Type::Boolean
         coerce_scalar(key, value, type)
       when Property::Type::Array
-        # Coerce each comma-separated item to the array's `items` type, as a
-        # variadic positional does; report the first item that doesn't fit.
+        # The value is one item, or several when the property names
+        # separators. Coerce each to the array's `items` type, as a variadic
+        # positional does; report the first item that doesn't fit.
         item_type = prop.try(&.items).try(&.type)
         first_error = nil
-        items = value.split(",").map do |v|
-          coerced, error = coerce_scalar(key, v.strip, item_type)
+        items = array_pieces(value, prop).map do |v|
+          coerced, error = coerce_scalar(key, v, item_type)
           first_error ||= error
           coerced
         end
@@ -1042,6 +1046,16 @@ module Jargon
         else
           {JSON::Any.new(value), nil}
         end
+      end
+    end
+
+    # The items a word gives an array: the word itself, or its pieces when the
+    # property names separators.
+    private def array_pieces(value : String, prop : Property?) : Array(String)
+      if separators = prop.try(&.separator)
+        Property.split(value, separators)
+      else
+        [value]
       end
     end
 

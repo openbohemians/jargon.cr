@@ -14,6 +14,29 @@ module Jargon
       Null
     end
 
+    # What a `separator` names: the characters at which an array option's
+    # value is split into items (`"separator": "comma"` reads `-f 1,3` as
+    # `[1, 3]`).
+    enum Separator
+      Comma
+      Colon
+      Semicolon
+      Whitespace
+
+      def splits_at?(char : Char) : Bool
+        case self
+        in .comma?      then char == ','
+        in .colon?      then char == ':'
+        in .semicolon?  then char == ';'
+        in .whitespace? then char.whitespace?
+        end
+      end
+
+      def self.names : Array(String)
+        values.map(&.to_s.downcase)
+      end
+    end
+
     getter name : String
     getter type : Type
     getter description : String?
@@ -25,6 +48,7 @@ module Jargon
     getter ref : String?
     getter short : String?
     getter env : String?
+    getter separator : Array(Separator)?
     getter minimum : Float64?
     getter maximum : Float64?
     getter exclusive_minimum : Float64?
@@ -54,6 +78,7 @@ module Jargon
       @ref : String? = nil,
       @short : String? = nil,
       @env : String? = nil,
+      @separator : Array(Separator)? = nil,
       @minimum : Float64? = nil,
       @maximum : Float64? = nil,
       @exclusive_minimum : Float64? = nil,
@@ -91,6 +116,7 @@ module Jargon
         ref: json["$ref"]?.try(&.as_s?),
         short: json["short"]?.try(&.as_s?),
         env: json["env"]?.try(&.as_s?),
+        separator: parse_separator(name, type, json),
         minimum: parse_number(json, "minimum"),
         maximum: parse_number(json, "maximum"),
         exclusive_minimum: parse_number(json, "exclusiveMinimum"),
@@ -124,6 +150,39 @@ module Jargon
       end
 
       type
+    end
+
+    # `separator`: one name or a list of them, on an array.
+    private def self.parse_separator(name : String, type : Type, json : JSON::Any) : Array(Separator)?
+      return unless value = json["separator"]?
+      if json["$ref"]?
+        raise ArgumentError.new("Schema '#{name}' has 'separator' beside '$ref' (put it in the referenced schema)")
+      end
+      unless type.array?
+        raise ArgumentError.new("Schema '#{name}' has 'separator' but isn't an array (did you mean type: array?)")
+      end
+
+      entries = value.as_a? || [value]
+      separators = entries.map do |entry|
+        word = entry.as_s? || entry.to_json
+        Separator.values.find { |separator| separator.to_s.downcase == word } ||
+          raise ArgumentError.new("Schema '#{name}' has unknown separator '#{word}' (use #{Separator.names.join(", ")})")
+      end
+      separators.uniq unless separators.empty?
+    end
+
+    # Split an array option's value at its separators, trimming each piece and
+    # dropping empty ones, so `"a, b,,c"` is `["a", "b", "c"]`.
+    def self.split(value : String, separators : Array(Separator)) : Array(String)
+      pieces = [] of String
+      start = 0
+      value.each_char_with_index do |char, i|
+        next unless separators.any?(&.splits_at?(char))
+        pieces << value[start...i]
+        start = i + 1
+      end
+      pieces << value[start..]
+      pieces.map(&.strip).reject(&.empty?)
     end
 
     private def self.parse_properties(type : Type, json : JSON::Any) : Hash(String, Property)?

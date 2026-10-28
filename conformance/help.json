@@ -24,6 +24,18 @@
     "expect": "Usage: myapp [options]\n\nOptions:\n      --tags=<array>     [default: [\"a\",1]]\n      --limits=<object>  [default: {\"max\":2}]\n      --label=<string>   [default: null]\n      --name=<string>    [default: x]\n      --ratio=<number>   [default: 0.5]"
   },
   {
+    "spec": "help > says which separators a list takes",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ps",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"fields\": {\"type\": \"array\", \"separator\": \"comma\", \"description\": \"Fields to print\"},\n          \"output\": {\"type\": \"array\", \"separator\": [\"comma\", \"whitespace\"]},\n          \"path\": {\"type\": \"array\", \"separator\": [\"comma\", \"colon\", \"whitespace\"], \"default\": [\"/bin\"]}\n        }\n      }"
+      }
+    ],
+    "subcommand": null,
+    "expect": "Usage: ps [options]\n\nOptions:\n      --fields=<array>  Fields to print (comma-separated)\n      --output=<array>  (comma- or whitespace-separated)\n      --path=<array>    (comma-, colon- or whitespace-separated) [default: [\"/bin\"]]"
+  },
+  {
     "spec": "help > shows an empty string as \"\"",
     "cli": [
       {

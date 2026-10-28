@@ -843,6 +843,121 @@
     ]
   },
   {
+    "spec": "shell completion > candidates engine > completes an array's items, after the last separator",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ps",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\n            \"output\": {\n              \"type\": \"array\", \"short\": \"o\", \"separator\": [\"comma\", \"whitespace\"],\n              \"items\": {\"type\": \"string\", \"enum\": [\"pid\", \"comm\", \"cmd\"]}\n            },\n            \"sort\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"pid\", \"comm\"]}}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "ps",
+      "-o",
+      ""
+    ],
+    "cword": 2,
+    "expect": [
+      "pid",
+      "comm",
+      "cmd"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes an array's items, after the last separator",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ps",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\n            \"output\": {\n              \"type\": \"array\", \"short\": \"o\", \"separator\": [\"comma\", \"whitespace\"],\n              \"items\": {\"type\": \"string\", \"enum\": [\"pid\", \"comm\", \"cmd\"]}\n            },\n            \"sort\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"pid\", \"comm\"]}}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "ps",
+      "-o",
+      "pid,c"
+    ],
+    "cword": 2,
+    "expect": [
+      "pid,comm",
+      "pid,cmd"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes an array's items, after the last separator",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ps",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\n            \"output\": {\n              \"type\": \"array\", \"short\": \"o\", \"separator\": [\"comma\", \"whitespace\"],\n              \"items\": {\"type\": \"string\", \"enum\": [\"pid\", \"comm\", \"cmd\"]}\n            },\n            \"sort\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"pid\", \"comm\"]}}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "ps",
+      "-o",
+      "pid, c"
+    ],
+    "cword": 2,
+    "expect": [
+      "pid, comm",
+      "pid, cmd"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes an array's items, after the last separator",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ps",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\n            \"output\": {\n              \"type\": \"array\", \"short\": \"o\", \"separator\": [\"comma\", \"whitespace\"],\n              \"items\": {\"type\": \"string\", \"enum\": [\"pid\", \"comm\", \"cmd\"]}\n            },\n            \"sort\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"pid\", \"comm\"]}}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "ps",
+      "--output=pid,co"
+    ],
+    "cword": 1,
+    "expect": [
+      "--output=pid,comm"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes an array's items, after the last separator",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ps",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\n            \"output\": {\n              \"type\": \"array\", \"short\": \"o\", \"separator\": [\"comma\", \"whitespace\"],\n              \"items\": {\"type\": \"string\", \"enum\": [\"pid\", \"comm\", \"cmd\"]}\n            },\n            \"sort\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"pid\", \"comm\"]}}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "ps",
+      "--sort",
+      "co"
+    ],
+    "cword": 2,
+    "expect": [
+      "comm"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes an array's items, after the last separator",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ps",
+        "text": "{\n          \"type\": \"object\",\n          \"properties\": {\n            \"output\": {\n              \"type\": \"array\", \"short\": \"o\", \"separator\": [\"comma\", \"whitespace\"],\n              \"items\": {\"type\": \"string\", \"enum\": [\"pid\", \"comm\", \"cmd\"]}\n            },\n            \"sort\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"pid\", \"comm\"]}}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "ps",
+      "--sort",
+      "pid,co"
+    ],
+    "cword": 2,
+    "expect": []
+  },
+  {
     "spec": "shell completion > candidates engine > counts a colon-bearing operand as a filled positional slot",
     "cli": [
       {

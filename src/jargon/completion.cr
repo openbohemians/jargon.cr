@@ -203,18 +203,34 @@ module Jargon
       end
     end
 
+    # Candidates for a field's value. In an array's value of several items,
+    # they complete the item being typed, after the last separator, and keep
+    # what comes before it (`pid,co` gives `pid,comm`).
     private def value_candidates(schema : Schema, field : String, path : String, partial : String, args : Array(String)) : Array(String)?
+      prop = props_of(schema)[field]?
+      head = separated_head(partial, prop)
+      item = partial[head.size..]
+
       key = path.empty? ? field : "#{path}.#{field}"
-      if completer = @cli.completers[key]?
-        ctx = Context.new(partial, @words, path.empty? ? nil : path, collect_arguments(schema, args))
-        return completer.call(ctx)
-      end
+      candidates = if completer = @cli.completers[key]?
+                     completer.call(Context.new(item, @words, path.empty? ? nil : path, collect_arguments(schema, args)))
+                   elsif prop && (enum_values = prop.enum_values || (prop.type.array? ? prop.items.try(&.enum_values) : nil))
+                     filter(enum_values.map { |v| v.as_s? || v.to_json }, item)
+                   end
+      head.empty? ? candidates : candidates.try(&.map { |value| head + value })
+    end
 
-      if (prop = props_of(schema)[field]?) && (enum_values = prop.enum_values)
-        return filter(enum_values.map { |v| v.as_s? || v.to_json }, partial)
+    # What precedes the item being typed in an array's value: everything up
+    # to its last separator, and the blanks after it (`pid, ` in `pid, co`).
+    # Empty when the property names no separators.
+    private def separated_head(partial : String, prop : Property?) : String
+      return "" unless separators = prop.try(&.separator)
+      size = 0
+      partial.each_char_with_index do |char, i|
+        size = i + 1 if separators.any?(&.splits_at?(char))
       end
-
-      nil
+      rest = partial[size..]
+      partial[0, size + rest.size - rest.lstrip.size]
     end
 
     private def flag_name_candidates(schema : Schema, partial : String) : Array(String)

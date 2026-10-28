@@ -176,12 +176,18 @@ module Jargon
       prop.type.boolean? ? flag : "#{flag}=<#{prop.type.to_s.downcase}>"
     end
 
-    # What help says about an argument or option: its description, the values
-    # an enum allows, whether it's required (when `required`), and its default.
+    # What help says about an argument or option: its description, the
+    # separators of a list, the values an enum allows, whether it's required
+    # (when `required`), and its default.
     private def help_text_for(prop : Property, required : Bool) : String
       parts = [] of String
       if (desc = prop.description.try(&.rstrip)) && !desc.empty?
         parts << desc
+      end
+      if separators = prop.separator
+        names = separators.map { |separator| "#{separator.to_s.downcase}-" }
+        listed = names.size == 1 ? names.first : "#{names[0..-2].join(", ")} or #{names.last}"
+        parts << "(#{listed}separated)"
       end
       if (values = prop.enum_values) && !values.empty?
         parts << "[#{values.join("|") { |value| help_value(value) }}]"

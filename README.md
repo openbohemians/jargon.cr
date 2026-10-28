@@ -160,8 +160,46 @@ result = cli.parse(["user.name=John", "user.email=john@example.com"])
 | `integer` | `count=42` | Parsed as Int64, strict validation |
 | `number` | `rate=3.14` | Parsed as Float64, strict validation |
 | `boolean` | `verbose=true` or `--verbose` | Flag style supported |
-| `array` | `tags=a,b,c` | Comma-separated, and each time it's given adds to it (`-I a -I b`); variadic positionals coerce items to the `items` type |
+| `array` | `tags=a tags=b` | Each time it's given adds an item (`-I a -I b`), or several with a [separator](#lists); variadic positionals coerce items to the `items` type |
 | `object` | `user.name=John` | Dot notation |
+
+### Lists
+
+An array option takes one item each time it's given:
+
+```sh
+ls -I '*.o' -I '*.a'     # ignore: ["*.o", "*.a"]
+grep -e 'a,b'            # regexp: ["a,b"], comma and all
+```
+
+For a value that holds several items, name its `separator`:
+
+```json
+{
+  "properties": {
+    "fields": {"type": "array", "items": {"type": "integer"}, "separator": "comma"},
+    "output": {"type": "array", "items": {"type": "string"}, "separator": ["comma", "whitespace"]}
+  }
+}
+```
+
+```sh
+cut -f 1,3 -f 5          # fields: [1, 3, 5]
+ps -o "pid, comm user"   # output: ["pid", "comm", "user"]
+```
+
+The separators are `comma`, `colon`, `semicolon`, and `whitespace` (any
+spaces, tabs, or newlines), and a list of them splits at any one. Each piece
+is trimmed and empty ones are dropped, so `--output=` gives `[]`. A
+separator applies wherever a word becomes items: an option's value,
+`key=value`, an environment variable, and each word of a variadic
+positional. Defaults, config files, and JSON from stdin hold arrays already,
+so they aren't split. An item can't contain its separator on the command
+line; there's no escape. Help names the separators (`(comma-separated)`),
+and completion completes the item after the last one.
+
+Before 0.25.0, every array option split at commas; add `"separator":
+"comma"` to keep that.
 
 ### Validation Constraints
 
@@ -468,7 +506,7 @@ myapp --completions zsh > ~/.zfunc/_myapp
 myapp --completions fish > ~/.config/fish/completions/myapp.fish
 ```
 
-Out of the box you get completion for subcommand names (including nested), long and short flags, and `enum` values (both `--mode <Tab>` and `--mode=<Tab>`) — all derived from the schema, no extra code. Values containing `:` (`Expenses:Food`) complete as whole words in every shell, including bash, where the shim undoes readline's splitting at `=` and `:`.
+Out of the box you get completion for subcommand names (including nested), long and short flags, and `enum` values (both `--mode <Tab>` and `--mode=<Tab>`, and an array's items) — all derived from the schema, no extra code. Values containing `:` (`Expenses:Food`) complete as whole words in every shell, including bash, where the shim undoes readline's splitting at `=` and `:`.
 
 ### Dynamic Completions
 

@@ -1,5 +1,70 @@
 [
   {
+    "spec": "type coercion > rejects a separator it doesn't know, or one off an array",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\"type\": \"object\", \"properties\": {\"tags\": {\"type\": \"array\", \"separator\": \"coma\"}}}"
+      }
+    ],
+    "expect": {
+      "raises": "Schema 'tags' has unknown separator 'coma' (use comma, colon, semicolon, whitespace)"
+    }
+  },
+  {
+    "spec": "type coercion > rejects a separator it doesn't know, or one off an array",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\"type\": \"object\", \"properties\": {\"tags\": {\"type\": \"array\", \"separator\": [\"comma\", \",\"]}}}"
+      }
+    ],
+    "expect": {
+      "raises": "Schema 'tags' has unknown separator ',' (use comma, colon, semicolon, whitespace)"
+    }
+  },
+  {
+    "spec": "type coercion > rejects a separator it doesn't know, or one off an array",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\"type\": \"object\", \"properties\": {\"tags\": {\"type\": \"array\", \"separator\": 5}}}"
+      }
+    ],
+    "expect": {
+      "raises": "Schema 'tags' has unknown separator '5' (use comma, colon, semicolon, whitespace)"
+    }
+  },
+  {
+    "spec": "type coercion > rejects a separator it doesn't know, or one off an array",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\"type\": \"object\", \"properties\": {\"tags\": {\"type\": \"string\", \"separator\": \"comma\"}}}"
+      }
+    ],
+    "expect": {
+      "raises": "Schema 'tags' has 'separator' but isn't an array (did you mean type: array?)"
+    }
+  },
+  {
+    "spec": "type coercion > rejects a separator it doesn't know, or one off an array",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\n          \"type\": \"object\",\n          \"$defs\": {\"list\": {\"type\": \"array\"}},\n          \"properties\": {\"tags\": {\"$ref\": \"#/$defs/list\", \"separator\": \"comma\"}}\n        }"
+      }
+    ],
+    "expect": {
+      "raises": "Schema 'tags' has 'separator' beside '$ref' (put it in the referenced schema)"
+    }
+  },
+  {
     "spec": "subcommands > raises when properties is present under an explicit non-object type",
     "schema": "{\n          \"type\": \"string\",\n          \"properties\": {\"name\": {\"type\": \"string\"}}\n        }",
     "expect": {

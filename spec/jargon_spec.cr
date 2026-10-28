@@ -136,7 +136,7 @@ describe Jargon do
         "properties": {
           "count": {"type": "integer"},
           "level": {"type": "integer", "enum": [1, 2, 3]},
-          "ids": {"type": "array", "items": {"type": "integer"}},
+          "ids": {"type": "array", "items": {"type": "integer"}, "separator": "comma"},
           "server": {"type": "object", "properties": {"port": {"type": "integer", "minimum": 1}}},
           "debug": {"type": "boolean", "env": "JARGON_SPEC_DEBUG"}
         }
@@ -296,11 +296,11 @@ describe Jargon do
       result.errors.first.should contain("true/false")
     end
 
-    it "coerces array values" do
+    it "splits an array's value at its separator" do
       cli = Jargon.cli("cli", json: %({
         "type": "object",
         "properties": {
-          "tags": {"type": "array", "items": {"type": "string"}}
+          "tags": {"type": "array", "items": {"type": "string"}, "separator": "comma"}
         }
       }))
 
@@ -309,11 +309,11 @@ describe Jargon do
       result["tags"].as_a.map(&.as_s).should eq(["a", "b", "c"])
     end
 
-    it "coerces comma-separated array items to the items type" do
+    it "coerces each piece of a separated value to the items type" do
       cli = Jargon.cli("cli", json: %({
         "type": "object",
         "properties": {
-          "nums": {"type": "array", "items": {"type": "integer"}}
+          "nums": {"type": "array", "items": {"type": "integer"}, "separator": "comma"}
         }
       }))
 
@@ -342,9 +342,9 @@ describe Jargon do
       result.valid?.should be_true
       result["ignore"].as_a.map(&.as_s).should eq(["*.o", "*.a"])
 
-      # Every form adds, and each still splits at commas.
+      # Every form adds an item.
       result = cli.parse(["--ignore", "a,b", "-Ic", "--ignore=d", "ignore=e"])
-      result["ignore"].as_a.map(&.as_s).should eq(["a", "b", "c", "d", "e"])
+      result["ignore"].as_a.map(&.as_s).should eq(["a,b", "c", "d", "e"])
 
       result = cli.parse(["--server.hosts", "x", "--server.hosts", "y"])
       result["server"]["hosts"].as_a.map(&.as_s).should eq(["x", "y"])
@@ -368,6 +368,96 @@ describe Jargon do
       defaults = {"ignore" => JSON.parse(%(["*.tmp"]))}
       result = cli.parse(["-I", "*.o", "-I", "*.a"], defaults: defaults)
       result["ignore"].as_a.map(&.as_s).should eq(["*.o", "*.a"])
+    end
+
+    it "takes an array's value whole when it names no separator" do
+      cli = Jargon.cli("grep", json: %({
+        "type": "object",
+        "properties": {
+          "regexp": {"type": "array", "items": {"type": "string"}, "short": "e", "env": "JARGON_SPEC_REGEXP"}
+        }
+      }))
+
+      cli.parse(["-e", "a,b"])["regexp"].as_a.map(&.as_s).should eq(["a,b"])
+      cli.parse(["-e", " a "])["regexp"].as_a.map(&.as_s).should eq([" a "])
+      begin
+        ENV["JARGON_SPEC_REGEXP"] = "a,b"
+        cli.parse([] of String)["regexp"].as_a.map(&.as_s).should eq(["a,b"])
+      ensure
+        ENV.delete("JARGON_SPEC_REGEXP")
+      end
+    end
+
+    it "splits at any of the separators a list names, dropping empty pieces" do
+      cli = Jargon.cli("ps", json: %({
+        "type": "object",
+        "properties": {
+          "output": {"type": "array", "items": {"type": "string"}, "short": "o", "separator": ["comma", "whitespace"]},
+          "path": {"type": "array", "items": {"type": "string"}, "separator": "colon"},
+          "libs": {"type": "array", "items": {"type": "string"}, "separator": "semicolon"}
+        }
+      }))
+
+      result = cli.parse(["-o", "pid, comm  user,", "-o", "tty\targs"])
+      result.valid?.should be_true
+      result["output"].as_a.map(&.as_s).should eq(["pid", "comm", "user", "tty", "args"])
+
+      cli.parse(["--path", "/usr/bin:/bin"])["path"].as_a.map(&.as_s).should eq(["/usr/bin", "/bin"])
+      cli.parse(["--libs", "a;b"])["libs"].as_a.map(&.as_s).should eq(["a", "b"])
+      # An empty value is an empty list.
+      cli.parse(["--output="])["output"].as_a.should be_empty
+    end
+
+    it "splits an environment variable at the array's separator" do
+      cli = Jargon.cli("cli", json: %({
+        "type": "object",
+        "properties": {
+          "path": {"type": "array", "items": {"type": "string"}, "separator": "colon", "env": "JARGON_SPEC_PATH"}
+        }
+      }))
+
+      begin
+        ENV["JARGON_SPEC_PATH"] = "/a:/b"
+        cli.parse([] of String)["path"].as_a.map(&.as_s).should eq(["/a", "/b"])
+      ensure
+        ENV.delete("JARGON_SPEC_PATH")
+      end
+    end
+
+    it "splits each word of a variadic positional at its separator" do
+      cli = Jargon.cli("cut", json: %({
+        "type": "object",
+        "positional": ["fields"],
+        "properties": {
+          "fields": {"type": "array", "items": {"type": "integer"}, "separator": "comma"}
+        }
+      }))
+
+      result = cli.parse(["1,3", "5"])
+      result.valid?.should be_true
+      result["fields"].as_a.map(&.as_i64).should eq([1, 3, 5])
+    end
+
+    it "rejects a separator it doesn't know, or one off an array" do
+      expect_raises(ArgumentError, "Schema 'tags' has unknown separator 'coma' (use comma, colon, semicolon, whitespace)") do
+        Jargon.cli("cli", json: %({"type": "object", "properties": {"tags": {"type": "array", "separator": "coma"}}}))
+      end
+      expect_raises(ArgumentError, "Schema 'tags' has unknown separator ',' (use comma, colon, semicolon, whitespace)") do
+        Jargon.cli("cli", json: %({"type": "object", "properties": {"tags": {"type": "array", "separator": ["comma", ","]}}}))
+      end
+      expect_raises(ArgumentError, "Schema 'tags' has unknown separator '5' (use comma, colon, semicolon, whitespace)") do
+        Jargon.cli("cli", json: %({"type": "object", "properties": {"tags": {"type": "array", "separator": 5}}}))
+      end
+      expect_raises(ArgumentError, "Schema 'tags' has 'separator' but isn't an array (did you mean type: array?)") do
+        Jargon.cli("cli", json: %({"type": "object", "properties": {"tags": {"type": "string", "separator": "comma"}}}))
+      end
+      expect_raises(ArgumentError, "Schema 'tags' has 'separator' beside '$ref' (put it in the referenced schema)") do
+        Jargon.cli("cli", json: %({
+          "type": "object",
+          "$defs": {"list": {"type": "array"}},
+          "properties": {"tags": {"$ref": "#/$defs/list", "separator": "comma"}}
+        }))
+      end
     end
   end
 
@@ -532,7 +622,8 @@ describe Jargon do
         "properties": {
           "tags": {
             "type": "array",
-            "items": {"type": "string", "enum": ["alpha", "beta", "stable"]}
+            "items": {"type": "string", "enum": ["alpha", "beta", "stable"]},
+            "separator": "comma"
           }
         }
       }))
@@ -657,7 +748,7 @@ describe Jargon do
       cli = Jargon.cli("cli", json: %({
         "type": "object",
         "properties": {
-          "files": {"type": "array", "minItems": 1, "maxItems": 3}
+          "files": {"type": "array", "minItems": 1, "maxItems": 3, "separator": "comma"}
         }
       }))
 
@@ -689,7 +780,7 @@ describe Jargon do
       cli = Jargon.cli("cli", json: %({
         "type": "object",
         "properties": {
-          "tags": {"type": "array", "uniqueItems": true}
+          "tags": {"type": "array", "uniqueItems": true, "separator": "comma"}
         }
       }))
 
@@ -998,6 +1089,22 @@ describe Jargon do
       help.should contain(%(--label=<string>   [default: null]))
       help.should contain(%(--name=<string>    [default: x]))
       help.should contain(%(--ratio=<number>   [default: 0.5]))
+    end
+
+    it "says which separators a list takes" do
+      cli = Jargon.cli("ps", json: %({
+        "type": "object",
+        "properties": {
+          "fields": {"type": "array", "separator": "comma", "description": "Fields to print"},
+          "output": {"type": "array", "separator": ["comma", "whitespace"]},
+          "path": {"type": "array", "separator": ["comma", "colon", "whitespace"], "default": ["/bin"]}
+        }
+      }))
+
+      help = cli.help
+      help.should contain(%(--fields=<array>  Fields to print (comma-separated)))
+      help.should contain(%(--output=<array>  (comma- or whitespace-separated)))
+      help.should contain(%(--path=<array>    (comma-, colon- or whitespace-separated) [default: ["/bin"]]))
     end
 
     it "shows an empty string as \"\"" do
@@ -3753,6 +3860,27 @@ describe Jargon do
         c.candidates(["ls", "-af", "long", ""], 3).should eq(["fast", "safe"])
         # One with the value attached takes no other word.
         c.candidates(["ls", "-aflong", ""], 2).should eq(["fast", "safe"])
+      end
+
+      it "completes an array's items, after the last separator" do
+        cli = Jargon.cli("ps", json: %({
+          "type": "object",
+          "properties": {
+            "output": {
+              "type": "array", "short": "o", "separator": ["comma", "whitespace"],
+              "items": {"type": "string", "enum": ["pid", "comm", "cmd"]}
+            },
+            "sort": {"type": "array", "items": {"type": "string", "enum": ["pid", "comm"]}}
+          }
+        }))
+        c = Jargon::Completion.new(cli)
+        c.candidates(["ps", "-o", ""], 2).should eq(["pid", "comm", "cmd"])
+        c.candidates(["ps", "-o", "pid,c"], 2).should eq(["pid,comm", "pid,cmd"])
+        c.candidates(["ps", "-o", "pid, c"], 2).should eq(["pid, comm", "pid, cmd"])
+        c.candidates(["ps", "--output=pid,co"], 1).should eq(["--output=pid,comm"])
+        # Without a separator, the whole word is one item.
+        c.candidates(["ps", "--sort", "co"], 2).should eq(["comm"])
+        c.candidates(["ps", "--sort", "pid,co"], 2).should eq([] of String)
       end
 
       it "counts a colon-bearing operand as a filled positional slot" do
