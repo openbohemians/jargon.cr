@@ -116,7 +116,8 @@
       "description": "Follow each command line symbolic link that points to a directory"
     },
     "hide": {
-      "type": "string",
+      "type": "array",
+      "items": {"type": "string"},
       "description": "Do not list implied entries matching shell PATTERN"
     },
     "hyperlink": {
@@ -135,7 +136,8 @@
       "description": "Print the index number of each file"
     },
     "ignore": {
-      "type": "string",
+      "type": "array",
+      "items": {"type": "string"},
       "short": "I",
       "description": "Do not list implied entries matching shell PATTERN"
     },
