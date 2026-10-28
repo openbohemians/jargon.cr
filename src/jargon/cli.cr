@@ -623,27 +623,25 @@ module Jargon
     end
 
     # Walk the argument tokens, filling `data`/`errors`. A first walk finds the
-    # positionals set by name and the bare words, so that the words fill the
-    # other positionals wherever the options are among them (`grep a -e foo
-    # b`); the second applies everything in order.
+    # positionals set by name and the bare words, so that the words go to the
+    # positionals with room, wherever the options are among them (`grep a -e
+    # foo b`); the second applies everything in order. A positional that
+    # holds one value is full once it's given; the variadic never is, and its
+    # words add to what an option gave it (`cp --sources a b dir/`).
     private def consume_tokens(args : Array(String), schema : Schema, data : Hash(String, JSON::Any), errors : Array(String), positional_names : Array(String)) : Nil
       short_to_long = build_short_map(schema)
       named = {} of String => JSON::Any
       words = [] of Int32
       walk_tokens(args, schema, short_to_long, named, [] of String) { |_, i| words << i }
-      open = positional_names.reject { |name| nested_value(named, name) }
+      open = positional_names.reject { |name| name != schema.variadic && nested_value(named, name) }
       slots = fill_slots(words, open, schema.variadic)
 
-      variadic_words = [] of String
       walk_tokens(args, schema, short_to_long, data, errors) do |arg, i|
         case slot = slots[i]?
         when nil             then handle_extra_arg(arg, args, i, data, errors, schema)
-        when schema.variadic then variadic_words << arg
+        when schema.variadic then add_variadic(slot, arg, data, errors, schema)
         else                      set_positional(slot, arg, data, errors, schema)
         end
-      end
-      if (key = schema.variadic) && open.includes?(key)
-        set_variadic(key, variadic_words, data, errors, schema)
       end
     end
 
@@ -778,18 +776,17 @@ module Jargon
       set_nested_value(data, key, coerced, errors)
     end
 
-    private def set_variadic(key : String, words : Array(String), data : Hash(String, JSON::Any), errors : Array(String), schema : Schema) : Nil
+    # Add a word's items to the variadic, after those it has, as a repeated
+    # array option adds them.
+    private def add_variadic(key : String, word : String, data : Hash(String, JSON::Any), errors : Array(String), schema : Schema) : Nil
       prop = find_property(key, schema)
       item_type = prop.try(&.items).try(&.type)
-      items = [] of JSON::Any
-      words.each do |word|
-        array_pieces(word, prop).each do |piece|
-          coerced, coerce_error = coerce_scalar(key, piece, item_type)
-          errors << coerce_error if coerce_error
-          items << coerced
-        end
+      items = array_pieces(word, prop).map do |piece|
+        coerced, coerce_error = coerce_scalar(key, piece, item_type)
+        errors << coerce_error if coerce_error
+        coerced
       end
-      set_nested_value(data, key, JSON::Any.new(items), errors)
+      set_option_value(data, key, JSON::Any.new(items), errors, schema)
     end
 
     # A variadic never given is an empty list.

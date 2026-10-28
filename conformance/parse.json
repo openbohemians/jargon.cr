@@ -3395,11 +3395,11 @@
     ],
     "expect": {
       "data": {
-        "number": true,
         "files": [
           "a.txt",
           "b.txt"
-        ]
+        ],
+        "number": true
       },
       "errors": [],
       "subcommand": null,
@@ -3456,11 +3456,11 @@
     ],
     "expect": {
       "data": {
-        "amount": 9.0,
         "items": [
           "a:b",
           "c:d"
-        ]
+        ],
+        "amount": 9.0
       },
       "errors": [],
       "subcommand": null,
@@ -3589,11 +3589,11 @@
     ],
     "expect": {
       "data": {
-        "dest": "dir/",
         "sources": [
           "a",
           "b"
-        ]
+        ],
+        "dest": "dir/"
       },
       "errors": [],
       "subcommand": null,
@@ -3617,10 +3617,10 @@
     ],
     "expect": {
       "data": {
-        "dest": "dir/",
         "sources": [
           "a"
-        ]
+        ],
+        "dest": "dir/"
       },
       "errors": [],
       "subcommand": null,
@@ -3671,11 +3671,11 @@
     "expect": {
       "data": {
         "verbose": true,
-        "dest": "dir/",
         "sources": [
           "a",
           "b"
-        ]
+        ],
+        "dest": "dir/"
       },
       "errors": [],
       "subcommand": null,
@@ -3701,12 +3701,12 @@
     ],
     "expect": {
       "data": {
-        "dest": "dir/",
-        "verbose": true,
         "sources": [
           "a",
           "b"
-        ]
+        ],
+        "dest": "dir/",
+        "verbose": true
       },
       "errors": [],
       "subcommand": null,
@@ -3732,12 +3732,12 @@
     ],
     "expect": {
       "data": {
-        "verbose": true,
-        "dest": "dir/",
         "sources": [
           "a",
           "b"
-        ]
+        ],
+        "verbose": true,
+        "dest": "dir/"
       },
       "errors": [],
       "subcommand": null,
@@ -3763,11 +3763,11 @@
     ],
     "expect": {
       "data": {
-        "dest": "dir/",
         "sources": [
           "-a",
           "b"
-        ]
+        ],
+        "dest": "dir/"
       },
       "errors": [],
       "subcommand": null,
@@ -3796,13 +3796,13 @@
     "expect": {
       "data": {
         "format": "zip",
-        "out": "out.zip",
-        "log": "pack.log",
         "inputs": [
           1,
           2,
           3
-        ]
+        ],
+        "out": "out.zip",
+        "log": "pack.log"
       },
       "errors": [],
       "subcommand": null,
@@ -3908,11 +3908,11 @@
     ],
     "expect": {
       "data": {
-        "pattern": "foo",
         "files": [
           "a.txt",
           "b.txt"
-        ]
+        ],
+        "pattern": "foo"
       },
       "errors": [],
       "subcommand": null,
@@ -3997,11 +3997,11 @@
     ],
     "expect": {
       "data": {
-        "dest": "dir/",
         "sources": [
           "a",
           "b"
-        ]
+        ],
+        "dest": "dir/"
       },
       "errors": [],
       "subcommand": null,
@@ -4137,12 +4137,71 @@
     "expect": {
       "data": {
         "files": [
-          "a"
+          "a",
+          "b"
         ]
       },
-      "errors": [
-        "Unexpected argument 'b'"
-      ],
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "variadic positionals > skips a positional given by name, wherever the option is",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cat",
+        "text": "{\"type\": \"object\", \"positional\": [\"files*\"], \"properties\": {\"files\": {\"type\": \"array\"}}}"
+      }
+    ],
+    "args": [
+      "b",
+      "--files",
+      "a",
+      "c"
+    ],
+    "expect": {
+      "data": {
+        "files": [
+          "b",
+          "a",
+          "c"
+        ]
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "variadic positionals > skips a positional given by name, wherever the option is",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cp",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"sources*\", \"dest\"],\n        \"properties\": {\n          \"sources\": {\"type\": \"array\"},\n          \"dest\": {\"type\": \"string\", \"short\": \"t\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "--sources",
+      "a",
+      "b",
+      "dir/"
+    ],
+    "expect": {
+      "data": {
+        "sources": [
+          "a",
+          "b"
+        ],
+        "dest": "dir/"
+      },
+      "errors": [],
       "subcommand": null,
       "help": false,
       "help_subcommand": null,

@@ -317,8 +317,11 @@ myapp input.txt output.txt --verbose
 
 Options can come anywhere among the words. A positional is a property like any
 other, so it's an option too (`--file input.txt`), and help lists it under
-Options as well as Arguments. One given by name is skipped when the words are
-given out, wherever the option is, as `grep -e` and `cp -t` do:
+Options as well as Arguments. The words go to the positionals with room,
+wherever the options are: one that holds a single value is full once it's
+given, by name or by a word, as `grep -e` and `cp -t` expect, and a variadic is
+never full, so its words add to what an option gave it (`cp --sources a b
+dir/`):
 
 ```crystal
 schema = %({

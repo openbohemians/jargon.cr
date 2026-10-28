@@ -1127,6 +1127,28 @@
     "cli": [
       {
         "op": "from_json",
+        "program": "deploy",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\", \"hosts*\"],\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"short\": \"m\", \"enum\": [\"fast\", \"safe\"]},\n            \"hosts\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"web1\", \"web2\"]}}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "deploy",
+      "--hosts",
+      "web1",
+      "fast",
+      ""
+    ],
+    "cword": 4,
+    "expect": [
+      "web1",
+      "web2"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes the positional after a variadic, as the parser would fill it",
+    "cli": [
+      {
+        "op": "from_json",
         "program": "cat",
         "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"files\"],\n          \"properties\": {\"files\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"a\", \"b\"]}}}\n        }"
       }

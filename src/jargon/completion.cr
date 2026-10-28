@@ -249,7 +249,7 @@ module Jargon
     # none follows it.
     private def positional_at(schema : Schema, args : Array(String), cursor : Int32) : String?
       named = named_fields(schema, args, cursor)
-      names = schema.positional.reject { |name| named.includes?(name) }
+      names = schema.positional.reject { |name| name != schema.variadic && named.includes?(name) }
       idx = positional_index(schema, args, Math.min(cursor, args.size))
       variadic = schema.variadic.try { |name| names.index(name) }
       return names[idx]? unless variadic && idx >= variadic
@@ -346,7 +346,8 @@ module Jargon
     end
 
     # The fields the line's flags set, apart from the word under the cursor.
-    # The parser skips these positionals when it gives out the bare words.
+    # The parser skips these positionals, but the variadic, when it gives out
+    # the bare words.
     private def named_fields(schema : Schema, args : Array(String), cursor : Int32) : Array(String)
       fields = {} of String => String
       i = 0

@@ -1609,11 +1609,15 @@ describe Jargon do
       myapp.parse(["a", "b", "mode=fast", "--mode", "slow"])["mode"].as_s.should eq("slow")
       myapp.parse(["a", "b", "--mode", "slow", "mode=fast"])["mode"].as_s.should eq("fast")
 
-      # A variadic given by name takes no words.
+      # A variadic is never full: its words add to what the option gave, in
+      # the order given.
       cat = Jargon.cli("cat", json: %q({"type": "object", "positional": ["files*"], "properties": {"files": {"type": "array"}}}))
-      result = cat.parse(["--files", "a", "b"])
-      result["files"].as_a.map(&.as_s).should eq(["a"])
-      result.errors.should eq(["Unexpected argument 'b'"])
+      cat.parse(["--files", "a", "b"])["files"].as_a.map(&.as_s).should eq(["a", "b"])
+      cat.parse(["b", "--files", "a", "c"])["files"].as_a.map(&.as_s).should eq(["b", "a", "c"])
+      result = cp.parse(["--sources", "a", "b", "dir/"])
+      result.valid?.should be_true
+      result["sources"].as_a.map(&.as_s).should eq(["a", "b"])
+      result["dest"].as_s.should eq("dir/")
     end
 
     it "takes one word for an array positional without a *" do
@@ -4199,6 +4203,8 @@ describe Jargon do
         c.candidates(["deploy", ""], 1).should eq(["fast", "safe"])
         c.candidates(["deploy", "-m", "fast", ""], 3).should eq(["web1", "web2"])
         c.candidates(["deploy", "", "--mode", "fast"], 1).should eq(["web1", "web2"])
+        # The variadic isn't, since it takes more.
+        c.candidates(["deploy", "--hosts", "web1", "fast", ""], 4).should eq(["web1", "web2"])
 
         # Without a *, an array positional takes one word.
         cli = Jargon.cli("cat", json: %({
