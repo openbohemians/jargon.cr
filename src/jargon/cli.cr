@@ -18,6 +18,10 @@ module Jargon
   # then `parse` arguments into a `Result`, `json` straight to validated data,
   # or `run` to also handle `--help`, completion, and error exits.
   class CLI
+    # Alone on a command line, or after the subcommand, it reads options as
+    # JSON from stdin (`xerp mark -@ < options.json`).
+    STDIN_JSON = "-@"
+
     getter schema : Schema?
     getter program_name : String
     getter subcommands : Hash(String, Schema | CLI)
@@ -332,7 +336,7 @@ module Jargon
     end
 
     # Set the JSON key that names the subcommand when parsing full JSON from
-    # stdin (the `-` form). Defaults to `"subcommand"`.
+    # stdin (the `-@` form). Defaults to `"subcommand"`.
     def subcommand_key(key : String)
       @subcommand_key = key
     end
@@ -368,13 +372,25 @@ module Jargon
       parse(args, STDIN, defaults: defaults)
     end
 
-    # :ditto: `input` supplies the stream read for the `-` (stdin JSON) form.
+    # :ditto: `input` supplies the stream read for the `-@` (stdin JSON) form.
     def parse(args : Array(String), input : IO, *, defaults : Defaults? = nil) : Result
       parse_scoped(args, input, {} of String => JSON::Any, defaults_hash(defaults))
     end
 
     # Parse with the defaults split as `parse` describes: `globals`, those
     # from further up, and `section`, the ones given for this CLI.
+    # The JSON form, given an outer CLI's JSON for this one: the subcommand's
+    # name in it if this CLI has subcommands, its options if not.
+    protected def parse_json_scoped(input : IO, globals : Hash(String, JSON::Any), section : Hash(String, JSON::Any)) : Result
+      if !@subcommands.empty?
+        parse_from_stdin_full(input, globals, section)
+      elsif schema = @schema
+        parse_from_stdin_args(input, schema, command_defaults(schema, globals, section))
+      else
+        raise ArgumentError.new("CLI has no schema and no subcommands defined")
+      end
+    end
+
     protected def parse_scoped(args : Array(String), input : IO, globals : Hash(String, JSON::Any), section : Hash(String, JSON::Any)) : Result
       if !@subcommands.empty?
         parse_with_subcommands(args, input, globals, section)
@@ -447,8 +463,8 @@ module Jargon
     end
 
     private def parse_with_subcommands(args : Array(String), input : IO, globals : Hash(String, JSON::Any), section : Hash(String, JSON::Any)) : Result
-      # Handle "xerp -" - full JSON with subcommand field
-      return parse_from_stdin_full(input, globals, section) if args == ["-"]
+      # "xerp -@": JSON naming the subcommand
+      return parse_from_stdin_full(input, globals, section) if args == [STDIN_JSON]
 
       # Check for top-level help (--help/-h before any subcommand)
       return Result.new({} of String => JSON::Any, [] of String, nil, true, nil) if help_flag?(args.first?)
@@ -534,9 +550,9 @@ module Jargon
 
       case subcmd
       when CLI
-        # For nested CLI, pass remaining JSON to it via stdin simulation
+        # A nested CLI reads the rest of the JSON as its own.
         nested_input = IO::Memory.new(data.to_json)
-        result = subcmd.parse_scoped(["-"], nested_input, globals, section)
+        result = subcmd.parse_json_scoped(nested_input, globals, section)
         full_subcmd = result.subcommand ? "#{subcmd_name} #{result.subcommand}" : subcmd_name
         return Result.new(result.data, result.errors, full_subcmd)
       when Schema
@@ -570,8 +586,9 @@ module Jargon
     end
 
     private def parse_flat(args : Array(String), schema : Schema, input : IO, subcommand_path : String?, defaults : Hash(String, JSON::Any)) : Result
-      # Handle "xerp mark -" - JSON args for this schema
-      if args == ["-"]
+      # "xerp mark -@": JSON options for this schema, unless the schema
+      # claims -@ for an option of its own, as it may -h.
+      if args == [STDIN_JSON] && !build_short_map(schema).has_key?("@")
         return parse_from_stdin_args(input, schema, defaults)
       end
 
@@ -668,6 +685,9 @@ module Jargon
           set_option_value(data, key, value, errors, schema)
         end
         consumed
+      elsif short_keys == "@"
+        errors << "'#{STDIN_JSON}' reads options as JSON from stdin, and takes no other arguments"
+        1
       else
         errors << unknown_option_error(short_keys, short_to_long.keys, "-")
         1

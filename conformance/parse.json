@@ -6319,6 +6319,149 @@
     }
   },
   {
+    "spec": "stdin JSON input > reads -@ alone as JSON, and a lone - as an argument",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cat",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"files\"],\n        \"properties\": {\n          \"files\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}},\n          \"number\": {\"type\": \"boolean\", \"short\": \"n\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "-@"
+    ],
+    "stdin": "{\"number\": true, \"files\": [\"a\"]}",
+    "expect": {
+      "data": {
+        "number": true,
+        "files": [
+          "a"
+        ]
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "stdin JSON input > reads -@ alone as JSON, and a lone - as an argument",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cat",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"files\"],\n        \"properties\": {\n          \"files\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}},\n          \"number\": {\"type\": \"boolean\", \"short\": \"n\"}\n        }\n      }"
+      }
+    ],
+    "args": [
+      "-"
+    ],
+    "stdin": "{\"number\": true}",
+    "expect": {
+      "data": {
+        "files": [
+          "-"
+        ]
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "stdin JSON input > rejects -@ among other arguments",
+    "cli": [
+      {
+        "op": "new",
+        "program": "xerp"
+      },
+      {
+        "op": "subcommand_json",
+        "name": "mark",
+        "text": "{\"type\": \"object\", \"properties\": {\"useful\": {\"type\": \"boolean\"}}}"
+      }
+    ],
+    "args": [
+      "mark",
+      "-@",
+      "--useful"
+    ],
+    "stdin": "{}",
+    "expect": {
+      "data": {
+        "useful": true
+      },
+      "errors": [
+        "'-@' reads options as JSON from stdin, and takes no other arguments"
+      ],
+      "subcommand": "mark",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "stdin JSON input > leaves -@ to a schema that defines it, as it does -h",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "ls",
+        "text": "{\n        \"type\": \"object\",\n        \"properties\": {\"xattr\": {\"type\": \"boolean\", \"short\": \"@\"}}\n      }"
+      }
+    ],
+    "args": [
+      "-@"
+    ],
+    "stdin": "{\"xattr\": false}",
+    "expect": {
+      "data": {
+        "xattr": true
+      },
+      "errors": [],
+      "subcommand": null,
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
+    "spec": "stdin JSON input > reads a nested CLI's options from the JSON, even one that defines -@",
+    "cli": [
+      {
+        "op": "new",
+        "program": "tools"
+      },
+      {
+        "op": "subcommand_cli",
+        "name": "ls",
+        "cli": [
+          {
+            "op": "from_json",
+            "program": "ls",
+            "text": "{\n        \"type\": \"object\",\n        \"properties\": {\n          \"all\": {\"type\": \"boolean\"},\n          \"xattr\": {\"type\": \"boolean\", \"short\": \"@\"}\n        }\n      }"
+          }
+        ]
+      }
+    ],
+    "args": [
+      "-@"
+    ],
+    "stdin": "{\"subcommand\": \"ls\", \"all\": true}",
+    "expect": {
+      "data": {
+        "all": true
+      },
+      "errors": [],
+      "subcommand": "ls",
+      "help": false,
+      "help_subcommand": null,
+      "completion_shell": null
+    }
+  },
+  {
     "spec": "stdin JSON input > parses JSON from stdin with subcommand in JSON",
     "cli": [
       {
@@ -6332,7 +6475,7 @@
       }
     ],
     "args": [
-      "-"
+      "-@"
     ],
     "stdin": "{\"subcommand\": \"query\", \"query_text\": \"search term\", \"top\": 5}",
     "expect": {
@@ -6362,7 +6505,7 @@
     ],
     "args": [
       "mark",
-      "-"
+      "-@"
     ],
     "stdin": "{\"result_id\": \"abc123\", \"useful\": true}",
     "expect": {
@@ -6395,7 +6538,7 @@
       }
     ],
     "args": [
-      "-"
+      "-@"
     ],
     "stdin": "{\"query_text\": \"search term\"}",
     "expect": {
@@ -6424,7 +6567,7 @@
     ],
     "args": [
       "query",
-      "-"
+      "-@"
     ],
     "stdin": "{\"query_text\": \"test\"}",
     "expect": {
@@ -6454,7 +6597,7 @@
     ],
     "args": [
       "mark",
-      "-"
+      "-@"
     ],
     "stdin": "{}",
     "expect": {
@@ -6483,7 +6626,7 @@
     ],
     "args": [
       "query",
-      "-"
+      "-@"
     ],
     "stdin": "not valid json",
     "expect": {
@@ -6511,7 +6654,7 @@
       }
     ],
     "args": [
-      "-"
+      "-@"
     ],
     "stdin": "{\"foo\": \"bar\"}",
     "expect": {
@@ -6543,7 +6686,7 @@
       }
     ],
     "args": [
-      "-"
+      "-@"
     ],
     "stdin": "{\"op\": \"query\", \"query_text\": \"search term\"}",
     "expect": {
@@ -6575,7 +6718,7 @@
       }
     ],
     "args": [
-      "-"
+      "-@"
     ],
     "stdin": "{\"foo\": \"bar\"}",
     "expect": {
@@ -6604,7 +6747,7 @@
     ],
     "args": [
       "query",
-      "-"
+      "-@"
     ],
     "stdin": "{\"query_text\": \"search\"}",
     "defaults": {
@@ -6637,7 +6780,7 @@
     ],
     "args": [
       "run",
-      "-"
+      "-@"
     ],
     "env": {
       "TEST_STDIN_HOST": "env-host"
@@ -6670,7 +6813,7 @@
     ],
     "args": [
       "run",
-      "-"
+      "-@"
     ],
     "env": {
       "TEST_STDIN_PORT": "9000"
@@ -7295,7 +7438,7 @@
       }
     ],
     "args": [
-      "-"
+      "-@"
     ],
     "stdin": "{\"name\": \"Alice\", \"unknown\": \"bad\"}",
     "expect": {
@@ -8408,7 +8551,7 @@
       }
     ],
     "args": [
-      "-"
+      "-@"
     ],
     "stdin": "{\"subcommand\": \"fetch\"}",
     "defaults": {
@@ -8471,7 +8614,7 @@
       }
     ],
     "args": [
-      "-"
+      "-@"
     ],
     "stdin": "{\"subcommand\": \"remote\"}",
     "defaults": {
@@ -8594,7 +8737,7 @@
       }
     ],
     "args": [
-      "-"
+      "-@"
     ],
     "stdin": "{\"subcommand\": \"fet\"}",
     "defaults": {

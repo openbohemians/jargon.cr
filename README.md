@@ -22,7 +22,7 @@ Jargon is also available for Rust, as [jargon.rs](https://github.com/openbohemia
 - **Boolean flags**: Support both `--verbose` and `--verbose false` styles
 - **Subcommands**: Named sub-parsers with independent schemas (supports abbreviated invocations)
 - **Default subcommand**: Fall back to a subcommand when none specified
-- **Stdin JSON**: Read arguments as JSON from stdin with `-`
+- **Stdin JSON**: Read arguments as JSON from stdin with `-@`
 - **Typo suggestions**: "Did you mean?" for mistyped options
 - **$ref support**: Reuse definitions with `$ref: "#/$defs/typename"`
 - **Extension annotations**: `x-*` keys pass through untouched for GUI/tooling consumers
@@ -349,8 +349,8 @@ cat a.txt -n b.txt            # -n stops collection; b.txt is then unexpected
 ```
 
 A lone `-` is a value, not a flag, so `cat a.txt - b.txt` collects it with
-the rest, as the conventional name for standard input. Only a `-` that is
-the whole command line reads JSON (see [JSON from Stdin](#json-from-stdin)).
+the rest, as the conventional name for standard input. (JSON from stdin is
+`-@`; see [JSON from Stdin](#json-from-stdin).)
 
 When the array declares an `items` type, each collected token is coerced to it:
 
@@ -841,18 +841,26 @@ Note that Jargon *flattens* `allOf` rather than evaluating it as a true conjunct
 
 ### JSON from Stdin
 
-Use `-`, alone after the program or subcommand, to read JSON input from
-stdin:
+Use `-@`, alone after the program or subcommand, to read options as JSON
+from stdin, as `zip -@` reads its file names:
 
 ```sh
 # JSON with subcommand field
-echo '{"subcommand": "query", "query_text": "search term", "top": 5}' | xerp -
+echo '{"subcommand": "query", "query_text": "search term", "top": 5}' | xerp -@
 
 # JSON args for explicit subcommand
-echo '{"result_id": "abc123", "useful": true}' | xerp mark -
+echo '{"result_id": "abc123", "useful": true}' | xerp mark -@
+
+# From a file
+xerp mark -@ < options.json
 ```
 
-If no `subcommand` field is present in `xerp -`, the default subcommand is used (if set).
+If no `subcommand` field is present in `xerp -@`, the default subcommand is used (if set).
+
+`-@` takes no other arguments. A schema that defines `"short": "@"` for an
+option of its own (as macOS `ls -@` does) has that option instead, as one
+that defines `-h` has `-h`. Before 0.25.0, the JSON form was a lone `-`,
+which is now standard input as a file.
 
 The field name is configurable:
 
@@ -861,7 +869,7 @@ cli.subcommand_key("op")  # default is "subcommand"
 ```
 
 ```sh
-echo '{"op": "query", "query_text": "search"}' | xerp -
+echo '{"op": "query", "query_text": "search"}' | xerp -@
 ```
 
 ## Environment Variables

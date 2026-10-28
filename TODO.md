@@ -2,6 +2,8 @@
 
 ## Completed
 
+- **JSON from stdin is `-@`** (unreleased) — a lone `-` read options as JSON from stdin, so `cat -` couldn't name standard input. The JSON form is now `-@`, alone after the program or subcommand, as `zip -@` reads names from stdin; a lone `-` is a value everywhere. A schema that defines `"short": "@"` keeps it, as with `-h`, and `-@` among other arguments is an error. The user chose `-@` (2026-10-28) over a lone `--` (taken by a script's `prog -- "$@"` with no arguments, and already POSIX's end of options), a reserved long option, and `@-`; a file is `-@ < file.json`, so no file option. Breaking: callers of `prog -` switch to `prog -@`. jargon.rs does the same.
+
 - **Lists name their separator** (unreleased) — every array option split its value at commas, so `grep -e 'a,b'` gave two patterns. A value is now one item, and a property's `separator` names where to split one into several: `comma`, `colon`, `semicolon`, or `whitespace`, or a list of them (`cut -f`, `ps -o`). Pieces are trimmed and empty ones dropped; it applies to option values, `key=value`, environment variables, and variadic words, not to arrays from defaults, config, or stdin. An unknown name, or a separator off an array or beside `$ref`, fails when the schema loads. Help shows it, and completion completes the item after the last one, from the items' `enum`. Names rather than characters, and only these four, as the user chose (2026-10-28). Breaking: a CLI relying on commas adds `"separator": "comma"`. jargon.rs does the same.
 
 - **Repeated array options add up** (unreleased) — an array option given more than once kept only its last value, dropping the rest without a word (`-I '*.o' -I '*.a'` kept `*.a`). Each occurrence now adds its items, still split at commas, as getopt programs collect `-I`, `-e`, and `--exclude`. Any other option keeps its last value, and the command line's array still replaces one from the defaults. jargon.rs does the same.
@@ -161,9 +163,7 @@ Found 2026-10-27 by parsing real `ls`, `cat`, `cp`, and `sudo` command lines wit
 
 **Must fix (proposed)**
 
-Repeated array options, a lone `-` among other arguments, and attached short values are done (see Completed). Left:
-
-- **A `-` that is the whole command line.** It reads options as JSON from stdin, so `cat -` can't name standard input. The user wants one standard trigger for every Jargon CLI rather than a per-CLI setting, and is weighing a lone `--` (2026-10-27). For it: a `--` with nothing after it means nothing in POSIX, so no meaning is lost and `-` is freed. Against it: `prog -- "$@"` with an empty list then reads stdin as JSON, waiting on a terminal or reading data meant for something else, and it breaks xerp and anything else using `-`. Reading empty stdin as `{}` would soften the first.
+All done (see Completed): repeated array options, `-` as an argument (with `-@` for JSON from stdin), and attached short values.
 
 **Should fix (proposed)**
 

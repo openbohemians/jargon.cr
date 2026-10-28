@@ -2852,6 +2852,66 @@ describe Jargon do
   end
 
   describe "stdin JSON input" do
+    it "reads -@ alone as JSON, and a lone - as an argument" do
+      cli = Jargon.cli("cat", json: %({
+        "type": "object",
+        "positional": ["files"],
+        "properties": {
+          "files": {"type": "array", "items": {"type": "string"}},
+          "number": {"type": "boolean", "short": "n"}
+        }
+      }))
+
+      result = cli.parse(["-@"], IO::Memory.new(%({"number": true, "files": ["a"]})))
+      result.valid?.should be_true
+      result["number"].as_bool.should be_true
+      result["files"].as_a.map(&.as_s).should eq(["a"])
+
+      # - is standard input as a file, and stdin isn't read as options.
+      result = cli.parse(["-"], IO::Memory.new(%({"number": true})))
+      result.valid?.should be_true
+      result["files"].as_a.map(&.as_s).should eq(["-"])
+      result["number"]?.should be_nil
+    end
+
+    it "rejects -@ among other arguments" do
+      cli = Jargon.new("xerp")
+      cli.subcommand("mark", json: %({"type": "object", "properties": {"useful": {"type": "boolean"}}}))
+
+      result = cli.parse(["mark", "-@", "--useful"], IO::Memory.new("{}"))
+      result.valid?.should be_false
+      result.errors.should eq(["'-@' reads options as JSON from stdin, and takes no other arguments"])
+    end
+
+    it "leaves -@ to a schema that defines it, as it does -h" do
+      cli = Jargon.cli("ls", json: %({
+        "type": "object",
+        "properties": {"xattr": {"type": "boolean", "short": "@"}}
+      }))
+
+      result = cli.parse(["-@"], IO::Memory.new(%({"xattr": false})))
+      result.valid?.should be_true
+      result["xattr"].as_bool.should be_true
+    end
+
+    it "reads a nested CLI's options from the JSON, even one that defines -@" do
+      ls = Jargon.cli("ls", json: %({
+        "type": "object",
+        "properties": {
+          "all": {"type": "boolean"},
+          "xattr": {"type": "boolean", "short": "@"}
+        }
+      }))
+      cli = Jargon.new("tools")
+      cli.subcommand("ls", ls)
+
+      result = cli.parse(["-@"], IO::Memory.new(%({"subcommand": "ls", "all": true})))
+      result.valid?.should be_true
+      result.subcommand.should eq("ls")
+      result["all"].as_bool.should be_true
+      result["xattr"]?.should be_nil
+    end
+
     it "parses JSON from stdin with subcommand in JSON" do
       cli = Jargon.new("xerp")
       cli.subcommand("query", json: %({
@@ -2864,7 +2924,7 @@ describe Jargon do
       }))
 
       input = IO::Memory.new(%({"subcommand": "query", "query_text": "search term", "top": 5}))
-      result = cli.parse(["-"], input)
+      result = cli.parse(["-@"], input)
 
       result.valid?.should be_true
       result.subcommand.should eq("query")
@@ -2884,7 +2944,7 @@ describe Jargon do
       }))
 
       input = IO::Memory.new(%({"result_id": "abc123", "useful": true}))
-      result = cli.parse(["mark", "-"], input)
+      result = cli.parse(["mark", "-@"], input)
 
       result.valid?.should be_true
       result.subcommand.should eq("mark")
@@ -2904,7 +2964,7 @@ describe Jargon do
       cli.default_subcommand("query")
 
       input = IO::Memory.new(%({"query_text": "search term"}))
-      result = cli.parse(["-"], input)
+      result = cli.parse(["-@"], input)
 
       result.valid?.should be_true
       result.subcommand.should eq("query")
@@ -2922,7 +2982,7 @@ describe Jargon do
       }))
 
       input = IO::Memory.new(%({"query_text": "test"}))
-      result = cli.parse(["query", "-"], input)
+      result = cli.parse(["query", "-@"], input)
 
       result.valid?.should be_true
       result["top"].as_i64.should eq(10)
@@ -2939,7 +2999,7 @@ describe Jargon do
       }))
 
       input = IO::Memory.new(%({}))
-      result = cli.parse(["mark", "-"], input)
+      result = cli.parse(["mark", "-@"], input)
 
       result.valid?.should be_false
       result.errors.should contain("Missing required field: result_id")
@@ -2950,7 +3010,7 @@ describe Jargon do
       cli.subcommand("query", json: %({"type": "object", "properties": {}}))
 
       input = IO::Memory.new("not valid json")
-      result = cli.parse(["query", "-"], input)
+      result = cli.parse(["query", "-@"], input)
 
       result.valid?.should be_false
       result.errors.first.should contain("Invalid JSON")
@@ -2961,7 +3021,7 @@ describe Jargon do
       cli.subcommand("query", json: %({"type": "object", "properties": {}}))
 
       input = IO::Memory.new(%({"foo": "bar"}))
-      result = cli.parse(["-"], input)
+      result = cli.parse(["-@"], input)
 
       result.valid?.should be_false
       result.errors.should contain("No 'subcommand' specified in JSON")
@@ -2978,7 +3038,7 @@ describe Jargon do
       cli.subcommand_key("op")
 
       input = IO::Memory.new(%({"op": "query", "query_text": "search term"}))
-      result = cli.parse(["-"], input)
+      result = cli.parse(["-@"], input)
 
       result.valid?.should be_true
       result.subcommand.should eq("query")
@@ -2991,7 +3051,7 @@ describe Jargon do
       cli.subcommand_key("op")
 
       input = IO::Memory.new(%({"foo": "bar"}))
-      result = cli.parse(["-"], input)
+      result = cli.parse(["-@"], input)
 
       result.valid?.should be_false
       result.errors.should contain("No 'op' specified in JSON")
@@ -3009,7 +3069,7 @@ describe Jargon do
 
       defaults = {"top" => JSON::Any.new(25_i64)}
       input = IO::Memory.new(%({"query_text": "search"}))
-      result = cli.parse(["query", "-"], input, defaults: defaults)
+      result = cli.parse(["query", "-@"], input, defaults: defaults)
 
       result.valid?.should be_true
       result["query_text"].as_s.should eq("search")
@@ -3029,7 +3089,7 @@ describe Jargon do
         }))
 
         input = IO::Memory.new(%({"port": 8080}))
-        result = cli.parse(["run", "-"], input)
+        result = cli.parse(["run", "-@"], input)
 
         result.valid?.should be_true
         result["host"].as_s.should eq("env-host") # From env var
@@ -3053,7 +3113,7 @@ describe Jargon do
 
         defaults = {"host" => JSON::Any.new("default-host")}
         input = IO::Memory.new(%({"host": "json-host", "port": 3000}))
-        result = cli.parse(["run", "-"], input, defaults: defaults)
+        result = cli.parse(["run", "-@"], input, defaults: defaults)
 
         result.valid?.should be_true
         result["host"].as_s.should eq("json-host") # JSON wins over defaults
@@ -3630,7 +3690,7 @@ describe Jargon do
 
       # Stdin JSON can introduce unknown keys
       input = IO::Memory.new(%({"name": "Alice", "unknown": "bad"}))
-      result = cli.parse(["-"], input)
+      result = cli.parse(["-@"], input)
       result.valid?.should be_false
       result.errors.first.should contain("Unknown property 'unknown'")
     end
@@ -4819,7 +4879,7 @@ describe Jargon do
       it "applies sections to JSON on standard input" do
         input = IO::Memory.new(%({"subcommand": "fetch"}))
         defaults = JSON.parse(%({"verbose": true, "fetch": {"depth": 1}}))
-        result = sections_cli.call.parse(["-"], input, defaults: defaults)
+        result = sections_cli.call.parse(["-@"], input, defaults: defaults)
         result.errors.should be_empty
         result.data.to_json.should eq(%({"verbose":true,"depth":1}))
       end
@@ -4827,7 +4887,7 @@ describe Jargon do
       it "reads a nested CLI's sections for JSON on standard input" do
         input = IO::Memory.new(%({"subcommand": "remote"}))
         defaults = JSON.parse(%({"remote": {"add": {"name": "b"}}}))
-        result = sections_cli.call.parse(["-"], input, defaults: defaults)
+        result = sections_cli.call.parse(["-@"], input, defaults: defaults)
         result.errors.should be_empty
         result.subcommand.should eq("remote add")
         result.data.to_json.should eq(%({"name":"b"}))
@@ -4837,7 +4897,7 @@ describe Jargon do
         defaults = JSON.parse(%({"fetch": {"depth": 1}}))
         sections_cli.call.parse(["fet"], defaults: defaults)["depth"].as_i64.should eq(1)
         input = IO::Memory.new(%({"subcommand": "fet"}))
-        sections_cli.call.parse(["-"], input, defaults: defaults)["depth"].as_i64.should eq(1)
+        sections_cli.call.parse(["-@"], input, defaults: defaults)["depth"].as_i64.should eq(1)
       end
 
       it "gives a global key to an option a mixin defines" do
