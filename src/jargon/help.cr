@@ -114,11 +114,9 @@ module Jargon
       # Build usage line
       usage_parts = ["Usage: #{command}"]
       positional_names.each do |name|
-        if prop = root.properties.try(&.[name]?)
-          usage_parts << (prop.required? ? "<#{name}>" : "[#{name}]")
-        else
-          usage_parts << "<#{name}>"
-        end
+        prop = root.properties.try(&.[name]?)
+        part = (prop.nil? || prop.required?) ? "<#{name}>" : "[#{name}]"
+        usage_parts << (name == schema.variadic ? "#{part}..." : part)
       end
       usage_parts << "[options]"
       lines << usage_parts.join(" ")

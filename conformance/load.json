@@ -65,6 +65,45 @@
     }
   },
   {
+    "spec": "variadic positionals > rejects a * on more than one positional, or on one that isn't an array",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\"type\": \"object\", \"positional\": [\"a*\", \"b*\"],\n          \"properties\": {\"a\": {\"type\": \"array\"}, \"b\": {\"type\": \"array\"}}}"
+      }
+    ],
+    "expect": {
+      "raises": "Positionals 'a*' and 'b*' are both variadic (only one can take a list)"
+    }
+  },
+  {
+    "spec": "variadic positionals > rejects a * on more than one positional, or on one that isn't an array",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\"type\": \"object\", \"positional\": [\"name*\"], \"properties\": {\"name\": {\"type\": \"string\"}}}"
+      }
+    ],
+    "expect": {
+      "raises": "Positional 'name*' isn't an array (did you mean type: array?)"
+    }
+  },
+  {
+    "spec": "variadic positionals > rejects a * on more than one positional, or on one that isn't an array",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cli",
+        "text": "{\"type\": \"object\", \"positional\": [\"files*\"], \"properties\": {}}"
+      }
+    ],
+    "expect": {
+      "raises": "Positional 'files*' names no property"
+    }
+  },
+  {
     "spec": "subcommands > raises when properties is present under an explicit non-object type",
     "schema": "{\n          \"type\": \"string\",\n          \"properties\": {\"name\": {\"type\": \"string\"}}\n        }",
     "expect": {

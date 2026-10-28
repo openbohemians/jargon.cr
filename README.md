@@ -317,12 +317,13 @@ myapp input.txt output.txt --verbose
 
 ### Variadic Positionals
 
-When the last positional has `type: array`, it collects all remaining arguments:
+A `*` after a positional's name makes it variadic, taking a list of words. It
+must be an array:
 
 ```crystal
 schema = %({
   "type": "object",
-  "positional": ["files"],
+  "positional": ["files*"],
   "properties": {
     "files": {"type": "array", "description": "Input files"},
     "number": {"type": "boolean", "short": "n"}
@@ -338,14 +339,44 @@ result = cli.parse(["-n", "a.txt", "b.txt", "c.txt"])
 cat -n a.txt b.txt c.txt
 ```
 
+The positionals after a variadic take its last words, one each, so a command
+can take `SOURCE... DEST` as `cp` does:
+
+```crystal
+schema = %({
+  "type": "object",
+  "positional": ["sources*", "dest"],
+  "properties": {
+    "sources": {"type": "array"},
+    "dest": {"type": "string"}
+  }
+})
+
+cli = Jargon.cli("cp", json: schema)
+result = cli.parse(["a.txt", "b.txt", "dir/"])
+# => {"sources": ["a.txt", "b.txt"], "dest": "dir/"}
+```
+
+With too few words, the positionals after the variadic fill first, so
+`cp a.txt` gives `{"sources": [], "dest": "a.txt"}`; `"minItems": 1` makes an
+empty variadic an error. A variadic that isn't given is an empty list. Only
+one positional can be variadic, and the usage line in help shows it as
+`[sources]...`. An array positional without a `*` takes one word, split at its
+[separator](#lists) if it has one (`cut 1,3 data.txt`).
+
+Before 0.26.0, the last positional was variadic whenever it was an array; add
+the `*` to keep that.
+
 A variadic positional is **greedy**: it captures every remaining token
 literally, including ones that look like assignments (`k=v`) or negative
 numbers (`-50`). It stops only at a genuine
-flag, so put flags before the variadic:
+flag, so put flags before or after its words. A `--` among them is dropped,
+and every word after it is collected as it is:
 
 ```sh
 cat -n a.txt b.txt c.txt      # ok: flag first
 cat a.txt -n b.txt            # -n stops collection; b.txt is then unexpected
+cat a.txt -- -n.txt           # files: ["a.txt", "-n.txt"]
 ```
 
 A lone `-` is a value, not a flag, so `cat a.txt - b.txt` collects it with
@@ -357,7 +388,7 @@ When the array declares an `items` type, each collected token is coerced to it:
 ```crystal
 schema = %({
   "type": "object",
-  "positional": ["values"],
+  "positional": ["values*"],
   "properties": {
     "values": {"type": "array", "items": {"type": "number"}}
   }
@@ -382,7 +413,7 @@ A bare `--` marks the end of options (POSIX convention). Everything after it is 
 ```crystal
 schema = %({
   "type": "object",
-  "positional": ["argv"],
+  "positional": ["argv*"],
   "properties": {
     "verbose": {"type": "boolean", "short": "v"},
     "argv": {"type": "array"}

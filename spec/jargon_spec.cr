@@ -427,7 +427,7 @@ describe Jargon do
     it "splits each word of a variadic positional at its separator" do
       cli = Jargon.cli("cut", json: %({
         "type": "object",
-        "positional": ["fields"],
+        "positional": ["fields*"],
         "properties": {
           "fields": {"type": "array", "items": {"type": "integer"}, "separator": "comma"}
         }
@@ -1348,7 +1348,7 @@ describe Jargon do
     it "collects multiple arguments into array positional" do
       cli = Jargon.cli("cli", json: %q({
         "type": "object",
-        "positional": ["files"],
+        "positional": ["files*"],
         "properties": {
           "files": {"type": "array", "description": "Input files"}
         }
@@ -1362,7 +1362,7 @@ describe Jargon do
     it "handles flags mixed with variadic positionals" do
       cli = Jargon.cli("cat", json: %q({
         "type": "object",
-        "positional": ["files"],
+        "positional": ["files*"],
         "properties": {
           "files": {"type": "array"},
           "number": {"type": "boolean", "short": "n"}
@@ -1378,7 +1378,7 @@ describe Jargon do
     it "handles non-array positional followed by array positional" do
       cli = Jargon.cli("cp", json: %q({
         "type": "object",
-        "positional": ["dest", "sources"],
+        "positional": ["dest", "sources*"],
         "properties": {
           "dest": {"type": "string"},
           "sources": {"type": "array"}
@@ -1394,7 +1394,7 @@ describe Jargon do
     it "returns empty array when no arguments for variadic" do
       cli = Jargon.cli("cat", json: %q({
         "type": "object",
-        "positional": ["files"],
+        "positional": ["files*"],
         "properties": {
           "files": {"type": "array"}
         }
@@ -1408,7 +1408,7 @@ describe Jargon do
     it "stops collecting at flags (flags should come first)" do
       cli = Jargon.cli("cat", json: %q({
         "type": "object",
-        "positional": ["files"],
+        "positional": ["files*"],
         "properties": {
           "files": {"type": "array"},
           "number": {"type": "boolean", "short": "n"}
@@ -1432,7 +1432,7 @@ describe Jargon do
     it "captures tokens containing ':' or '=' literally (greedy)" do
       cli = Jargon.cli("add", json: %q({
         "type": "object",
-        "positional": ["items"],
+        "positional": ["items*"],
         "properties": {
           "amount": {"type": "number"},
           "items": {"type": "array"}
@@ -1447,7 +1447,7 @@ describe Jargon do
     it "still breaks collection at a real flag, not at ':' tokens" do
       cli = Jargon.cli("add", json: %q({
         "type": "object",
-        "positional": ["items"],
+        "positional": ["items*"],
         "properties": {
           "amount": {"type": "number"},
           "items": {"type": "array"}
@@ -1463,7 +1463,7 @@ describe Jargon do
     it "takes a lone - among the arguments as a value, for standard input" do
       cli = Jargon.cli("cat", json: %q({
         "type": "object",
-        "positional": ["files"],
+        "positional": ["files*"],
         "properties": {
           "files": {"type": "array"},
           "number": {"type": "boolean", "short": "n"}
@@ -1488,6 +1488,142 @@ describe Jargon do
 
       cli.parse(["--file", "-"])["file"].as_s.should eq("-")
       cli.parse(["-f", "-"])["file"].as_s.should eq("-")
+    end
+
+    it "gives the positionals after a variadic the last words" do
+      cli = Jargon.cli("cp", json: %q({
+        "type": "object",
+        "positional": ["sources*", "dest"],
+        "properties": {
+          "sources": {"type": "array"},
+          "dest": {"type": "string"},
+          "verbose": {"type": "boolean", "short": "v"}
+        }
+      }))
+
+      result = cli.parse(["a", "b", "dir/"])
+      result.valid?.should be_true
+      result["sources"].as_a.map(&.as_s).should eq(["a", "b"])
+      result["dest"].as_s.should eq("dir/")
+
+      result = cli.parse(["a", "dir/"])
+      result["sources"].as_a.map(&.as_s).should eq(["a"])
+      result["dest"].as_s.should eq("dir/")
+
+      # Too few words: the positionals after the variadic fill first.
+      result = cli.parse(["a"])
+      result["sources"].as_a.should be_empty
+      result["dest"].as_s.should eq("a")
+
+      # Options before or after the run.
+      result = cli.parse(["-v", "a", "b", "dir/"])
+      result["sources"].as_a.map(&.as_s).should eq(["a", "b"])
+      result["dest"].as_s.should eq("dir/")
+      result = cli.parse(["a", "b", "dir/", "-v"])
+      result["verbose"].as_bool.should be_true
+      result["sources"].as_a.map(&.as_s).should eq(["a", "b"])
+      result["dest"].as_s.should eq("dir/")
+
+      # An option inside the run ends it, as for any variadic.
+      result = cli.parse(["a", "-v", "b", "dir/"])
+      result.errors.should eq(["Unexpected argument 'b'", "Unexpected argument 'dir/'"])
+
+      result = cli.parse(["--", "-a", "b", "dir/"])
+      result["sources"].as_a.map(&.as_s).should eq(["-a", "b"])
+      result["dest"].as_s.should eq("dir/")
+    end
+
+    it "puts a variadic between positionals" do
+      cli = Jargon.cli("pack", json: %q({
+        "type": "object",
+        "positional": ["format", "inputs*", "out", "log"],
+        "properties": {
+          "format": {"type": "string"},
+          "inputs": {"type": "array", "items": {"type": "integer"}},
+          "out": {"type": "string"},
+          "log": {"type": "string"}
+        }
+      }))
+
+      result = cli.parse(["zip", "1", "2", "3", "out.zip", "pack.log"])
+      result.valid?.should be_true
+      result["format"].as_s.should eq("zip")
+      result["inputs"].as_a.map(&.as_i64).should eq([1, 2, 3])
+      result["out"].as_s.should eq("out.zip")
+      result["log"].as_s.should eq("pack.log")
+
+      result = cli.parse(["zip", "out.zip"])
+      result["inputs"].as_a.should be_empty
+      result["out"].as_s.should eq("out.zip")
+      result["log"]?.should be_nil
+
+      result = cli.parse(["zip"])
+      result["inputs"].as_a.should be_empty
+      result["out"]?.should be_nil
+    end
+
+    it "takes one word for an array positional without a *" do
+      cli = Jargon.cli("cut", json: %q({
+        "type": "object",
+        "positional": ["fields", "file"],
+        "properties": {
+          "fields": {"type": "array", "items": {"type": "integer"}, "separator": "comma"},
+          "file": {"type": "string"}
+        }
+      }))
+
+      result = cli.parse(["1,3", "data.txt"])
+      result.valid?.should be_true
+      result["fields"].as_a.map(&.as_i64).should eq([1, 3])
+      result["file"].as_s.should eq("data.txt")
+
+      cli = Jargon.cli("cat", json: %q({
+        "type": "object",
+        "positional": ["files"],
+        "properties": {"files": {"type": "array"}}
+      }))
+      result = cli.parse(["a", "b"])
+      result["files"].as_a.map(&.as_s).should eq(["a"])
+      result.errors.should eq(["Unexpected argument 'b'"])
+      cli.parse([] of String)["files"]?.should be_nil
+    end
+
+    it "reads on past a -- in a variadic's run" do
+      cli = Jargon.cli("cat", json: %q({
+        "type": "object",
+        "positional": ["files*"],
+        "properties": {
+          "files": {"type": "array"},
+          "number": {"type": "boolean", "short": "n"}
+        }
+      }))
+
+      result = cli.parse(["a", "--", "-n", "--", "b"])
+      result.valid?.should be_true
+      result["files"].as_a.map(&.as_s).should eq(["a", "-n", "--", "b"])
+      result["number"]?.should be_nil
+    end
+
+    it "rejects a * on more than one positional, or on one that isn't an array" do
+      expect_raises(ArgumentError, "Positionals 'a*' and 'b*' are both variadic (only one can take a list)") do
+        Jargon.cli("cli", json: %({"type": "object", "positional": ["a*", "b*"],
+          "properties": {"a": {"type": "array"}, "b": {"type": "array"}}}))
+      end
+      expect_raises(ArgumentError, "Positional 'name*' isn't an array (did you mean type: array?)") do
+        Jargon.cli("cli", json: %({"type": "object", "positional": ["name*"], "properties": {"name": {"type": "string"}}}))
+      end
+      expect_raises(ArgumentError, "Positional 'files*' names no property") do
+        Jargon.cli("cli", json: %({"type": "object", "positional": ["files*"], "properties": {}}))
+      end
+
+      # An array by $ref is an array.
+      cli = Jargon.cli("cli", json: %({
+        "type": "object",
+        "$defs": {"list": {"type": "array"}},
+        "positional": ["files*"],
+        "properties": {"files": {"$ref": "#/$defs/list"}}
+      }))
+      cli.parse(["a", "b"])["files"].as_a.map(&.as_s).should eq(["a", "b"])
     end
   end
 
@@ -1522,7 +1658,7 @@ describe Jargon do
     it "collects negative numbers inside an untyped variadic positional" do
       cli = Jargon.cli("nums", json: %q({
         "type": "object",
-        "positional": ["vals"],
+        "positional": ["vals*"],
         "properties": {"vals": {"type": "array"}}
       }))
 
@@ -1534,7 +1670,7 @@ describe Jargon do
     it "coerces variadic items to the array's declared item type" do
       cli = Jargon.cli("nums", json: %q({
         "type": "object",
-        "positional": ["vals"],
+        "positional": ["vals*"],
         "properties": {
           "vals": {"type": "array", "items": {"type": "number"}}
         }
@@ -1548,7 +1684,7 @@ describe Jargon do
     it "reports a per-item error for a non-numeric variadic token" do
       cli = Jargon.cli("nums", json: %q({
         "type": "object",
-        "positional": ["vals"],
+        "positional": ["vals*"],
         "properties": {
           "vals": {"type": "array", "items": {"type": "integer"}}
         }
@@ -1632,7 +1768,7 @@ describe Jargon do
     it "captures flag-like tokens after -- into a variadic positional" do
       cli = Jargon.cli("app", json: %({
         "type": "object",
-        "positional": ["cmd", "rest"],
+        "positional": ["cmd", "rest*"],
         "properties": {
           "verbose": {"type": "boolean", "short": "v"},
           "cmd": {"type": "string"},
@@ -1650,7 +1786,7 @@ describe Jargon do
     it "treats --help after -- as a literal operand, not a help request" do
       cli = Jargon.cli("app", json: %({
         "type": "object",
-        "positional": ["rest"],
+        "positional": ["rest*"],
         "properties": {"rest": {"type": "array"}}
       }))
 
@@ -1662,7 +1798,7 @@ describe Jargon do
     it "discards the -- marker and parses options before it normally" do
       cli = Jargon.cli("app", json: %({
         "type": "object",
-        "positional": ["rest"],
+        "positional": ["rest*"],
         "properties": {"rest": {"type": "array"}}
       }))
 
@@ -1674,7 +1810,7 @@ describe Jargon do
     it "treats a second -- as a literal operand" do
       cli = Jargon.cli("app", json: %({
         "type": "object",
-        "positional": ["rest"],
+        "positional": ["rest*"],
         "properties": {"rest": {"type": "array"}}
       }))
 
@@ -1686,7 +1822,7 @@ describe Jargon do
     it "yields an empty tail when nothing follows --" do
       cli = Jargon.cli("app", json: %({
         "type": "object",
-        "positional": ["rest"],
+        "positional": ["rest*"],
         "properties": {"rest": {"type": "array"}}
       }))
 
@@ -1699,7 +1835,7 @@ describe Jargon do
       cli = Jargon.new("app")
       cli.subcommand("run", json: %({
         "type": "object",
-        "positional": ["argv"],
+        "positional": ["argv*"],
         "properties": {"argv": {"type": "array"}}
       }))
 
@@ -2792,6 +2928,22 @@ describe Jargon do
       help.should contain("Input file")
     end
 
+    it "marks the variadic in the usage line" do
+      cli = Jargon.cli("cp", json: %({
+        "type": "object",
+        "positional": ["sources*", "dest"],
+        "required": ["dest"],
+        "properties": {
+          "sources": {"type": "array", "description": "Files to copy"},
+          "dest": {"type": "string", "description": "Where to copy them"}
+        }
+      }))
+
+      help = cli.help
+      help.should start_with("Usage: cp [sources]... <dest> [options]\n")
+      help.should contain("  sources  Files to copy\n")
+    end
+
     it "generates help for subcommands" do
       cli = Jargon.new("myapp")
       cli.subcommand("run", json: %({"type": "object", "properties": {}}))
@@ -2855,7 +3007,7 @@ describe Jargon do
     it "reads -@ alone as JSON, and a lone - as an argument" do
       cli = Jargon.cli("cat", json: %({
         "type": "object",
-        "positional": ["files"],
+        "positional": ["files*"],
         "properties": {
           "files": {"type": "array", "items": {"type": "string"}},
           "number": {"type": "boolean", "short": "n"}
@@ -3954,6 +4106,41 @@ describe Jargon do
         }))
         c = Jargon::Completion.new(cli)
         c.candidates(["myapp", "host:8080", ""], 2).should eq(["fast", "safe"])
+      end
+
+      it "completes the positional after a variadic, as the parser would fill it" do
+        cli = Jargon.cli("deploy", json: %({
+          "type": "object",
+          "positional": ["mode", "hosts*", "env"],
+          "properties": {
+            "mode": {"type": "string", "enum": ["fast", "safe"]},
+            "hosts": {"type": "array", "items": {"type": "string", "enum": ["web1", "web2"]}},
+            "env": {"type": "string", "enum": ["prod", "test"]}
+          }
+        }))
+        c = Jargon::Completion.new(cli)
+        c.candidates(["deploy", ""], 1).should eq(["fast", "safe"])
+        # If the line ended here, the word would be env's.
+        c.candidates(["deploy", "fast", ""], 2).should eq(["prod", "test"])
+        c.candidates(["deploy", "fast", "web1", ""], 3).should eq(["prod", "test"])
+
+        cli = Jargon.cli("cat", json: %({
+          "type": "object",
+          "positional": ["files*"],
+          "properties": {"files": {"type": "array", "items": {"type": "string", "enum": ["a", "b"]}}}
+        }))
+        c = Jargon::Completion.new(cli)
+        c.candidates(["cat", "a", ""], 2).should eq(["a", "b"])
+
+        # Without a *, an array positional takes one word.
+        cli = Jargon.cli("cat", json: %({
+          "type": "object",
+          "positional": ["files"],
+          "properties": {"files": {"type": "array", "items": {"type": "string", "enum": ["a", "b"]}}}
+        }))
+        c = Jargon::Completion.new(cli)
+        c.candidates(["cat", ""], 1).should eq(["a", "b"])
+        c.candidates(["cat", "a", ""], 2).should eq([] of String)
       end
 
       positional_pair = %({

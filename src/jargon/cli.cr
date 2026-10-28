@@ -605,10 +605,8 @@ module Jargon
       errors = [] of String
       positional_names = schema.positional
 
-      positional_index = consume_tokens(args, schema, data, errors, positional_names)
-
-      # Initialize unfilled variadic positionals to empty arrays
-      init_empty_variadic(positional_index, positional_names, data, errors, schema)
+      consume_tokens(args, schema, data, errors, positional_names)
+      init_empty_variadic(data, errors, schema)
 
       # Apply environment variables - CLI args take precedence
       apply_env_vars(data, errors, schema)
@@ -624,9 +622,8 @@ module Jargon
       Result.new(data, errors)
     end
 
-    # Walk the argument tokens, filling `data`/`errors`. Returns the number of
-    # positional slots consumed (for variadic initialization).
-    private def consume_tokens(args : Array(String), schema : Schema, data : Hash(String, JSON::Any), errors : Array(String), positional_names : Array(String)) : Int32
+    # Walk the argument tokens, filling `data`/`errors`.
+    private def consume_tokens(args : Array(String), schema : Schema, data : Hash(String, JSON::Any), errors : Array(String), positional_names : Array(String)) : Nil
       short_to_long = build_short_map(schema)
       positional_index = 0
       options_ended = false
@@ -652,8 +649,6 @@ module Jargon
           i += handle_extra_arg(arg, args, i, data, errors, schema)
         end
       end
-
-      positional_index
     end
 
     private def flag?(arg : String) : Bool
@@ -734,49 +729,70 @@ module Jargon
 
     private def handle_positional(arg : String, args : Array(String), i : Int32, positional_index : Int32, positional_names : Array(String), data : Hash(String, JSON::Any), errors : Array(String), schema : Schema, options_ended : Bool = false) : {Int32, Int32}
       key = positional_names[positional_index]
-      prop = find_property(key, schema)
-
-      if prop.try(&.type) == Property::Type::Array && positional_index == positional_names.size - 1
-        consumed = collect_variadic(args, i, key, data, errors, schema, options_ended)
-        {consumed, 1}
-      else
-        coerced, coerce_error = coerce_value(key, arg, schema)
-        errors << coerce_error if coerce_error
-        set_nested_value(data, key, coerced, errors)
-        {1, 1}
+      unless key == schema.variadic
+        set_positional(key, arg, data, errors, schema)
+        return {1, 1}
       end
+
+      # The variadic takes a run of words, and the positionals after it take
+      # the run's last words, one each (`cp a b dir/`).
+      consumed, words = collect_run(args, i, options_ended)
+      after = positional_names[(positional_index + 1)..]
+      count = Math.min(after.size, words.size)
+      set_variadic(key, words[0, words.size - count], data, errors, schema)
+      words[(words.size - count)..].each_with_index do |word, n|
+        set_positional(after[n], word, data, errors, schema)
+      end
+      {consumed, 1 + after.size}
     end
 
-    private def collect_variadic(args : Array(String), start : Int32, key : String, data : Hash(String, JSON::Any), errors : Array(String), schema : Schema, passthrough : Bool = false) : Int32
-      prop = find_property(key, schema)
-      item_type = prop.try(&.items).try(&.type)
-      items = [] of JSON::Any
+    private def set_positional(key : String, word : String, data : Hash(String, JSON::Any), errors : Array(String), schema : Schema) : Nil
+      coerced, coerce_error = coerce_value(key, word, schema)
+      errors << coerce_error if coerce_error
+      set_nested_value(data, key, coerced, errors)
+    end
+
+    # The words a variadic takes from `start`, and how many tokens they span.
+    # The run is greedy: it captures every token literally, including ones
+    # that contain `:`/`=` (e.g. Expenses:Food, host:8080) or look like
+    # negative numbers (-50). It stops only at a genuine flag so that flag can
+    # be parsed normally. A `--` in the run is dropped, and after `--` even
+    # flags are captured.
+    private def collect_run(args : Array(String), start : Int32, passthrough : Bool) : {Int32, Array(String)}
+      words = [] of String
       i = start
       while i < args.size
         current_arg = args[i]
-        # A variadic positional is greedy: it captures every token literally,
-        # including ones that contain `:`/`=` (e.g. Expenses:Food, host:8080) or
-        # look like negative numbers (-50). It stops only at a genuine flag so
-        # that flag can be parsed normally. After `--` even flags are captured.
-        break if !passthrough && flag_like?(current_arg)
-        array_pieces(current_arg, prop).each do |piece|
+        if !passthrough && current_arg == "--"
+          passthrough = true
+        elsif !passthrough && flag_like?(current_arg)
+          break
+        else
+          words << current_arg
+        end
+        i += 1
+      end
+      {i - start, words}
+    end
+
+    private def set_variadic(key : String, words : Array(String), data : Hash(String, JSON::Any), errors : Array(String), schema : Schema) : Nil
+      prop = find_property(key, schema)
+      item_type = prop.try(&.items).try(&.type)
+      items = [] of JSON::Any
+      words.each do |word|
+        array_pieces(word, prop).each do |piece|
           coerced, coerce_error = coerce_scalar(key, piece, item_type)
           errors << coerce_error if coerce_error
           items << coerced
         end
-        i += 1
       end
       set_nested_value(data, key, JSON::Any.new(items), errors)
-      i - start
     end
 
-    private def init_empty_variadic(positional_index : Int32, positional_names : Array(String), data : Hash(String, JSON::Any), errors : Array(String), schema : Schema) : Nil
-      return unless positional_index < positional_names.size
-      key = positional_names[positional_names.size - 1]
-      prop = find_property(key, schema)
-      if prop.try(&.type) == Property::Type::Array && !data.has_key?(key)
-        set_nested_value(data, key, JSON::Any.new([] of JSON::Any), errors)
-      end
+    # A variadic never given is an empty list.
+    private def init_empty_variadic(data : Hash(String, JSON::Any), errors : Array(String), schema : Schema) : Nil
+      return unless key = schema.variadic
+      set_nested_value(data, key, JSON::Any.new([] of JSON::Any), errors) unless nested_value(data, key)
     end
 
     private def handle_extra_arg(arg : String, args : Array(String), i : Int32, data : Hash(String, JSON::Any), errors : Array(String), schema : Schema) : Int32
@@ -976,41 +992,13 @@ module Jargon
       end
     end
 
-    # Look up a property by dotted path (e.g. "server.port"), descending through
-    # object properties and resolving `$ref`s. Returns nil if any segment is
-    # missing or a non-final segment isn't an object.
+    # Look up a property by dotted path (e.g. "server.port"); see `Schema#find_property`.
     private def find_property(key : String, schema : Schema) : Property?
-      parts = key.split(".")
-      current = resolve_property(schema.root, schema)
-
-      parts.each_with_index do |part, i|
-        if props = current.properties
-          if prop = props[part]?
-            resolved = resolve_property(prop, schema)
-            if i == parts.size - 1
-              return resolved
-            elsif resolved.type.object?
-              current = resolved
-            else
-              return
-            end
-          else
-            return
-          end
-        else
-          return
-        end
-      end
-
-      nil
+      schema.find_property(key)
     end
 
     private def resolve_property(prop : Property, schema : Schema) : Property
-      if ref = prop.ref
-        schema.resolve_ref(ref) || prop
-      else
-        prop
-      end
+      schema.resolve_property(prop)
     end
 
     # The fields whose value didn't convert to the field's type. A token is a

@@ -149,6 +149,18 @@
     "expect": "Usage: myapp [file] [options]\n\nArguments:\n  file  Input file\n\nOptions:\n      --verbose"
   },
   {
+    "spec": "help with new features > marks the variadic in the usage line",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cp",
+        "text": "{\n        \"type\": \"object\",\n        \"positional\": [\"sources*\", \"dest\"],\n        \"required\": [\"dest\"],\n        \"properties\": {\n          \"sources\": {\"type\": \"array\", \"description\": \"Files to copy\"},\n          \"dest\": {\"type\": \"string\", \"description\": \"Where to copy them\"}\n        }\n      }"
+      }
+    ],
+    "subcommand": null,
+    "expect": "Usage: cp [sources]... <dest> [options]\n\nArguments:\n  sources  Files to copy\n  dest     Where to copy them\n\nOptions:"
+  },
+  {
     "spec": "help with new features > generates help for subcommands",
     "cli": [
       {

@@ -1,6 +1,6 @@
 {
   "type": "object",
-  "positional": ["files"],
+  "positional": ["files*"],
   "properties": {
     "files": {
       "type": "array",

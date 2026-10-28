@@ -978,6 +978,122 @@
     ]
   },
   {
+    "spec": "shell completion > candidates engine > completes the positional after a variadic, as the parser would fill it",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "deploy",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\", \"hosts*\", \"env\"],\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]},\n            \"hosts\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"web1\", \"web2\"]}},\n            \"env\": {\"type\": \"string\", \"enum\": [\"prod\", \"test\"]}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "deploy",
+      ""
+    ],
+    "cword": 1,
+    "expect": [
+      "fast",
+      "safe"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes the positional after a variadic, as the parser would fill it",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "deploy",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\", \"hosts*\", \"env\"],\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]},\n            \"hosts\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"web1\", \"web2\"]}},\n            \"env\": {\"type\": \"string\", \"enum\": [\"prod\", \"test\"]}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "deploy",
+      "fast",
+      ""
+    ],
+    "cword": 2,
+    "expect": [
+      "prod",
+      "test"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes the positional after a variadic, as the parser would fill it",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "deploy",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"mode\", \"hosts*\", \"env\"],\n          \"properties\": {\n            \"mode\": {\"type\": \"string\", \"enum\": [\"fast\", \"safe\"]},\n            \"hosts\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"web1\", \"web2\"]}},\n            \"env\": {\"type\": \"string\", \"enum\": [\"prod\", \"test\"]}\n          }\n        }"
+      }
+    ],
+    "words": [
+      "deploy",
+      "fast",
+      "web1",
+      ""
+    ],
+    "cword": 3,
+    "expect": [
+      "prod",
+      "test"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes the positional after a variadic, as the parser would fill it",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cat",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"files*\"],\n          \"properties\": {\"files\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"a\", \"b\"]}}}\n        }"
+      }
+    ],
+    "words": [
+      "cat",
+      "a",
+      ""
+    ],
+    "cword": 2,
+    "expect": [
+      "a",
+      "b"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes the positional after a variadic, as the parser would fill it",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cat",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"files\"],\n          \"properties\": {\"files\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"a\", \"b\"]}}}\n        }"
+      }
+    ],
+    "words": [
+      "cat",
+      ""
+    ],
+    "cword": 1,
+    "expect": [
+      "a",
+      "b"
+    ]
+  },
+  {
+    "spec": "shell completion > candidates engine > completes the positional after a variadic, as the parser would fill it",
+    "cli": [
+      {
+        "op": "from_json",
+        "program": "cat",
+        "text": "{\n          \"type\": \"object\",\n          \"positional\": [\"files\"],\n          \"properties\": {\"files\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"a\", \"b\"]}}}\n        }"
+      }
+    ],
+    "words": [
+      "cat",
+      "a",
+      ""
+    ],
+    "cword": 2,
+    "expect": []
+  },
+  {
     "spec": "shell completion > candidates engine > fills positional slots with k=v and negative-number words, as the parser does",
     "cli": [
       {

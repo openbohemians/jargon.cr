@@ -245,17 +245,19 @@ module Jargon
     end
 
     # Which positional slot the cursor sits in, accounting for flags (and the
-    # values non-boolean flags consume). Returns the last positional when it is
-    # a variadic array and the cursor is past the declared slots.
+    # values non-boolean flags consume). From the variadic on, the parser
+    # gives the run's last words to the positionals after it, so the word under
+    # the cursor, the last so far, is one of theirs, or the variadic's when
+    # none follows it.
     private def positional_at(schema : Schema, args : Array(String), cursor : Int32) : String?
       names = schema.positional
-      return if names.empty?
-
       idx = positional_index(schema, args, Math.min(cursor, args.size))
-      return names[idx] if idx < names.size
+      variadic = schema.variadic.try { |name| names.index(name) }
+      return names[idx]? unless variadic && idx >= variadic
 
-      last = names.last?
-      (last && array?(schema, last)) ? last : nil
+      after = names.size - 1 - variadic
+      run = idx - variadic + 1
+      names[variadic + Math.min(run, after)]
     end
 
     # Count how many positional slots are filled within args[0...limit],
@@ -392,10 +394,6 @@ module Jargon
 
     private def boolean?(schema : Schema, field : String) : Bool
       props_of(schema)[field]?.try(&.type.boolean?) || false
-    end
-
-    private def array?(schema : Schema, field : String) : Bool
-      props_of(schema)[field]?.try(&.type.array?) || false
     end
 
     private def join(path : String, name : String) : String

@@ -4,7 +4,7 @@ cli = Jargon.cli("pretty", json: <<-JSON)
   {
     "type": "object",
     "description": "Example CLI that pretty prints parsed arguments as JSON",
-    "positional": ["files"],
+    "positional": ["files*"],
     "properties": {
       "name": {
         "type": "string",
