@@ -173,6 +173,7 @@ All done (see Completed): repeated array options, `-` as an argument (with `-@` 
 - **A command's arguments taken verbatim.** `sudo -u root ls -l` reads `-l` as sudo's own option; only `--` gets it through. `sudo`, `xargs`, `env`, `nice`, `time`, and `ssh` take a command, and everything after it is that command's. A positional could be marked as ending option parsing.
 - **Options whose value is optional.** `ls --color` alone fails ("Missing value for --color"). GNU's `--color[=WHEN]` takes a value only after `=`, and uses one of its own when there's none. It needs a new keyword for that value. POSIX advises against optional values, so this matters mostly for GNU commands.
 - **Counted flags.** `-vvv` fails. `ssh` and others count a repeated flag as a level; `--verbose=3` is the workaround today.
+- **A pointer to help after an error.** GNU commands end one with "Try 'ls --help' for more information." Since an unknown option no longer lists the options, `run` could print such a line after the errors, rather than each error carrying it. It has to name a help flag the command really has: a schema can define its own `help` property or `-h` short, and then Jargon's doesn't apply.
 
 **Opt-in at most (proposed)**
 
